@@ -1,0 +1,6 @@
+name: cookie_collector_bot
+version: 0.0.1
+description: A little discord bot that lets you collect and do stuff with cookies
+dependencies:
+  nyxx:
+    git: git://github.com/l7ssha/nyxx.git
