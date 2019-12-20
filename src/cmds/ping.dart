@@ -6,5 +6,7 @@ Future<void> ping(CommandContext ctx) async {
   stopwatch.start();
   await ctx.waitForTyping(bot.self);
   stopwatch.stop();
-  ctx.message.reply(content: ":stopwatch: Pong! `${stopwatch.elapsedMilliseconds}ms`", mention: false);
+  ctx.message.reply(
+      content: ":stopwatch: Pong! `${stopwatch.elapsedMilliseconds}ms`",
+      mention: false);
 }
