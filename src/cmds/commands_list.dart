@@ -10,3 +10,4 @@ import '../main.dart';
 //Put commands here
 part 'ping.dart';
 part 'info.dart';
+part 'say.dart';
