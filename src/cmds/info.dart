@@ -1,10 +1,11 @@
 part of commands;
 
-@Command("info", typing: true, aliases: ["status", "stats"])
+@Command("info", aliases: ["status", "stats"])
+@Restrict(requiredContext: ContextType.guild)
 Future<void> info(CommandContext ctx) async {
   var botName = "${bot.self.username + "#" + bot.self.discriminator}";
   var memUsage = (ProcessInfo.currentRss / 1024 / 1024).toStringAsFixed(2);
-  var embed = EmbedBuilder()
+  var embed = await EmbedBuilder()
     ..addField(
         name: "Uptime", content: "${bot.uptime.inMinutes} min", inline: true)
     //Big thanks to lib dev (l7ssha) and the power of ctrl + f for memory usage
@@ -21,5 +22,5 @@ Future<void> info(CommandContext ctx) async {
     });
   embed.color = DiscordColor.fromHexString("87CEEB");
   embed.timestamp = DateTime.now().toUtc();
-  ctx.message.reply(mention: false, embed: embed);
+  await ctx.reply(embed: embed);
 }
