@@ -17,10 +17,11 @@ void main() {
   String mention = "";
 
   bot = NyxxVm(token);
-  prefixHandler = cmd.CommandsFramework(bot, prefix: prefix)
+  List<Snowflake> admins = [Snowflake(156872400145874944)];
+  prefixHandler = cmd.CommandsFramework(bot, prefix: prefix, admins: admins)
     ..discoverCommands();
   
-  var mentionHandler = cmd.CommandsFramework(bot, prefix: mention)
+  var mentionHandler = cmd.CommandsFramework(bot, prefix: mention, admins: admins)
     ..discoverCommands();
   
   bot.onReady.listen((e) {
