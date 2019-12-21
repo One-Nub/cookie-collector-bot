@@ -1,22 +1,26 @@
 import 'package:nyxx/nyxx.dart';
 import 'package:nyxx/Vm.dart';
-import 'package:nyxx/commands.dart';
+import 'package:nyxx/commands.dart' as cmd;
 
 //commands
 import 'cmds/commands_list.dart'; //ignore: unused_import
 
 Nyxx bot;
-var cmdFramework;
+var prefixHandler;
 
 void main() {
   var timer = Stopwatch();
   timer.start();
 
-  var token = "";
-  var prefix = ".";
+  String token = "";
+  String prefix = ".";
+  String mention = "";
 
   bot = NyxxVm(token);
-  cmdFramework = CommandsFramework(bot, prefix: prefix)
+  prefixHandler = cmd.CommandsFramework(bot, prefix: prefix)
+    ..discoverCommands();
+  
+  var mentionHandler = cmd.CommandsFramework(bot, prefix: mention)
     ..discoverCommands();
   
   bot.onReady.listen((e) {
@@ -27,5 +31,8 @@ void main() {
 
     var presence = Presence.of("${bot.guilds.count} guild(s)", type: PresenceType(3));
     bot.self.setPresence(game: presence);
+
+    mention = bot.self.mention;
+    mentionHandler.prefix = mention;
   });
 }
