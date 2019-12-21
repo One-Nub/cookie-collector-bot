@@ -1,5 +1,6 @@
 part of commands;
 
+@Restrict(requiredContext: ContextType.guild)
 @Command("ping", typing: true)
 Future<void> ping(CommandContext ctx) async {
   var stopwatch = Stopwatch();
