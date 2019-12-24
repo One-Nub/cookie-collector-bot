@@ -14,6 +14,9 @@ const List<String> collectTriggers = [
   "grab",
   "mine"
 ];
+//These would be dynamic if I made the bot public one day
+const listenCategory = 658437900979011630; //Category to listen to messages in
+const sendChannelID = 440350951572897814;
 
 Message prev;
 DateTime prevTime;
@@ -22,7 +25,6 @@ DateTime lastSuccess;
 void cookieTriggerListener() async {
   bot.onMessageReceived.listen((event) {
     TextChannel eventTxtChannel = event.message.channel;
-    var listenCategory = 658437900979011630;
 
     //All the scenarios where it should not do anything.
     if (event.message.author.bot ||
@@ -76,34 +78,40 @@ void cookieTriggerListener() async {
   });
 }
 
-@Command(" ")
 Future<void> sendCookies(CommandContext ctx) async {
   //Hardcoding a channel to send to for now - when I setup a database maybe
   //I'll make it a setting to choose which channel to send to
-  Snowflake channelID = Snowflake(440350951572897814);
+  Snowflake channelID = Snowflake(sendChannelID);
   TextChannel channel = await bot.getChannel(channelID);
   ctx.channel = channel;
   String prefix = prefixHandler.prefix;
-  var embed = EmbedBuilder();
+  var collectEmbed = EmbedBuilder();
   var numCookies = 1 + Random().nextInt(4);
   var randomSelection = Random().nextInt(collectTriggers.length - 1);
   var randomKeyword = "$prefix${collectTriggers[randomSelection]}";
 
-  embed.title = randomKeyword;
-  embed.description =
-      "Say that to collect $numCookies cookies! (Or don't that's on you...)";
-  Message collectMe = await channel.send(embed: embed);
+  collectEmbed.title = randomKeyword;
+  collectEmbed.description =
+      "Say that to collect **$numCookies** cookies! (Or don't that's on you...)";
+
+  var pluralization = "";
+  if (numCookies == 1)
+    pluralization = "**$numCookies** cookie!";
+  else
+    pluralization = "**$numCookies** cookies!";
+
+  Message collectMe = await channel.send(embed: collectEmbed);
   lastSuccess = collectMe.createdAt;
 
-  //TODO: Add a timeout for this so that after ~3 minutes it'll auto delete
-  var userResponse = await ctx
-      .nextMessagesWhere((msg) => msg.message.content == embed.title, limit: 1);
+  //TODO: Add a timeout for this so that after ~1 minutes it'll auto delete
+  var userResponse = await ctx.nextMessagesWhere(
+      (msg) => msg.message.content == collectEmbed.title,
+      limit: 1);
   userResponse.listen((event) async {
     await collectMe.delete();
     await event.message.delete();
     await ctx.replyTemp(Duration(seconds: 5),
-        content:
-            "${event.message.author.mention} collected $numCookies cookies!");
+        content: "${event.message.author.mention} collected $pluralization");
     //And my cookie adding method would go here.
   });
 }
