@@ -13,4 +13,4 @@ import '../main.dart';
 part 'ping.dart';
 part 'info.dart';
 part 'say.dart';
-part 'chatcollect.dart';
+part 'chat_collector.dart';
