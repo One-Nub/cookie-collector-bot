@@ -6,6 +6,7 @@ dependencies:
     path: packages/nyxx/nyxx
   nyxx.commands:
     path: packages/nyxx/nyxx.commands
+  safe_config: ^2.0.2
 dependency_override:
   nyxx:
     path: packages/nyxx/nyxx
