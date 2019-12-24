@@ -39,20 +39,17 @@ class UserProcessor implements Preprocessor{
   Future<PreprocessorResult> execute(List<Object> services, Message message) 
   async {
     RegExp idFinder = RegExp("\\d+[^>]"); //Gets only the numbers in the ID
-    Match idMatch = idFinder.firstMatch(message.content); 
+    Match idMatch = idFinder.firstMatch(message.content);
+    String mentionError = "I need a user mention as a parameter!";
     if (idMatch == null) {
-      Message msg = await message.reply(content: "I need a user!");
-      await Future.delayed(Duration(seconds: 3));
-      msg.delete();
+      await message.reply(content: mentionError);
       return PreprocessorResult.error("No user ID found");
     }
     
     String id = idMatch.group(0); //Since an ID was found, get it
     Member guildMember = message.guild.members[Snowflake(id)];
     if(guildMember == null) {
-      Message msg = await message.reply(content: "That wasn't a user!");
-      await Future.delayed(Duration(seconds: 3));
-      msg.delete();
+      await message.reply(content: mentionError);
       return PreprocessorResult.error("Non-user ID given");
     }
     
