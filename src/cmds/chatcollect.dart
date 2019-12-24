@@ -105,7 +105,7 @@ Future<void> sendCookies(CommandContext ctx) async {
 
   //TODO: Add a timeout for this so that after ~1 minutes it'll auto delete
   var userResponse = await ctx.nextMessagesWhere(
-      (msg) => msg.message.content == collectEmbed.title,
+      (msg) => msg.message.content.toLowerCase() == collectEmbed.title,
       limit: 1);
   userResponse.listen((event) async {
     await collectMe.delete();
