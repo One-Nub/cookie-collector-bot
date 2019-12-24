@@ -14,7 +14,7 @@ Future<void> main() async {
   var timer = Stopwatch();
   timer.start();
 
-  var botConfig = new BotConfig('src/config.yaml');
+  var botConfig = await new BotConfig('src/config.yaml');
 
   String token = botConfig.token;
   String prefix = botConfig.prefix;
@@ -22,9 +22,9 @@ Future<void> main() async {
 
   bot = NyxxVm(token);
   List<Snowflake> admins = [Snowflake(156872400145874944)];
+  
   prefixHandler = cmd.CommandsFramework(bot, prefix: prefix, admins: admins)
     ..discoverCommands();
-  
   var mentionHandler = cmd.CommandsFramework(bot, prefix: mention, admins: admins)
     ..discoverCommands();
   
