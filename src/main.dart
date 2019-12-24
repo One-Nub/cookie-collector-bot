@@ -1,9 +1,6 @@
 import 'package:nyxx/nyxx.dart';
 import 'package:nyxx/Vm.dart';
-//Rewrite branch is locally cloned so this will work
-import 'package:nyxx.commands/commands.dart' as cmd;
-
-//commands
+import 'package:nyxx.commands/commands.dart' as cmd; //rewrite locally cloned
 import 'cmds/commands_list.dart'; //ignore: unused_import
 
 Nyxx bot;

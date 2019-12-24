@@ -4,12 +4,12 @@ library commands;
 import 'dart:io';
 import 'dart:math';
 
-//Rewrite branch of nyxx is locally cloned so this will work
+//Nyxx related
 import 'package:nyxx.commands/commands.dart';
 import 'package:nyxx/nyxx.dart';
 import '../main.dart';
 
-//Put commands here
+//Put commands below here
 part 'chat_collector.dart';
 part 'give.dart';
 part 'info.dart';
