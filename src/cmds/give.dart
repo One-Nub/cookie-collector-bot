@@ -1,6 +1,7 @@
 part of commands;
 
 @UserProcessor()
+@Restrict(requiredContext: ContextType.guild, cooldown: 10)
 @Command("give")
 Future<void> give(CommandContext ctx, [User reciever, int cookieCount]) async {
   if(reciever is int) {
