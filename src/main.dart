@@ -1,6 +1,7 @@
 import 'package:nyxx/nyxx.dart';
 import 'package:nyxx/Vm.dart';
-import 'package:nyxx/commands.dart' as cmd;
+//Rewrite branch is locally clones so this will work
+import 'package:nyxx.commands/commands.dart' as cmd;
 
 //commands
 import 'cmds/commands_list.dart'; //ignore: unused_import
@@ -35,5 +36,6 @@ void main() {
 
     mention = bot.self.mention;
     mentionHandler.prefix = mention;
+    cookieTriggerListener();
   });
 }
