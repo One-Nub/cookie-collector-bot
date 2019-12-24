@@ -10,7 +10,8 @@ import 'package:nyxx/nyxx.dart';
 import '../main.dart';
 
 //Put commands here
-part 'ping.dart';
-part 'info.dart';
-part 'say.dart';
 part 'chat_collector.dart';
+part 'info.dart';
+part 'ping.dart';
+part 'processors.dart';
+part 'say.dart';
