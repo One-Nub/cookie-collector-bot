@@ -1,6 +1,6 @@
 import 'package:nyxx/nyxx.dart';
 import 'package:nyxx/Vm.dart';
-//Rewrite branch is locally clones so this will work
+//Rewrite branch is locally cloned so this will work
 import 'package:nyxx.commands/commands.dart' as cmd;
 
 //commands
