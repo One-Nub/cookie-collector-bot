@@ -36,8 +36,7 @@ void cookieTriggerListener() async {
     //All the scenarios where it should not do anything.
     if (event.message.author.bot ||
         (eventTxtChannel is DMChannel) ||
-        (eventTxtChannel.parentChannel == null) ||
-        (eventTxtChannel.parentChannel.id != listenCategory)) {
+        (eventTxtChannel.parentChannel == null)) {
       return;
     }
 
