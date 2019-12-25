@@ -12,11 +12,13 @@ const List<String> collectTriggers = [
   "pick",
   "steal",
   "grab",
-  "mine"
+  "mine",
+  "john"
 ];
 //These would be dynamic if I made the bot public one day
-const listenCategory = 658437900979011630; //Category to listen to messages in
-const sendChannelID = 440350951572897814;
+const listenCategory  = 658437900979011630; //Category to listen to messages in
+const sendChannelID   = 440350951572897814;
+const guildID         = 440350951572897812; 
 
 Message prev;
 DateTime prevTime;
@@ -41,7 +43,7 @@ void cookieTriggerListener() async {
     }
 
     //Restricts the command to one guild. (aka not public)
-    if (prev != null && prev.guild != event.message.guild) {
+    if (prev != null && event.message.guild != guildID) {
       return;
     }
 
