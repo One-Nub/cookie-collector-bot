@@ -68,4 +68,9 @@ class database_helper {
         "available_cookies MEDIUMINT UNSIGNED, "
         "level SMALLINT)");
   }
+
+  Future<Iterator> get_rows(int guildID) async {
+    var rows = await connection.query("SELECT * FROM `$guildID`");
+    return rows.iterator;
+  }
 }
