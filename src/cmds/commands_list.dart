@@ -11,8 +11,10 @@ import '../main.dart';
 
 //Put commands below here
 part 'chat_collector.dart';
+part 'generate.dart';
 part 'give.dart';
 part 'info.dart';
+part 'leaderboard.dart';
 part 'ping.dart';
 part 'processors.dart';
 part 'say.dart';
