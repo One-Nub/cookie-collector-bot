@@ -7,6 +7,7 @@ dependencies:
   nyxx.commands:
     path: packages/nyxx/nyxx.commands
   safe_config: ^2.0.2
+  mysql1: ^0.17.1
 dependency_override:
   nyxx:
     path: packages/nyxx/nyxx
