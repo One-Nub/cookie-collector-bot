@@ -21,7 +21,8 @@ Future<void> main() async {
   String token = botConfig.token;
   String prefix = botConfig.prefix;
   String mention = "";
-  List<Snowflake> admins = [Snowflake(156872400145874944)];
+  List<Snowflake> admins = [Snowflake(156872400145874944),
+    Snowflake(194962036784889858)];
 
   db = database_helper();
   await db.connect(
