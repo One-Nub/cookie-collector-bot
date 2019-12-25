@@ -2,7 +2,7 @@
 //random amount if 2+ people are typing in chat.
 part of commands;
 
-const conversationDelay = 15; //seconds
+const conversationDelay = 90; //seconds
 const lastSuccessDelay = 180; //seconds
 const List<String> collectTriggers = [
   "collect",
