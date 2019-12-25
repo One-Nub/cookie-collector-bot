@@ -1,6 +1,5 @@
 //This file has the main functionality - letting users collect cookies of a
-//random amount if 2+ people are typing in chat. This will be a doosy
-//It also needs a delay of 3 minutes to match the existing bot
+//random amount if 2+ people are typing in chat.
 part of commands;
 
 const conversationDelay = 15; //seconds
@@ -15,10 +14,16 @@ const List<String> collectTriggers = [
   "mine",
   "john"
 ];
-//These would be dynamic if I made the bot public one day
-const listenCategory  = 658437900979011630; //Category to listen to messages in
+
+//Testing channels
+/*const listenCategory  = 658437900979011630; //Category to listen to messages in
 const sendChannelID   = 440350951572897814;
-const guildID         = 440350951572897812; 
+const guildID         = 440350951572897812; */
+
+//Release channels
+const listenCategory  = 438843373961609227; //Category to listen to messages in
+const sendChannelID   = 614266653332733952;
+const guildID         = 438843373961609226;
 
 Message prev;
 DateTime prevTime;
