@@ -47,7 +47,7 @@ void cookieTriggerListener() async {
     }
 
     //Restricts the command to one guild. (aka not public)
-    if (prev != null && event.message.guild != guildID) {
+    if (prev != null && event.message.guild.id.toInt() != guildID) {
       return;
     }
 
