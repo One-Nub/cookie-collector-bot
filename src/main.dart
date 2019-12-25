@@ -46,7 +46,7 @@ Future<void> main() async {
     print("It took ${timer.elapsed.inSeconds} seconds to start up");
 
     var presence =
-        Presence.of("to some happy tunes", type: PresenceType.listening);
+        Presence.of("some happy tunes", type: PresenceType.listening);
     bot.self.setPresence(game: presence);
 
     mention = bot.self.mention;
