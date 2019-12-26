@@ -25,12 +25,14 @@ Future<void> main() async {
   String mention = "";
 
   db = database_helper();
-  await db.connect(
+  await db.setup_config(
       botConfig.database_config.username, 
       botConfig.database_config.password, 
       botConfig.database_config.host, 
       botConfig.database_config.databaseName, 
       botConfig.database_config.port);
+  
+  print("Database connection available?: ${await db.test_connection()}");
 
   bot = NyxxVm(token);
   prefixHandler = cmd.CommandsFramework(bot, prefix: prefix, admins: admins)
