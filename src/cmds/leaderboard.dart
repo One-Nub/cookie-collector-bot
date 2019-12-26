@@ -20,7 +20,7 @@ Future<void> leaderboard(CommandContext ctx) async {
     });
   lbEmbed.color = DiscordColor.fromHexString("87CEEB");
   lbEmbed.description = output;
-  lbEmbed.thumbnailUrl = ctx.guild.iconURL();
+  lbEmbed.thumbnailUrl = ctx.guild.iconURL(format: "png", size: 512);
   lbEmbed.timestamp = DateTime.now().toUtc();
   lbEmbed.title = "Leaderboard";
 
