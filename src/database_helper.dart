@@ -5,8 +5,8 @@ import 'package:mysql1/mysql1.dart';
 class database_helper {
   var user_config;
 
-  Future<void> setup_config(String username, String password,
-      String host, String database, int port) async {
+  Future<void> setup_config(String username, String password, String host,
+      String database, int port) async {
     user_config = ConnectionSettings(
         user: username,
         password: password,
@@ -20,14 +20,15 @@ class database_helper {
   }
 
   Future<bool> test_connection() async {
-      var tempConnect = await dbConnect(user_config).timeout(Duration(seconds: 15))
-          .catchError((TimeoutException error) {
-            print("Didn't connect in time");
-            return false;
-          });
-        tempConnect.close();
-        return true;
-      }
+    var tempConnect = await dbConnect(user_config)
+        .timeout(Duration(seconds: 15))
+        .catchError((TimeoutException error) {
+      print("Didn't connect in time");
+      return false;
+    });
+    tempConnect.close();
+    return true;
+  }
 
   Future<void> add_cookies(int userID, int numCookies, int guildID) async {
     //No user input is ever used here so sanitization isn't as concerning, though
@@ -89,7 +90,7 @@ class database_helper {
         "user_id BIGINT UNSIGNED PRIMARY KEY, "
         "total_cookies MEDIUMINT UNSIGNED, "
         "available_cookies MEDIUMINT UNSIGNED, "
-        "level SMALLINT)");
+        "level SMALLINT DEFAULT 0)");
     await connection.close();
   }
 
@@ -104,4 +105,12 @@ class database_helper {
     await connection.close();
     return rows.iterator;
   }
-} 
+
+  Future<Iterator> get_user(int userID, int guildID) async {
+    var connection = await dbConnect(user_config);
+    var user = await connection.query("SELECT * FROM `$guildID` "
+        "WHERE user_id = $userID");
+    await connection.close();
+    return user.iterator;
+  }
+}
