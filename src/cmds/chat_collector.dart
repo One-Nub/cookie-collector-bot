@@ -32,14 +32,16 @@ DateTime lastSuccess;
 
 void cookieTriggerListener() async {
   bot.onMessageReceived.listen((event) {
-    TextChannel eventTxtChannel = event.message.channel;
 
     //All the scenarios where it should not do anything.
     if (event.message.author.bot ||
-        (eventTxtChannel is DMChannel) ||
-        (eventTxtChannel.parentChannel == null)) {
+        (event.message.channel is DMChannel)) {
       return;
     }
+
+    TextChannel eventTxtChannel = event.message.channel;
+    if (eventTxtChannel != null && eventTxtChannel.parentChannel == null)
+      return;
 
     if (prev == null) {
       prev = event.message;
