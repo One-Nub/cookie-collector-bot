@@ -7,7 +7,9 @@ Future<void> help(CommandContext ctx) async {
       "`.help` ➙ view this help prompt!\n"
       "`.info` ➙ get some information about the bot\n"
       "`.leaderboard` ➙ view the top 15 people with the most cookies\n"
-      "`.ping` ➙ view the latency between discord and the bot";
+      "`.ping` ➙ view the latency between discord and the bot\n"
+      "`.stats [user]` ➙ view your stored cookie count and level, or someone elses";
+      
   String adminCommands =
       "`.say <channel> <message>` ➙ have the bot say something in a channel\n";
   DMChannel authorDM = await ctx.author.dmChannel;
