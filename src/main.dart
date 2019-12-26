@@ -11,6 +11,8 @@ import 'database_helper.dart';
 Nyxx bot;
 var prefixHandler;
 var db;
+List<Snowflake> admins = [Snowflake(156872400145874944),
+    Snowflake(194962036784889858)];
 
 Future<void> main() async {
   var timer = Stopwatch();
@@ -21,8 +23,6 @@ Future<void> main() async {
   String token = botConfig.token;
   String prefix = botConfig.prefix;
   String mention = "";
-  List<Snowflake> admins = [Snowflake(156872400145874944),
-    Snowflake(194962036784889858)];
 
   db = database_helper();
   await db.connect(
@@ -39,7 +39,7 @@ Future<void> main() async {
       cmd.CommandsFramework(bot, prefix: mention, admins: admins)
         ..discoverCommands();
 
-  bot.onReady.listen((e) {
+  await bot.onReady.listen((e) {
     timer.stop();
     print("Ready in ${bot.guilds.count} guild(s) as "
         "${bot.self.username + "#" + bot.self.discriminator}");

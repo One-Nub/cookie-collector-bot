@@ -13,6 +13,7 @@ import '../main.dart';
 part 'chat_collector.dart';
 part 'generate.dart';
 part 'give.dart';
+part 'help.dart';
 part 'info.dart';
 part 'leaderboard.dart';
 part 'ping.dart';
