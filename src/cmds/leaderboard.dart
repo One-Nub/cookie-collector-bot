@@ -10,12 +10,13 @@ Future<void> leaderboard(CommandContext ctx) async {
   while(test.moveNext()) {
     Map rowVals = test.current.fields;
     User user = await bot.getUser(Snowflake(rowVals['user_id']));
-    output += "**$count.** $user - `${rowVals['available_cookies']}`\n";   
+    var discordName = "${user.username}#${user.discriminator}";
+    output += "**$count.** $discordName - `${rowVals['available_cookies']}`\n";   
     count++;
   }
   var lbEmbed = EmbedBuilder()
     ..addFooter((footer) {
-      footer.iconUrl = ctx.author.avatarURL();
+      footer.iconUrl = ctx.author.avatarURL(format: "png", size: 512);
       footer.text = "Ran by: ${ctx.author.username}#${ctx.author.discriminator}";
     });
   lbEmbed.color = DiscordColor.fromHexString("87CEEB");
