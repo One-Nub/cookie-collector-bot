@@ -5,6 +5,21 @@ import 'package:mysql1/mysql1.dart';
 class database_helper {
   var user_config;
 
+  //Database functions
+  Future<void> create_table(int guildID) async {
+    var connection = await dbConnect(user_config);
+    await connection.query("CREATE TABLE IF NOT EXISTS `$guildID` ("
+        "user_id BIGINT UNSIGNED PRIMARY KEY, "
+        "total_cookies MEDIUMINT UNSIGNED, "
+        "available_cookies MEDIUMINT UNSIGNED, "
+        "level SMALLINT DEFAULT 0)");
+    await connection.close();
+  }
+
+  Future<MySqlConnection> dbConnect(ConnectionSettings user_config) async {
+    return await MySqlConnection.connect(user_config);
+  }
+
   Future<void> setup_config(String username, String password, String host,
       String database, int port) async {
     user_config = ConnectionSettings(
@@ -13,10 +28,6 @@ class database_helper {
         host: host,
         db: database,
         port: port);
-  }
-
-  Future<MySqlConnection> dbConnect(ConnectionSettings user_config) async {
-    return await MySqlConnection.connect(user_config);
   }
 
   Future<bool> test_connection() async {
@@ -30,21 +41,30 @@ class database_helper {
     return true;
   }
 
-  Future<void> add_cookies(int userID, int numCookies, int guildID) async {
-    //No user input is ever used here so sanitization isn't as concerning, though
-    //typically good in practice
+  Future<bool> user_exists(int userID, int guildID) async {
     var connection = await dbConnect(user_config);
     var queryExistance = await connection.query(
         "SELECT EXISTS (SELECT * FROM `$guildID` WHERE user_id = $userID)");
     int result = queryExistance.first.values[0];
     if (result == 0) {
-      //Row does not exist
+      //User does not exist in that table
+      return false;
+    }
+    return true;
+  }
+
+  //Cookie related functions
+  Future<void> add_cookies(int userID, int numCookies, int guildID) async {
+    //No user input is ever used here so sanitization isn't as concerning, though
+    //typically good in practice
+    var connection = await dbConnect(user_config);
+    var existence = await user_exists(userID, guildID);
+    if (existence == false) {
       await connection.query("INSERT INTO `$guildID` SET "
           "user_id = $userID, "
           "total_cookies = $numCookies, "
           "available_cookies = $numCookies");
     } else {
-      //Row exists
       await connection.query("UPDATE `$guildID` SET "
           "total_cookies = total_cookies + $numCookies, "
           "available_cookies = available_cookies + $numCookies "
@@ -55,10 +75,8 @@ class database_helper {
 
   Future<void> remove_cookies(int userID, int numCookies, int guildID) async {
     var connection = await dbConnect(user_config);
-    var queryExistance = await connection.query(
-        "SELECT EXISTS (SELECT * FROM `$guildID` WHERE user_id = $userID)");
-    int result = queryExistance.first.values[0];
-    if (result != 0) {
+    var existence = await user_exists(userID, guildID);
+    if (existence == true) {
       await connection.query("UPDATE `$guildID` SET "
           "available_cookies = available_cookies - $numCookies "
           "WHERE user_id = $userID");
@@ -68,32 +86,21 @@ class database_helper {
 
   Future<int> get_cookies(int userID, int guildID) async {
     var connection = await dbConnect(user_config);
-    var queryExistance = await connection.query(
-        "SELECT EXISTS (SELECT * FROM `$guildID` WHERE user_id = $userID)");
-    int result = queryExistance.first.values[0];
-    if (result != 0) {
+    var existence = await user_exists(userID, guildID);
+    var numCookies = 0;
+    if (existence == true) {
       var row = await connection.query(
           "SELECT available_cookies FROM `$guildID` WHERE user_id = $userID");
-      var numCookies = row.first.values[0];
-      await connection.close();
-      return numCookies;
+      numCookies = row.first.values[0];
     }
     await connection.close();
-    return 0;
+    return numCookies;
   }
 
+  //Level related functions
   Future<void> increase_level(int userID, int numCookies, int guildID) async {}
 
-  Future<void> create_table(int guildID) async {
-    var connection = await dbConnect(user_config);
-    await connection.query("CREATE TABLE IF NOT EXISTS `$guildID` ("
-        "user_id BIGINT UNSIGNED PRIMARY KEY, "
-        "total_cookies MEDIUMINT UNSIGNED, "
-        "available_cookies MEDIUMINT UNSIGNED, "
-        "level SMALLINT DEFAULT 0)");
-    await connection.close();
-  }
-
+  //Other getters
   Future<Iterator> get_rows(int guildID, String orderBy) async {
     //orderBy has to be a column in the database so:
     //user_id, available_cookies, total_cookies, or level
@@ -108,6 +115,13 @@ class database_helper {
 
   Future<Iterator> get_user(int userID, int guildID) async {
     var connection = await dbConnect(user_config);
+    var existence = await user_exists(userID, guildID);
+    if (existence == false) {
+      await connection.query("INSERT INTO `$guildID` SET "
+          "user_id = $userID, "
+          "total_cookies = 0, "
+          "available_cookies = 0");
+    }
     var user = await connection.query("SELECT * FROM `$guildID` "
         "WHERE user_id = $userID");
     await connection.close();
