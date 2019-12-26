@@ -70,7 +70,7 @@ class database_helper {
   }
 
   Future<Iterator> get_rows(int guildID, String orderBy) async {
-    //orderBy has to be a column in the database so: 
+    //orderBy has to be a column in the database so:
     //user_id, available_cookies, total_cookies, or level
     //The limit will have to be removed if/when I learn pagnation
     //Unless i just show top 15
