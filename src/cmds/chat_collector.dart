@@ -6,13 +6,14 @@ const conversationDelay = 90; //seconds
 const lastSuccessDelay = 180; //seconds
 const List<String> collectTriggers = [
   "collect",
-  "nab",
-  "yoink",
-  "pick",
-  "steal",
   "grab",
   "mine",
-  "john"
+  "nab",
+  "pick",
+  "snatch", 
+  "steal",
+  "yoink",
+  "john",
 ];
 
 //Testing channels
