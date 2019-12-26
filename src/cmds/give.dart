@@ -20,7 +20,7 @@ Future<void> give(CommandContext ctx, [User reciever, int cookieCount]) async {
   }
 
   await db.add_cookies(reciever.id.toInt(), cookieCount, ctx.guild.id.toInt());
-  await db.remove_cookies(ctx.author.id.toInt(), ctx.guild.id.toInt());
+  await db.remove_cookies(ctx.author.id.toInt(), cookieCount, ctx.guild.id.toInt());
 
   ctx.message.delete();
   var giveEmbed = EmbedBuilder()
