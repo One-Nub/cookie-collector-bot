@@ -1,11 +1,11 @@
 part of commands;
 
 @UserProcessor()
-@Restrict(requiredContext: ContextType.guild)
+@Restrict(requiredContext: ContextType.guild, cooldown: 300, admin: true)
 @Command("generate")
 Future<void> generate(CommandContext ctx, [User reciever, int cookieCount]) async {
   //Limit this to only me.
-  if (ctx.message.author.id.toInt() != 156872400145874944) return;
+  //if (ctx.message.author.id.toInt() != 156872400145874944) return;
 
   if (reciever is int) {
     reciever = ctx.guild.members[Snowflake(reciever)];
