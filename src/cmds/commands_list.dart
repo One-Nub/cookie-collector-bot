@@ -19,3 +19,4 @@ part 'leaderboard.dart';
 part 'ping.dart';
 part 'processors.dart';
 part 'say.dart';
+part 'stats.dart';
