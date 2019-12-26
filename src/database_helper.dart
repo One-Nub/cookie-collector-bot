@@ -69,8 +69,13 @@ class database_helper {
         "level SMALLINT)");
   }
 
-  Future<Iterator> get_rows(int guildID) async {
-    var rows = await connection.query("SELECT * FROM `$guildID`");
+  Future<Iterator> get_rows(int guildID, String orderBy) async {
+    //orderBy has to be a column in the database so: 
+    //user_id, available_cookies, total_cookies, or level
+    //The limit will have to be removed if/when I learn pagnation
+    //Unless i just show top 15
+    var rows = await connection.query("SELECT * FROM `$guildID` "
+    "ORDER BY $orderBy DESC LIMIT 15");
     return rows.iterator;
   }
 }
