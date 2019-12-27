@@ -1,11 +1,12 @@
 part of commands;
 
 @UserProcessor()
-@Restrict(requiredContext: ContextType.guild, cooldown: 300, admin: true)
+@Restrict(requiredContext: ContextType.guild)
 @Command("generate")
 Future<void> generate(CommandContext ctx, [User reciever, int cookieCount]) async {
   //Limit this to only me.
-  //if (ctx.message.author.id.toInt() != 156872400145874944) return;
+  await ctx.message.delete();
+  if (ctx.message.author.id.toInt() != 156872400145874944) return;
 
   if (reciever is int) {
     reciever = ctx.guild.members[Snowflake(reciever)];
@@ -19,6 +20,7 @@ Future<void> generate(CommandContext ctx, [User reciever, int cookieCount]) asyn
   }
 
   await db.add_cookies(reciever.id.toInt(), cookieCount, ctx.guild.id.toInt());
-  await ctx.replyTemp(Duration(seconds: 3), content: "Success.");
-  await ctx.message.delete();
+  var dmChannel = await ctx.author.dmChannel;
+  dmChannel.send(content: "Successfuly gave $cookieCount cookies to " 
+  "${reciever.username}#${reciever.discriminator} in ${ctx.guild.name}");
 }
