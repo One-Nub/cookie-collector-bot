@@ -101,14 +101,21 @@ class database_helper {
   Future<void> increase_level(int userID, int numCookies, int guildID) async {}
 
   //Other getters
-  Future<Iterator> get_rows(int guildID, String orderBy) async {
+  Future<Iterator> get_rows(int guildID, String orderBy, [int limit]) async {
     //orderBy has to be a column in the database so:
     //user_id, available_cookies, total_cookies, or level
     //The limit will have to be removed if/when I learn pagnation
     //Unless i just show top 15
     var connection = await dbConnect(user_config);
-    var rows = await connection.query("SELECT * FROM `$guildID` "
-        "ORDER BY $orderBy DESC LIMIT 15");
+    var rows;
+    if(limit != null) {
+      rows = await connection.query("SELECT * FROM `$guildID` "
+        "ORDER BY $orderBy DESC LIMIT $limit");
+    } else {
+      rows = await connection.query("SELECT * FROM `$guildID` "
+        "ORDER BY $orderBy DESC");
+    }
+    
     await connection.close();
     return rows.iterator;
   }
