@@ -11,6 +11,7 @@ import '../main.dart';
 
 //Put commands below here
 part 'chat_collector.dart';
+part 'daily.dart';
 part 'generate.dart';
 part 'give.dart';
 part 'help.dart';
