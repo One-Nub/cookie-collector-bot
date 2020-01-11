@@ -5,7 +5,7 @@ part of commands;
 Future<void> leaderboard(CommandContext ctx) async {
   //This could be a dynamic parameter if I implement multiple retrievals
   Iterator test =
-      await db.get_rows(ctx.guild.id.toInt(), "available_cookies", 15);
+      await db.get_rows(ctx.guild.id.toInt(), "available_cookies", limit: 15);
   String output = "";
   int count = 1;
   while (test.moveNext()) {
