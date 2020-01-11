@@ -59,7 +59,7 @@ Future<void> main() async {
   bot.onGuildCreate.listen((e) async {
     var guildID = e.guild.id.toInt();
     await db.create_table(guildID);
-    print("Joined guild - ${e.guild.name} with ID of $guildID");
+    print("Joined guild - ${e.guild.name} with ID of $guildID at ${DateTime.now()}");
   });
 }
 
