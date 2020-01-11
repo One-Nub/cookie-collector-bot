@@ -5,7 +5,7 @@ import 'package:nyxx/nyxx.dart';
 import 'package:nyxx/Vm.dart';
 import 'package:nyxx.commands/commands.dart' as cmd; //rewrite locally cloned
 
-import 'cmds/commands_list.dart'; //ignore: unused_import
+import 'commands_list.dart'; //ignore: unused_import
 import 'database_helper.dart';
 
 Nyxx bot;
