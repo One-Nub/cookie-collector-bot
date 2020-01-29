@@ -8,18 +8,20 @@ Future<void> daily(CommandContext ctx) async {
   int dailyCookieCount = 15;
   var nowUtc = DateTime.now().toUtc();
 
-  if (!_manualCooldown.hasKey(ctx.author.id) || 
-      nowUtc.difference(_manualCooldown[ctx.author.id]).inDays >= 1) {
+  if(_manualCooldown.hasKey(ctx.author.id) &&
+      _manualCooldown[ctx.author.id].isAfter(nowUtc)) {
+    var diff = _manualCooldown[ctx.author.id].difference(nowUtc).toString();
+    var timeSplit = diff.split(":");
+    var remainingTime = "`${timeSplit[0]}` hours, `${timeSplit[1]}` minutes, "
+    "and `${timeSplit[2].substring(0, 2)}` seconds";
 
-    _manualCooldown.add(ctx.author.id, nowUtc);
-    db.add_cookies(ctx.author.id.toInt(), dailyCookieCount, ctx.guild.id.toInt());
-    ctx.message.reply(content: "You have collected your daily "
-      "**$dailyCookieCount** cookies! You can collect again in 24 hours!");
+    ctx.message.reply(content: "It hasn't been a day yet! You can collect "
+      "again in $remainingTime.");
   }
   else {
-    var diff = nowUtc.difference(_manualCooldown[ctx.author.id]).inMinutes;
-    var hourlyDiff = 24 - (diff / 60);
-    ctx.message.reply(content: "It hasn't been a day yet! You can collect "
-      "again in ${hourlyDiff.toStringAsFixed(2)} hours");
+    _manualCooldown.add(ctx.author.id, nowUtc.add(new Duration(days: 1)));
+    await db.add_cookies(ctx.author.id.toInt(), dailyCookieCount, ctx.guild.id.toInt());
+    await ctx.message.reply(content: "You have collected your daily "
+      "**$dailyCookieCount** cookies! You can collect again in 24 hours!");
   }
 }
