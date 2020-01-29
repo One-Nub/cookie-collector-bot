@@ -11,7 +11,6 @@ const List<String> collectTriggers = [
   "nab",
   "pick",
   "snatch", 
-  "steal",
   "yoink",
   "john",
 ];
