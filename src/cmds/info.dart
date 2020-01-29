@@ -1,7 +1,7 @@
 part of commands;
 
 @Restrict(requiredContext: ContextType.guild)
-@Command("info", aliases: ["status", "stats"])
+@Command("info", aliases: ["status"])
 Future<void> info(CommandContext ctx) async {
   var botName = "${bot.self.username + "#" + bot.self.discriminator}";
   var memUsage = (ProcessInfo.currentRss / 1024 / 1024).toStringAsFixed(2);
