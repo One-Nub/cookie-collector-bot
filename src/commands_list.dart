@@ -20,6 +20,7 @@ part 'cmds/help.dart';
 part 'cmds/info.dart';
 part 'cmds/leaderboard.dart';
 part 'cmds/ping.dart';
+part 'cmds/rob.dart';
 part 'cmds/say.dart';
 part 'cmds/stats.dart';
 
