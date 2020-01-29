@@ -12,8 +12,8 @@ Future<void> daily(CommandContext ctx) async {
       _manualCooldown[ctx.author.id].isAfter(nowUtc)) {
     var diff = _manualCooldown[ctx.author.id].difference(nowUtc).toString();
     var timeSplit = diff.split(":");
-    var remainingTime = "`${timeSplit[0]}` hours, `${timeSplit[1]}` minutes, "
-    "and `${timeSplit[2].substring(0, 2)}` seconds";
+    var remainingTime = "`${timeSplit[0]} hours, ${timeSplit[1]} minutes, "
+    "and ${timeSplit[2].substring(0, 2)} seconds`";
 
     ctx.message.reply(content: "It hasn't been a day yet! You can collect "
       "again in $remainingTime.");
