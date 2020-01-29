@@ -22,6 +22,6 @@ Future<void> daily(CommandContext ctx) async {
     _manualCooldown.add(ctx.author.id, nowUtc.add(new Duration(days: 1)));
     await db.add_cookies(ctx.author.id.toInt(), dailyCookieCount, ctx.guild.id.toInt());
     await ctx.message.reply(content: "You have collected your daily "
-      "**$dailyCookieCount** cookies! You can collect again in 24 hours!");
+      "`$dailyCookieCount` cookies! You can collect again in 24 hours!");
   }
 }
