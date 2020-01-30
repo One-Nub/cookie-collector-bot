@@ -1,16 +1,20 @@
 part of commands;
 
 var _robCooldown = UserBasedCache();
+var _recentlyRobbed = UserBasedCache();
 
 @UserProcessor()
 @Restrict(requiredContext: ContextType.guild)
 @Command("rob", aliases: ["steal"])
 Future<void> rob(CommandContext ctx, [User broke]) async {
-  int brokeId = broke.id.toInt();
   Snowflake authorSnflk = ctx.author.id;
+  Snowflake brokeSnflk = broke.id;
+  int brokeId = broke.id.toInt();
   int authorId = authorSnflk.toInt();
   int guildId = ctx.guild.id.toInt();
   var nowUtc = DateTime.now().toUtc();
+  Duration robCoolOffset = new Duration(hours: 3);
+  Duration prevRobbedOffset = new Duration(hours: 1);
 
   //Prevent self robbing
   if(brokeId == authorId) {
@@ -28,6 +32,14 @@ Future<void> rob(CommandContext ctx, [User broke]) async {
 
       await ctx.message.reply(content: "Your government induced cooldown has not"
         " expired yet. You can rob again in $remainingTime");
+      return;
+  }
+
+  //Cooldown for person who's been robbed, hopefully to ward off targeting
+  if (_recentlyRobbed.hasKey(brokeSnflk) &&
+    _recentlyRobbed[brokeSnflk].isAfter(nowUtc)) {
+      await ctx.message.reply(content: "This user has been robbed recently. "
+        "Try again later, or rob someone else.");
       return;
   }
 
@@ -54,6 +66,7 @@ Future<void> rob(CommandContext ctx, [User broke]) async {
     //No DB calls because that's handled in the robUser method.
     await ctx.message.reply(content: "You obtained `$stolenAmt` cookies from "
       "<@$brokeId> by $successMsg");
+    await _recentlyRobbed.add(brokeSnflk, nowUtc.add(prevRobbedOffset));
   }
   else {
     String failMsg = _failMessages[Random().nextInt(_failMessages.length - 1)];
@@ -69,9 +82,9 @@ Future<void> rob(CommandContext ctx, [User broke]) async {
     }
     await ctx.message.reply(content: response);
   }
-  _robCooldown.add(authorSnflk, nowUtc.add(new Duration(hours: 3)));
-  await ctx.message.reply(content: "You can rob again in `3 hours`.",
-    mention: false);
+  _robCooldown.add(authorSnflk, nowUtc.add(robCoolOffset));
+  await ctx.message.reply(content: "You can rob again in "
+    "`${robCoolOffset.inHours} hours`.", mention: false);
 }
 
 //0 is a failure, any other number will be a success
