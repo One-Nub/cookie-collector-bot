@@ -92,10 +92,12 @@ Future<int> robUser(int authorId, int brokeId, int userCookies, int guildId) asy
   if(Random().nextDouble() > 0.4)
     return 0; //40% chance of success
 
+  int low = 5;
+  int high = 10;
   int removeVal = userCookies < 100 ?
-    5 + Random().nextInt(15 - 5) :
-    (5 + Random().nextInt(15 - 5) + (userCookies * .025).round());
-    //If the user has over 100 cookies, add 2.5% of their cookies on top
+    low + Random().nextInt(high - low) :
+    (low + Random().nextInt(high - low) + (userCookies * .0075).round());
+    //If the user has over 100 cookies, add 0.75% of their cookies on top
     //of what they're randomly losing
 
   await db.remove_cookies(brokeId, removeVal, guildId);
