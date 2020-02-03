@@ -16,6 +16,10 @@ Future<void> rob(CommandContext ctx, [User broke]) async {
   Duration robCoolOffset = new Duration(hours: 3);
   Duration prevRobbedOffset = new Duration(hours: 1);
 
+  //Blacklisting a user
+  if(authorId == 235740896459489280)
+    return;
+
   //Prevent self robbing
   if(brokeId == authorId) {
     await ctx.message.reply(content: "You can't rob yourself... Can you?");
