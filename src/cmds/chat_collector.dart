@@ -10,7 +10,7 @@ const List<String> collectTriggers = [
   "mine",
   "nab",
   "pick",
-  "snatch", 
+  "snatch",
   "yoink",
   "john",
 ];
