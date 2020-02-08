@@ -15,6 +15,7 @@ part 'processors.dart';
 //Normal commands below here
 part 'cmds/chat_collector.dart';
 part 'cmds/daily.dart';
+part 'cmds/eat.dart';
 part 'cmds/give.dart';
 part 'cmds/help.dart';
 part 'cmds/info.dart';

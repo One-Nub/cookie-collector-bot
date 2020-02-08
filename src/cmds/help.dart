@@ -4,6 +4,7 @@ part of commands;
 Future<void> help(CommandContext ctx) async {
   String commands =
       "`.daily` ➙ collect a set amount of cookies once a day\n"
+      "`.eat` ➙ eat a cookie! that's literally it\n"
       "`.give <user> <amt>` ➙ give the user of your choosing some cookies\n"
       "`.help` ➙ view this help prompt!\n"
       "`.info` ➙ get some information about the bot\n"
