@@ -1,12 +1,14 @@
 import 'dart:io';
 
 import 'package:safe_config/safe_config.dart';
+import 'package:logging/logging.dart';
 import 'package:nyxx/nyxx.dart';
 import 'package:nyxx/Vm.dart';
 import 'package:nyxx.commands/commands.dart' as cmd; //rewrite locally cloned
 
 import 'commands_list.dart'; //ignore: unused_import
 import 'database_helper.dart';
+import 'listeners.dart';
 
 Nyxx bot;
 var prefixHandler;
@@ -41,25 +43,22 @@ Future<void> main() async {
       cmd.CommandsFramework(bot, prefix: mention, admins: admins)
         ..discoverCommands();
 
+  setupDefaultLogging(Level.INFO);
+  guildCreateListener();
+
   await bot.onReady.listen((e) {
     timer.stop();
     print("Ready in ${bot.guilds.count} guild(s) as "
         "${bot.self.username + "#" + bot.self.discriminator}");
     print("It took ${timer.elapsed.inSeconds} seconds to start up");
 
-    var presence =
-        Presence.of("with some cookies", type: PresenceType.game);
-    bot.self.setPresence(game: presence);
-
     mention = bot.self.mention;
     mentionHandler.prefix = mention;
-    cookieTriggerListener();
-  });
 
-  bot.onGuildCreate.listen((e) async {
-    var guildID = e.guild.id.toInt();
-    await db.create_table(guildID);
-    print("Joined guild - ${e.guild.name} with ID of $guildID at ${DateTime.now()}");
+    bot.shard.setPresence(game:
+      Presence.of("with some cookies", type: PresenceType.game));
+    cookieTriggerListener();
+    shardConnectActions();
   });
 }
 
