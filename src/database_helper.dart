@@ -47,9 +47,10 @@ class database_helper {
         "SELECT EXISTS (SELECT * FROM `$guildID` WHERE user_id = $userID)");
     int result = queryExistance.first.values[0];
     if (result == 0) {
-      //User does not exist in that table
+      await connection.close();
       return false;
     }
+    await connection.close();
     return true;
   }
 
@@ -116,7 +117,7 @@ class database_helper {
     if(extras != null) {
       query += extras;
     }
-    
+
     rows = await connection.query(query);
     await connection.close();
     return rows.iterator;
