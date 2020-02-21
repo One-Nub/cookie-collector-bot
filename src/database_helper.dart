@@ -17,7 +17,10 @@ class database_helper {
   }
 
   Future<MySqlConnection> dbConnect(ConnectionSettings user_config) async {
-    return await MySqlConnection.connect(user_config);
+    return await MySqlConnection.connect(user_config)
+      .catchError((Object error) {
+        print("An error occurred while connecting to the database... $error\n");
+      });
   }
 
   Future<void> setup_config(String username, String password, String host,
@@ -34,9 +37,12 @@ class database_helper {
     var tempConnect = await dbConnect(user_config)
         .timeout(Duration(seconds: 15))
         .catchError((TimeoutException error) {
-      print("Didn't connect in time");
+      print("I took too long to connect to the database... $error\n");
       return false;
     });
+    if(tempConnect == null)
+      return false;
+
     tempConnect.close();
     return true;
   }

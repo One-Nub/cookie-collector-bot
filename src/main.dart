@@ -34,7 +34,13 @@ Future<void> main() async {
     botConfig.database_config.databaseName,
     botConfig.database_config.port);
 
-  print("Database connection available?: ${await db.test_connection()}");
+  bool dbConnection = await db.test_connection();
+  print("Database connection available?: $dbConnection");
+  if(dbConnection == false)
+  {
+    print("Because the database is not available, I will exit now... Goodbye!");
+    exit(1);
+  }
 
   bot = NyxxVm(token);
   prefixHandler = cmd.CommandsFramework(bot, prefix: prefix, admins: admins)
