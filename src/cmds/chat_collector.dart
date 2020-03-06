@@ -4,6 +4,7 @@ part of commands;
 
 const conversationDelay = 90; //seconds
 const lastSuccessDelay = 180; //seconds
+const promptTimeout = 60; //also seconds
 const List<String> collectTriggers = [
   "collect",
   "grab",
@@ -16,9 +17,9 @@ const List<String> collectTriggers = [
 ];
 
 //Testing channels
-/*const listenCategory  = 658437900979011630; //Category to listen to messages in
-const sendChannelID   = 440350951572897814;
-const guildID         = 440350951572897812; */
+// const listenCategory  = 658437900979011630; //Category to listen to messages in
+// const sendChannelID   = 440350951572897814;
+// const guildID         = 440350951572897812;
 
 //Release channels
 const listenCategory  = 438843373961609227; //Category to listen to messages in
@@ -94,7 +95,10 @@ Future<void> sendCookies(CommandContext ctx) async {
   TextChannel channel = await bot.getChannel(channelID);
   ctx.channel = channel;
   String prefix = prefixHandler.prefix;
-  var collectEmbed = EmbedBuilder();
+  var collectEmbed = EmbedBuilder()
+    ..addFooter((footer) {
+      footer.text = "This will delete itself in $promptTimeout seconds!";
+    });
   var numCookies = 1 + Random().nextInt(4);
   var randomSelection = Random().nextInt(collectTriggers.length - 1);
   var randomKeyword = "$prefix${collectTriggers[randomSelection]}";
@@ -112,13 +116,17 @@ Future<void> sendCookies(CommandContext ctx) async {
   Message collectMe = await channel.send(embed: collectEmbed);
   lastSuccess = collectMe.createdAt;
 
-  //TODO: Add a timeout for this so that after ~1 minutes it'll auto delete
   var userResponse = await ctx.nextMessagesWhere(
       (msg) => msg.message.content.toLowerCase() == collectEmbed.title,
-      limit: 1);
+      limit: 1).timeout(new Duration(seconds: promptTimeout), onTimeout:
+        ((deletethings) async {
+          await collectMe.delete();
+          return;
+      }));
+
   userResponse.listen((event) async {
-    await collectMe.delete();
-    await event.message.delete();
+    await collectMe.delete(); //Bot's message
+    await event.message.delete(); //Trigger message
     await ctx.replyTemp(Duration(seconds: 3),
         content: "${event.message.author.mention} collected $pluralization");
 
