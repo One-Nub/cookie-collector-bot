@@ -4,7 +4,7 @@ part of commands;
 
 const conversationDelay = 90; //seconds
 const lastSuccessDelay = 180; //seconds
-const promptTimeout = 60; //also seconds
+const promptTimeout = 120; //also seconds
 const List<String> collectTriggers = [
   "collect",
   "grab",
