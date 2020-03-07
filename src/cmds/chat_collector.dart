@@ -23,7 +23,7 @@ const List<String> collectTriggers = [
 
 //Release channels
 const listenCategory  = 438843373961609227; //Category to listen to messages in
-const sendChannelID   = 614266653332733952;
+const sendChannelID   = 459582639289008148;
 const guildID         = 438843373961609226;
 
 Message prev;
