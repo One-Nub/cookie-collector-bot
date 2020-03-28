@@ -69,11 +69,9 @@ class database_helper {
     if (existence == false) {
       await connection.query("INSERT INTO `$guildID` SET "
           "user_id = $userID, "
-          "total_cookies = $numCookies, "
           "available_cookies = $numCookies");
     } else {
       await connection.query("UPDATE `$guildID` SET "
-          "total_cookies = total_cookies + $numCookies, "
           "available_cookies = available_cookies + $numCookies "
           "WHERE user_id = $userID");
     }
@@ -110,7 +108,7 @@ class database_helper {
   //Other getters
   Future<Iterator> get_rows(int guildID, String orderBy, {int limit = 0, String extras}) async {
     //orderBy has to be a column in the database so:
-    //user_id, available_cookies, total_cookies, or level
+    //user_id, available_cookies, or level
     //The limit will have to be removed if/when I learn pagnation
     //Unless i just show top 15
     var connection = await dbConnect(user_config);
@@ -135,7 +133,6 @@ class database_helper {
     if (existence == false) {
       await connection.query("INSERT INTO `$guildID` SET "
           "user_id = $userID, "
-          "total_cookies = 0, "
           "available_cookies = 0");
     }
     var user = await connection.query("SELECT * FROM `$guildID` "

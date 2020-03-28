@@ -13,18 +13,16 @@ Future<void> stats(CommandContext ctx, [String user]) async {
   userIterator.moveNext();
   Map dbValues = userIterator.current.fields;
   User member = await bot.getUser(Snowflake(dbValues['user_id']));
-  int totalCookies = dbValues['total_cookies'];
   int availableCookies = dbValues['available_cookies'];
   int level = dbValues['level'];
 
   var statsEmbed = EmbedBuilder()
-    ..addField(name: "Total Cookies", content: totalCookies, inline:  true)
     ..addField(name: "Available Cookies", content: availableCookies, inline: true)
     ..addField(name: "Level (WIP)", content: level, inline: true);
   statsEmbed.color = DiscordColor.fromHexString("87CEEB");
   statsEmbed.thumbnailUrl = member.avatarURL(format: "png", size: 512);
   statsEmbed.timestamp = DateTime.now().toUtc();
   statsEmbed.title = "Stats for ${member.username}#${member.discriminator}";
-  
+
   ctx.reply(embed: statsEmbed);
 }
