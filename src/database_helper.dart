@@ -10,7 +10,6 @@ class database_helper {
     var connection = await dbConnect(user_config);
     await connection.query("CREATE TABLE IF NOT EXISTS `$guildID` ("
         "user_id BIGINT UNSIGNED PRIMARY KEY, "
-        "total_cookies MEDIUMINT UNSIGNED, "
         "available_cookies MEDIUMINT UNSIGNED, "
         "level SMALLINT DEFAULT 0)");
     await connection.close();
