@@ -123,7 +123,6 @@ Future<void> sendCookies(CommandContext ctx) async {
 
   userResponse.listen(
     (event) async {
-      print(event.message.content);
       await collectMe.delete(); //Bot's message
       await event.message.delete(); //Trigger message
       await ctx.replyTemp(Duration(seconds: 3),
