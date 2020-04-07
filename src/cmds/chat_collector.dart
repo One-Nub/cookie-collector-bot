@@ -116,21 +116,28 @@ Future<void> sendCookies(CommandContext ctx) async {
   Message collectMe = await channel.send(embed: collectEmbed);
   lastSuccess = collectMe.createdAt;
 
+
   var userResponse = await ctx.nextMessagesWhere(
-      (msg) => msg.message.content.toLowerCase() == collectEmbed.title,
-      limit: 1).timeout(new Duration(seconds: promptTimeout), onTimeout:
-        ((deletethings) async {
-          await collectMe.delete();
-          return;
-      }));
+      (msg) => msg.message.content.toLowerCase() == collectEmbed.title, limit: 1)
+      .timeout(new Duration(seconds: promptTimeout));
 
-  userResponse.listen((event) async {
-    await collectMe.delete(); //Bot's message
-    await event.message.delete(); //Trigger message
-    await ctx.replyTemp(Duration(seconds: 3),
-        content: "${event.message.author.mention} collected $pluralization");
+  userResponse.listen(
+    (event) async {
+      print(event.message.content);
+      await collectMe.delete(); //Bot's message
+      await event.message.delete(); //Trigger message
+      await ctx.replyTemp(Duration(seconds: 3),
+          content: "${event.message.author.mention} collected $pluralization");
 
-    await db.add_cookies(
-        event.message.author.id.toInt(), numCookies, ctx.guild.id.toInt());
-  });
+      await db.add_cookies(
+          event.message.author.id.toInt(), numCookies, ctx.guild.id.toInt());
+    },
+    onError: ((error) async {
+      if(error is TimeoutException)
+        await collectMe.delete();
+      else
+        print("Real error: $error");
+    }),
+    cancelOnError: true
+  );
 }

@@ -3,6 +3,7 @@ library commands;
 //Imports that the commands may need
 import 'dart:io';
 import 'dart:math';
+import 'dart:async';
 
 //Nyxx related
 import 'package:nyxx.commands/commands.dart';
