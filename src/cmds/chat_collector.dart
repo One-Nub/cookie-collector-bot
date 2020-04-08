@@ -102,16 +102,11 @@ Future<void> sendCookies(CommandContext ctx) async {
   var numCookies = 1 + Random().nextInt(4);
   var randomSelection = Random().nextInt(collectTriggers.length - 1);
   var randomKeyword = "$prefix${collectTriggers[randomSelection]}";
+  var pluralization = "**$numCookies cookie${numCookies != 1 ? "s" : ""}";
 
   collectEmbed.title = randomKeyword;
   collectEmbed.description =
-      "Say that to collect **$numCookies** cookies! (Or don't that's on you...)";
-
-  var pluralization = "";
-  if (numCookies == 1)
-    pluralization = "**$numCookies** cookie!";
-  else
-    pluralization = "**$numCookies** cookies!";
+      "Say that to collect $pluralization! (Or don't that's on you...)";
 
   Message collectMe = await channel.send(embed: collectEmbed);
   lastSuccess = collectMe.createdAt;
