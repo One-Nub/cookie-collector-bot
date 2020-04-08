@@ -102,7 +102,7 @@ Future<void> sendCookies(CommandContext ctx) async {
   var numCookies = 1 + Random().nextInt(4);
   var randomSelection = Random().nextInt(collectTriggers.length - 1);
   var randomKeyword = "$prefix${collectTriggers[randomSelection]}";
-  var pluralization = "**$numCookies cookie${numCookies != 1 ? "s" : ""}";
+  var pluralization = "**$numCookies cookie${numCookies != 1 ? "s" : ""}**";
 
   collectEmbed.title = randomKeyword;
   collectEmbed.description =
