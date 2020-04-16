@@ -1,6 +1,6 @@
 part of commands;
 
-@Command("help")
+@Command("help", aliases: ["commands", "cmds"])
 Future<void> help(CommandContext ctx) async {
   String commands =
     "`.daily` ➙ collect a set amount of cookies once a day\n"
