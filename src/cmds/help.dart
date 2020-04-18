@@ -35,7 +35,15 @@ Future<void> help(CommandContext ctx) async {
     ctx.channel.send(embed: helpEmbed);
   }
   else {
-    await ctx.message.reply(content: "please check your DMs!");
-    await authorDM.send(embed: helpEmbed);
+    bool dmsOpen = true;
+    await authorDM.send(embed: helpEmbed).catchError(
+      (onError) {
+        ctx.channel.send(embed: helpEmbed);
+        dmsOpen = false;
+    });
+
+    if (dmsOpen) {
+      await ctx.message.reply(content: "please check your DMs!");
+    }
   }
 }
