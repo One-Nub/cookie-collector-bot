@@ -147,12 +147,12 @@ final List<String> _failMessages = [
   "you felt bad and called the police and told them",
   "you tripped and all your stolen cookies fell down the storm drain",
   "you woke up",
+  "you ~~somehow~~ fell in love with John and left your profits behind",
   "after a nice robbery, you realize you forgot one thing: the cookies",
   "that's just how the cookie crumbles",
   "all they had were stupid coins and not any cookies",
   "for some reason they had oatmeal cookies, like who eats those?",
   "your browser said delete cookies and you said yes",
   "your house was set on fire by the person you robbed",
-  "I said so :eyes:",
-  "you ~~somehow~~ fell in love with John and left your profits behind"
+  "I said so :eyes:"
 ];
