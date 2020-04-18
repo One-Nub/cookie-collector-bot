@@ -61,10 +61,10 @@ Future<void> main() async {
     mention = bot.self.mention;
     mentionHandler.prefix = mention;
 
-    bot.shard.setPresence(game:
+    bot.self.setPresence(game:
       Presence.of("with some cookies", type: PresenceType.game));
     cookieTriggerListener();
-    shardConnectActions();
+    //shardConnectActions();
   });
 }
 
