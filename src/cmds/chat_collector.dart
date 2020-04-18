@@ -121,7 +121,7 @@ Future<void> sendCookies(CommandContext ctx) async {
       await collectMe.delete(); //Bot's message
       await event.message.delete(); //Trigger message
       await ctx.replyTemp(Duration(seconds: 3),
-          content: "${event.message.author.mention} collected $pluralization");
+          content: "${event.message.author.mention} collected $pluralization!");
 
       await db.add_cookies(
           event.message.author.id.toInt(), numCookies, ctx.guild.id.toInt());
