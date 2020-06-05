@@ -7,7 +7,6 @@ Future<void> info(CommandContext ctx) async {
   String memUsage = (ProcessInfo.currentRss / 1024 / 1024).toStringAsFixed(2);
 
   var startTime = DateTime.now().subtract(bot.uptime);
-  startTime = startTime.subtract(Duration(hours: 892, minutes: 30));
   var runtime = DateTimeFormat.relative(startTime, levelOfPrecision: 5, abbr: true);
 
   var embed = await EmbedBuilder()
@@ -24,7 +23,7 @@ Future<void> info(CommandContext ctx) async {
       author.name = botName;
       author.iconUrl = bot.self.avatarURL();
     });
-    
+
   embed.color = DiscordColor.fromHexString("87CEEB");
   embed.timestamp = DateTime.now().toUtc();
   await ctx.reply(embed: embed);
