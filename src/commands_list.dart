@@ -1,16 +1,16 @@
 library commands;
 
-//Imports that the commands may need
+//Imports
 import 'dart:io';
 import 'dart:math';
 import 'dart:async';
 
-//Nyxx related
+import 'package:date_time_format/date_time_format.dart';
 import 'package:nyxx.commands/commands.dart';
 import 'package:nyxx/nyxx.dart';
-import 'main.dart';
 
-//Utility files
+//Files
+import 'main.dart';
 part 'processors.dart';
 
 //Normal commands below here
