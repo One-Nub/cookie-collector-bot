@@ -1,13 +1,11 @@
 part of commands;
 
 @Restrict(requiredContext: ContextType.guild)
-@Command("ping", typing: true)
+@Command("ping")
 Future<void> ping(CommandContext ctx) async {
   var stopwatch = Stopwatch();
   stopwatch.start();
-  await ctx.waitForTyping(bot.self);
+  var msg = await ctx.channel.send(content: "Pinging...");
   stopwatch.stop();
-  ctx.message.reply(
-      content: ":stopwatch: Pong! `${stopwatch.elapsedMilliseconds}ms`",
-      mention: false);
+  msg.edit(content: ":stopwatch: Pong! `${stopwatch.elapsedMilliseconds}ms`");
 }
