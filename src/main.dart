@@ -64,7 +64,7 @@ Future<void> main() async {
     bot.self.setPresence(game:
       Presence.of("with some cookies", type: PresenceType.game));
     cookieTriggerListener();
-    //shardConnectActions();
+    shardConnectActions();
   });
 }
 
