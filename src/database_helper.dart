@@ -1,142 +1,112 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:logging/logging.dart';
 import 'package:mysql1/mysql1.dart';
 
-class database_helper {
-  var user_config;
+class CCDatabase {
+  late final ConnectionSettings _connectionSettings;
+  final String _username;
+  final String _password;
+  final String _host;
+  final String _databaseName;
+  final int _port;
 
-  //Database functions
-  Future<void> create_table(int guildID) async {
-    var connection = await dbConnect(user_config);
+  CCDatabase(this._username, this._password, this._host, this._databaseName, this._port) {
+    this._connectionSettings = ConnectionSettings(
+      user: _username,
+      password: _password,
+      host: _host,
+      db: _databaseName,
+      port: _port);
+  }
+
+  Future<MySqlConnection> dbConnection() async {
+    //TODO: Consider a different solution than exiting on error
+    try {
+      return await MySqlConnection.connect(_connectionSettings);
+    }
+    on TimeoutException catch (e) {
+      Logger("CCDB")
+        .severe("It took too long to connect to the database.\n" +
+      "Because of this the program will now exit for integrity.\n$e");
+      exit(1);
+    }
+    on SocketException catch (e) {
+      Logger("CCDB")
+        .severe("An issue was enountered with the credentials given.\n" +
+      "Because of this the program will now exit for integrity. \n$e");
+      exit(1);
+    }
+  }
+
+  Future<void> createGuildTable(int guildID) async {
+    var connection = await dbConnection();
     await connection.query("CREATE TABLE IF NOT EXISTS `$guildID` ("
         "user_id BIGINT UNSIGNED PRIMARY KEY, "
-        "available_cookies MEDIUMINT UNSIGNED, "
+        "available_cookies INT DEFAULT 0, "
         "level SMALLINT DEFAULT 0)");
     await connection.close();
   }
 
-  Future<MySqlConnection> dbConnect(ConnectionSettings user_config) async {
-    return await MySqlConnection.connect(user_config)
-      .catchError((Object error) {
-        print("An error occurred while connecting to the database... $error\n");
-      });
+  Future<Iterator> getRowRange(int guildID, String orderBy, 
+    {int startIndex = 0, int rowCount = 15}) async {
+    
+    var connection = await dbConnection();
+    String query = "SELECT * FROM `$guildID`" 
+      "ORDER BY $orderBy DESC "
+      "LIMIT $startIndex,$rowCount";
+
+    var rows = await connection.query(query.toString());
+    await connection.close();
+    return rows.iterator;
   }
 
-  Future<void> setup_config(String username, String password, String host,
-      String database, int port) async {
-    user_config = ConnectionSettings(
-        user: username,
-        password: password,
-        host: host,
-        db: database,
-        port: port);
-  }
-
-  Future<bool> test_connection() async {
-    var tempConnect = await dbConnect(user_config)
-        .timeout(Duration(seconds: 15))
-        .catchError((TimeoutException error) {
-      print("I took too long to connect to the database... $error\n");
-      return false;
-    });
-    if(tempConnect == null)
-      return false;
-
-    tempConnect.close();
-    return true;
-  }
-
-  Future<bool> user_exists(int userID, int guildID) async {
-    var connection = await dbConnect(user_config);
-    var queryExistance = await connection.query(
-        "SELECT EXISTS (SELECT * FROM `$guildID` WHERE user_id = $userID)");
-    int result = queryExistance.first.values[0];
-    if (result == 0) {
-      await connection.close();
-      return false;
+  Future<Row?> getStoredUser(int userID, int guildID) async {
+    Row? returnRow = null;
+    var connection = await dbConnection();
+    var results = await connection.query("SELECT * FROM `$guildID` "
+        "WHERE user_id = $userID");
+    if(results.isNotEmpty) {
+      returnRow = results.first;
     }
     await connection.close();
-    return true;
+    return returnRow;
   }
 
-  //Cookie related functions
-  Future<void> add_cookies(int userID, int numCookies, int guildID) async {
-    //No user input is ever used here so sanitization isn't as concerning, though
-    //typically good in practice
-    var connection = await dbConnect(user_config);
-    var existence = await user_exists(userID, guildID);
-    if (existence == false) {
-      await connection.query("INSERT INTO `$guildID` SET "
-          "user_id = $userID, "
-          "available_cookies = $numCookies");
-    } else {
-      await connection.query("UPDATE `$guildID` SET "
-          "available_cookies = available_cookies + $numCookies "
-          "WHERE user_id = $userID");
-    }
+
+
+  Future<void> addCookies(int userID, int numCookies, int guildID) async {
+    var connection = await dbConnection();
+    String query = "INSERT INTO `$guildID` (user_id, available_cookies) "
+      "VALUES ($userID, $numCookies) "
+      "ON DUPLICATE KEY UPDATE"
+      "available_cookies = available_cookies + $numCookies";
+    await connection.query(query);
     await connection.close();
   }
 
-  Future<void> remove_cookies(int userID, int numCookies, int guildID) async {
-    var connection = await dbConnect(user_config);
-    var existence = await user_exists(userID, guildID);
-    if (existence == true) {
-      await connection.query("UPDATE `$guildID` SET "
-          "available_cookies = available_cookies - $numCookies "
-          "WHERE user_id = $userID");
-    }
+  Future<void> removeCookies(int userID, int numCookies, int guildID) async {
+    var connection = await dbConnection();
+    String query = "INSERT INTO `$guildID` (user_id, available_cookies) "
+      "VALUES ($userID, -$numCookies) "
+      "ON DUPLICATE KEY UPDATE"
+      "available_cookies = available_cookies - $numCookies";
+    await connection.query(query);
     await connection.close();
   }
 
-  Future<int> get_cookies(int userID, int guildID) async {
-    var connection = await dbConnect(user_config);
-    var existence = await user_exists(userID, guildID);
+  Future<int> getCookieCount(int userID, int guildID) async {
+    var connection = await dbConnection();
     var numCookies = 0;
-    if (existence == true) {
-      var row = await connection.query(
-          "SELECT available_cookies FROM `$guildID` WHERE user_id = $userID");
-      numCookies = row.first.values[0];
+    String query = "SELECT available_cookies FROM `$guildID` WHERE user_id = $userID";
+    var row = await connection.query(query);
+    if(row.isNotEmpty) {
+      numCookies = row.first.fields["available_cookies"];
     }
     await connection.close();
     return numCookies;
   }
 
-  //Level related functions
-  Future<void> increase_level(int userID, int numCookies, int guildID) async {}
-
-  //Other getters
-  Future<Iterator> get_rows(int guildID, String orderBy, {int limit = 0, String extras}) async {
-    //orderBy has to be a column in the database so:
-    //user_id, available_cookies, or level
-    //The limit will have to be removed if/when I learn pagnation
-    //Unless i just show top 15
-    var connection = await dbConnect(user_config);
-    var rows;
-    var query = "SELECT * FROM `$guildID` ORDER BY $orderBy DESC ";
-
-    if(limit != 0) {
-      query += "LIMIT $limit";
-    }
-    if(extras != null) {
-      query += extras;
-    }
-
-    rows = await connection.query(query);
-    await connection.close();
-    return rows.iterator;
-  }
-
-  Future<Iterator> get_user(int userID, int guildID) async {
-    var connection = await dbConnect(user_config);
-    var existence = await user_exists(userID, guildID);
-    if (existence == false) {
-      await connection.query("INSERT INTO `$guildID` SET "
-          "user_id = $userID, "
-          "available_cookies = 0");
-    }
-    var user = await connection.query("SELECT * FROM `$guildID` "
-        "WHERE user_id = $userID");
-    await connection.close();
-    return user.iterator;
-  }
+  Future<void> increaseLevel(int userID, int numCookies, int guildID) async {}
 }

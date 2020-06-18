@@ -1,77 +1,74 @@
 import 'dart:io';
 
-import 'package:safe_config/safe_config.dart';
 import 'package:logging/logging.dart';
 import 'package:nyxx/nyxx.dart';
-import 'package:nyxx/Vm.dart';
-import 'package:nyxx.commands/commands.dart' as cmd; //rewrite locally cloned
+import 'package:nyxx.commander/commander.dart';
+import 'package:yaml/yaml.dart';
 
 import 'commands_list.dart'; //ignore: unused_import
 import 'database_helper.dart';
 import 'listeners.dart';
 
-Nyxx bot;
-var prefixHandler;
-var db;
-List<Snowflake> admins = [Snowflake(156872400145874944),
-    Snowflake(194962036784889858)];
+late final Nyxx bot;
+late final Commander cmdr;
+late CCDatabase db;
+final List<Snowflake> admins = [];
 
 Future<void> main() async {
-  var timer = Stopwatch();
-  timer.start();
-
-  var botConfig = await new BotConfig('src/config.yaml');
-
-  String token = botConfig.token;
-  String prefix = botConfig.prefix;
-  String mention = "";
-
-  db = database_helper();
-  await db.setup_config(
-    botConfig.database_config.username,
-    botConfig.database_config.password,
-    botConfig.database_config.host,
-    botConfig.database_config.databaseName,
-    botConfig.database_config.port);
-
-  bool dbConnection = await db.test_connection();
-  print("Database connection available?: $dbConnection");
-  if(dbConnection == false)
-  {
-    print("Because the database is not available, I will exit now... Goodbye!");
-    exit(1);
-  }
-
-  bot = NyxxVm(token);
-  prefixHandler = cmd.CommandsFramework(bot, prefix: prefix, admins: admins)
-    ..discoverCommands();
-  var mentionHandler =
-      cmd.CommandsFramework(bot, prefix: mention, admins: admins)
-        ..discoverCommands();
+  Stopwatch startupTimer = Stopwatch();
+  startupTimer.start();
 
   setupDefaultLogging(Level.INFO);
-  guildCreateListener();
+  Level startup = Level("START", 850);
+  var startLogger = Logger("STARTUP");
+  
+  //Load config.
+  YamlMap botConfig = loadYaml(File('src/config.yaml').readAsStringSync());
+  final token = botConfig["token"];
+  final defaultPrefix = botConfig["default_prefix"];
 
-  await bot.onReady.listen((e) {
-    timer.stop();
-    print("Ready in ${bot.guilds.count} guild(s) as "
-        "${bot.self.username + "#" + bot.self.discriminator}");
-    print("It took ${timer.elapsed.inSeconds} seconds to start up");
+  YamlList configAdmins = botConfig["admins"];
+  for(int value in configAdmins) {
+    admins.add(Snowflake(value));
+  }
 
-    mention = bot.self.mention;
-    mentionHandler.prefix = mention;
+  YamlMap dbConfig = botConfig["database_config"];
+  db = CCDatabase(dbConfig["username"], 
+    dbConfig["password"], 
+    dbConfig["host"], 
+    dbConfig["databaseName"], 
+    dbConfig["port"]);
 
-    bot.self.setPresence(game:
-      Presence.of("with some cookies", type: PresenceType.game));
-    cookieTriggerListener();
-    shardConnectActions();
+  var verifyConnection = await db.dbConnection();
+  verifyConnection.close();
+
+  ClientOptions clOpts = ClientOptions()
+    ..initialPresence = PresenceBuilder(game: Activity.of("the development game"));
+
+  bot = Nyxx(token, options: clOpts);
+  cmdr = Commander(bot, prefixHandler: (Message msg) => prefixHandler(msg, defaultPrefix));
+  cmdr.registerCommand("test", (context, message) {
+    context.reply(content: "Hey! It worked! wow");
+  });
+
+  bot.onReady.listen((event) {
+    startupTimer.stop();
+    startLogger.log(startup, "Ready, it took ${startupTimer.elapsed.inSeconds} "
+      "second(s) to start.");
+  });
+
+  bot.onGuildCreate.listen((event) {
+    Logger("Guild Join")
+      .log(Level.INFO, "Guild ${event.guild.name}:${event.guild.id} "
+        "was loaded at ${DateTime.now()}");
+    db.createGuildTable(event.guild.id.id);
   });
 }
 
-class BotConfig extends Configuration {
-  BotConfig(String fileName) : super.fromFile(File(fileName));
-
-  String token;
-  String prefix;
-  DatabaseConfiguration database_config;
+Future<String?> prefixHandler(Message message, String defaultPrefix) async {
+  String mention = bot.self.mention;
+  if(message.content.startsWith(mention))
+    return mention;
+  else if(message.content.startsWith(defaultPrefix))
+    return defaultPrefix;
 }

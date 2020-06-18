@@ -1,9 +1,13 @@
-token: ""
-prefix: ""
+token: "token"
+default_prefix: "."
 
 database_config:
-  username: ""
-  password: ""
-  host: ""
-  databaseName: ""
+  username: "username"
+  password: "password"
+  host: "host"
+  databaseName: "dbName"
   port: 3306
+
+admins:
+  - 156872400145874944
+  - 194962036784889858
