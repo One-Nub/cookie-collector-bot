@@ -5,8 +5,8 @@ import 'package:nyxx/nyxx.dart';
 import 'package:nyxx.commander/commander.dart';
 import 'package:yaml/yaml.dart';
 
-import 'commands.dart'; //ignore: unused_import
 import 'CCDatabase.dart';
+import 'commands/commands_lib.dart';
 
 late final Nyxx bot;
 late final Commander cmdr;
