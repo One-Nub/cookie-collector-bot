@@ -6,14 +6,10 @@ import 'dart:math';
 import 'dart:async';
 
 import 'package:date_time_format/date_time_format.dart';
-import 'package:nyxx.commands/commands.dart';
+import 'package:nyxx.commander/commander.dart';
 import 'package:nyxx/nyxx.dart';
 
-//Files
-import 'main.dart';
-part 'processors.dart';
-
-//Normal commands below here
+//Normal commands
 part 'cmds/chat_collector.dart';
 part 'cmds/daily.dart';
 part 'cmds/eat.dart';
@@ -26,5 +22,5 @@ part 'cmds/rob.dart';
 part 'cmds/say.dart';
 part 'cmds/stats.dart';
 
-//Admin commands below here
+//Admin commands
 part 'admin_cmds/generate.dart';
