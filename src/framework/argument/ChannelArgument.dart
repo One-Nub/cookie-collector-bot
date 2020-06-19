@@ -77,14 +77,11 @@ class ChannelArgument<T extends Channel> extends Argument {
       throw InvalidChannelException("A matching channel could not be found within the guild.");
     }
 
-    try {
-      return await ctx.client.getChannel(Snowflake(channelID)) as T;
-    } catch (exception) {
-      //Safeguard in the sencario that the bot can't get the channel or the type
-      //casting doesn't work somehow. I haven't been able to cause this to trigger.
-      Logger.root.severe("Type casting issue?: $exception\n");
-      throw InvalidChannelException("A major issue was encountered while getting" +
-      " the channel in the guild. The error has been logged and will be looked into.");
+    var returnChannel = await ctx.client.getChannel(Snowflake(channelID));
+    if(returnChannel.runtimeType != T) {
+      throw InvalidChannelException("A channel was found, but it's type "
+        "does not match the expected type.");
     }
+    return returnChannel as T;
   }
 }
