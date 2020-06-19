@@ -38,8 +38,3 @@ abstract class Argument<T> {
     else return null; //Nothing considered an ID could be found.
   }
 }
-
-
-
-
-
