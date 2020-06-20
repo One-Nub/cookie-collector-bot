@@ -49,17 +49,19 @@ class CCDatabase {
     await connection.close();
   }
 
-  Future<Iterator> getRowRange(int guildID, String orderBy, 
-    {int startIndex = 0, int rowCount = 15}) async {
-    
-    var connection = await dbConnection();
-    String query = "SELECT * FROM `$guildID`" 
-      "ORDER BY $orderBy DESC "
-      "LIMIT $startIndex,$rowCount";
+  Future<Iterator> leaderboardSelection(int guildID, {int pageNumber = 0,
+    int pageEntryMax = 15}) async {
 
-    var rows = await connection.query(query.toString());
+    var connection = await dbConnection();
+    String query = "SELECT * FROM ("
+  	"SELECT ROW_NUMBER() OVER(ORDER BY available_cookies DESC) "
+  	"AS row_num, user_id, available_cookies, level "
+  	"FROM `$guildID` ORDER BY row_num) rnt "
+    "WHERE rnt.row_num > ${pageNumber * pageEntryMax} LIMIT $pageEntryMax";
+
+    var result = await connection.query(query);
     await connection.close();
-    return rows.iterator;
+    return result.iterator;
   }
 
   Future<Row?> getStoredUser(int userID, int guildID) async {
@@ -74,13 +76,29 @@ class CCDatabase {
     return returnRow;
   }
 
+  Future<Row?> getStoredUserAndRank(int userID, int guildID) async {
+    Row? returnRow = null;
+    var connection = await dbConnection();
+    String query = "SELECT * FROM ("
+      "SELECT ROW_NUMBER() OVER(ORDER BY available_cookies DESC) "
+      "AS row_num, user_id, available_cookies, level "
+      "FROM `$guildID` ORDER BY row_num) rnt "
+      "WHERE user_id = $userID";
+    var results = await connection.query(query);
+    if(results.isNotEmpty) {
+      returnRow = results.first;
+    }
+    await connection.close();
+    return returnRow;
+  }
+
 
 
   Future<void> addCookies(int userID, int numCookies, int guildID) async {
     var connection = await dbConnection();
     String query = "INSERT INTO `$guildID` (user_id, available_cookies) "
       "VALUES ($userID, $numCookies) "
-      "ON DUPLICATE KEY UPDATE"
+      "ON DUPLICATE KEY UPDATE "
       "available_cookies = available_cookies + $numCookies";
     await connection.query(query);
     await connection.close();
@@ -90,7 +108,7 @@ class CCDatabase {
     var connection = await dbConnection();
     String query = "INSERT INTO `$guildID` (user_id, available_cookies) "
       "VALUES ($userID, -$numCookies) "
-      "ON DUPLICATE KEY UPDATE"
+      "ON DUPLICATE KEY UPDATE "
       "available_cookies = available_cookies - $numCookies";
     await connection.query(query);
     await connection.close();
@@ -99,7 +117,8 @@ class CCDatabase {
   Future<int> getCookieCount(int userID, int guildID) async {
     var connection = await dbConnection();
     var numCookies = 0;
-    String query = "SELECT available_cookies FROM `$guildID` WHERE user_id = $userID";
+    String query = "SELECT available_cookies FROM `$guildID` "
+      "WHERE user_id = $userID";
     var row = await connection.query(query);
     if(row.isNotEmpty) {
       numCookies = row.first.fields["available_cookies"];
