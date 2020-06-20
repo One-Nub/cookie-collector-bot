@@ -45,10 +45,8 @@ Future<void> main() async {
     ..initialPresence = PresenceBuilder(game: Activity.of("the development game"));
 
   bot = Nyxx(token, options: clOpts);
-  cmdr = Commander(bot, prefixHandler: (Message msg) => prefixHandler(msg, defaultPrefix));
-  cmdr.registerCommand("test", (context, message) {
-    context.reply(content: "Hey! It worked! wow");
-  });
+  cmdr = Commander(bot, prefixHandler: (Message msg) => prefixHandler(msg, defaultPrefix))
+    ..registerCommand("stats", Stats(db).argumentParser, beforeHandler: Stats.preRunChecks);
 
   bot.onReady.listen((event) {
     startupTimer.stop();
