@@ -46,6 +46,8 @@ Future<void> main() async {
 
   bot = Nyxx(token, options: clOpts);
   cmdr = Commander(bot, prefixHandler: (Message msg) => prefixHandler(msg, defaultPrefix))
+    ..registerCommand("leaderboard", Leaderboard(db).commandFunction, beforeHandler: Leaderboard.preRunChecks)
+    ..registerCommand("lb", Leaderboard(db).commandFunction, beforeHandler: Leaderboard.preRunChecks)
     ..registerCommand("stats", Stats(db).argumentParser, beforeHandler: Stats.preRunChecks);
 
   bot.onReady.listen((event) {

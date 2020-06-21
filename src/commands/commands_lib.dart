@@ -6,8 +6,10 @@ import 'dart:math';
 import 'dart:async';
 
 import 'package:date_time_format/date_time_format.dart';
+import 'package:mysql1/mysql1.dart' show Row;
 import 'package:nyxx/nyxx.dart';
 import 'package:nyxx.commander/commander.dart';
+import 'package:nyxx.interactivity/interactivity.dart' show EmojiUtils;
 
 import '../CCDatabase.dart';
 import '../framework/framework_lib.dart';
@@ -19,7 +21,7 @@ import '../framework/framework_lib.dart';
 // part 'cmds/give.dart';
 // part 'cmds/help.dart';
 // part 'cmds/info.dart';
-// part 'cmds/leaderboard.dart';
+part 'cmds/leaderboard.dart';
 // part 'cmds/ping.dart';
 // part 'cmds/rob.dart';
 // part 'cmds/say.dart';
