@@ -12,9 +12,6 @@ class Stats {
   }
 
   Future<void> argumentParser(CommandContext ctx, String message) async {
-    message = message.replaceFirst(" ", "");
-    message = message.replaceFirst(ctx.commandMatcher, "");
-
     var userArg = UserArgument(searchMemberNames: true);
     User user;
     try {
