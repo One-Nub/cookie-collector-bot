@@ -45,7 +45,9 @@ Future<void> main() async {
     ..initialPresence = PresenceBuilder(game: Activity.of("the development game"));
 
   bot = Nyxx(token, options: clOpts);
+
   cmdr = Commander(bot, prefixHandler: (Message msg) => prefixHandler(msg, defaultPrefix))
+    ..registerCommand("generate", Generate(db).argumentParser, beforeHandler: Generate.preRunChecks)
     ..registerCommand("leaderboard", Leaderboard(db).commandFunction, beforeHandler: Leaderboard.preRunChecks)
     ..registerCommand("lb", Leaderboard(db).commandFunction, beforeHandler: Leaderboard.preRunChecks)
     ..registerCommand("stats", Stats(db).argumentParser, beforeHandler: Stats.preRunChecks);

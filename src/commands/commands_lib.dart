@@ -28,4 +28,4 @@ part 'cmds/leaderboard.dart';
 part 'cmds/stats.dart';
 
 // //Admin commands
-// part 'admin_cmds/generate.dart';
+part 'admin_cmds/generate.dart';
