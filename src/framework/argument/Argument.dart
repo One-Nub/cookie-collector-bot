@@ -1,12 +1,13 @@
 part of framework;
 
-/// Searches string for numbers between < and >, while ignoring proceeding characters in-between 
-/// < & > before the numbers.
-final RegExp _mentionIDRegex = RegExp("<.+\?(\\d+)>");
+/// Searches the start of string for numbers between < and >, while ignoring 
+/// proceeding characters in-between < & > before the numbers.
+final RegExp _mentionIDRegex = RegExp("^<.+\?(\\d+)>");
 
-/// Searches for any numbers with more than the expected minimum length a discord ID
-/// can be, which is 17 characters.
-final RegExp _rawIDRegex = RegExp("(\\d{17,})");
+/// Searches for any numbers at the start of the string 
+/// with more than the expected minimum length a discord ID can be, 
+/// which is 17 characters.
+final RegExp _rawIDRegex = RegExp("^(\\d{17,})");
 
 /// Basis for argument parsing classes
 abstract class Argument<T> {
