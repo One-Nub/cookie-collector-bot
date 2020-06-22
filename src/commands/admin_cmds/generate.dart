@@ -4,7 +4,7 @@ class Generate {
   CCDatabase _database;
   Generate(this._database);
 
-  static Future<bool> preRunChecks(CommandContext ctx) async {
+  static bool preRunChecks(CommandContext ctx) {
     //Must be run in guild & must be me
     if(ctx.guild == null || ctx.author!.id.id != 156872400145874944) {
       return false;
