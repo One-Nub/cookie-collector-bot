@@ -16,6 +16,8 @@ class UserArgument extends Argument {
 
   @override
   Future<User> parseArg(CommandContext ctx, String message) async {
+    message = message.replaceFirst(" ", "");
+    message = message.replaceFirst(ctx.commandMatcher, "");
     //Only check for empty message since this does not need to be triggered in guild context.
     if (message == "") {
       throw MissingArgumentException();

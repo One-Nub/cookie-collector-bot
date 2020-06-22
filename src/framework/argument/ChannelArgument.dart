@@ -20,6 +20,9 @@ class ChannelArgument<T extends Channel> extends Argument {
     if (ctx.guild == null) {
       throw GuildContextRequiredException();
     }
+
+    message = message.replaceFirst(" ", "");
+    message = message.replaceFirst(ctx.commandMatcher, "");
     if(message == "") {
       throw MissingArgumentException();
     }
