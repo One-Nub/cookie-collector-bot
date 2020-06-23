@@ -47,6 +47,7 @@ Future<void> main() async {
   bot = Nyxx(token, options: clOpts);
 
   cmdr = Commander(bot, prefixHandler: (Message msg) => prefixHandler(msg, defaultPrefix))
+    ..registerCommand("eat", Eat(db).commandFunction, beforeHandler: Eat.preRunChecks)
     ..registerCommand("generate", Generate(db).argumentParser, beforeHandler: Generate.preRunChecks)
     ..registerCommand("leaderboard", Leaderboard(db).commandFunction, beforeHandler: Leaderboard.preRunChecks)
     ..registerCommand("lb", Leaderboard(db).commandFunction, beforeHandler: Leaderboard.preRunChecks)

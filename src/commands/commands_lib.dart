@@ -17,7 +17,7 @@ import '../framework/framework_lib.dart';
 //Normal commands
 // part 'cmds/chat_collector.dart';
 // part 'cmds/daily.dart';
-// part 'cmds/eat.dart';
+part 'cmds/eat.dart';
 // part 'cmds/give.dart';
 // part 'cmds/help.dart';
 // part 'cmds/info.dart';
