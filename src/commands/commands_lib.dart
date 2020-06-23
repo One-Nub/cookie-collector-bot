@@ -24,8 +24,8 @@ import '../framework/framework_lib.dart';
 part 'cmds/leaderboard.dart';
 // part 'cmds/ping.dart';
 // part 'cmds/rob.dart';
-// part 'cmds/say.dart';
 part 'cmds/stats.dart';
 
 // //Admin commands
 part 'admin_cmds/generate.dart';
+part 'admin_cmds/say.dart';

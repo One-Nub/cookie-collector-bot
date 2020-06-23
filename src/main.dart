@@ -50,6 +50,7 @@ Future<void> main() async {
     ..registerCommand("generate", Generate(db).argumentParser, beforeHandler: Generate.preRunChecks)
     ..registerCommand("leaderboard", Leaderboard(db).commandFunction, beforeHandler: Leaderboard.preRunChecks)
     ..registerCommand("lb", Leaderboard(db).commandFunction, beforeHandler: Leaderboard.preRunChecks)
+    ..registerCommand("say", Say().argParser, beforeHandler: (ctx) => Say.preRunChecks(ctx, admins))
     ..registerCommand("stats", Stats(db).argumentParser, beforeHandler: Stats.preRunChecks);
 
   bot.onReady.listen((event) {
