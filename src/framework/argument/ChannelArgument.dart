@@ -35,7 +35,7 @@ class ChannelArgument<T extends Channel> extends Argument {
       message = message.split("|").first.trim();
     } else {
       //Text channels can't have spaces while categories & voice channels can.
-      if (T == CachelessTextChannel)
+      if (T == CachelessTextChannel || T == CacheTextChannel)
         message = message.split(RegExp("\\s+")).first.trim();
     }
 
