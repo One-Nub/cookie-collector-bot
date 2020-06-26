@@ -42,7 +42,7 @@ Future<void> main() async {
   verifyConnection.close();
 
   ClientOptions clOpts = ClientOptions()
-    ..initialPresence = PresenceBuilder(game: Activity.of("the development game"));
+    ..initialPresence = PresenceBuilder.of(game: Activity.of("the development game"));
 
   bot = Nyxx(token, options: clOpts);
 
