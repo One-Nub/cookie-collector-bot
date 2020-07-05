@@ -10,7 +10,7 @@ class Say {
       return true;
     }
 
-    CacheMember user = await ctx.guild!.getMemberById(ctx.author!.id);
+    CacheMember user = await ctx.guild!.getMemberById(ctx.author!.id) as CacheMember;
     if(user.effectivePermissions.administrator || 
         user.effectivePermissions.manageGuild) {
       return true;
