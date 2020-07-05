@@ -24,8 +24,14 @@ class Daily with Cooldown {
 
     if(Cooldown.isCooldownActive(ctx.guild!.id, ctx.author!.id)) {
       String timeRemaining = Cooldown.getRemainingTime(ctx.guild!.id, ctx.author!.id);
-      await ctx.reply(content: "<@${ctx.author!.id.id}>, "
-        "it hasn't been a full day yet! Try again in `$timeRemaining`");
+      EmbedBuilder errorEmbed = EmbedBuilder()
+        ..color = DiscordColor.fromHexString("6B0504")
+        ..description = "It hasn't been a full day yet! Try again in `$timeRemaining`"
+        ..addAuthor((author) {
+          author.name = ctx.author!.tag;
+          author.iconUrl = ctx.author!.avatarURL(format: "png");
+        });
+      await ctx.reply(embed: errorEmbed);
       return false;
     }
     return true;
