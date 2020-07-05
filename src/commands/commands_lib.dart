@@ -5,7 +5,6 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:async';
 
-import 'package:date_time_format/date_time_format.dart';
 import 'package:mysql1/mysql1.dart' show Row;
 import 'package:nyxx/nyxx.dart';
 import 'package:nyxx.commander/commander.dart';
@@ -16,7 +15,7 @@ import '../framework/framework_lib.dart';
 
 //Normal commands
 // part 'cmds/chat_collector.dart';
-// part 'cmds/daily.dart';
+part 'cmds/daily.dart';
 part 'cmds/eat.dart';
 // part 'cmds/give.dart';
 // part 'cmds/help.dart';

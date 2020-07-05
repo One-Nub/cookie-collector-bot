@@ -1,27 +1,83 @@
-// part of commands;
+part of commands;
 
-// var _manualCooldown = UserBasedCache();
+class Daily with Cooldown {
+  static const int baseReward = 15;
+  static const int rewardIncInterval = 5;
+  CCDatabase _database;
 
-// @Restrict(requiredContext: ContextType.guild)
-// @Command("daily", aliases: ["loot"])
-// Future<void> daily(CommandContext ctx) async {
-//   int dailyCookieCount = 15;
-//   var nowUtc = DateTime.now().toUtc();
+  ///Snowflake: Guild ID
+  ///Guild Users Map:
+  /// Snowflake: User ID
+  /// User Info Map:
+  ///   streak: Streak length
+  ///   time: DateTime when streak expires (2 days from now)
+  Map<Snowflake, Map<Snowflake, Map<String, dynamic>>> _streakTracker = {};
 
-//   if(_manualCooldown.hasKey(ctx.author.id) &&
-//       _manualCooldown[ctx.author.id].isAfter(nowUtc)) {
-//     var diff = _manualCooldown[ctx.author.id].difference(nowUtc).toString();
-//     var timeSplit = diff.split(":");
-//     var remainingTime = "`${timeSplit[0]} hours, ${timeSplit[1]} minutes, "
-//     "and ${timeSplit[2].substring(0, 2)} seconds`";
+  Daily(this._database) {
+    Cooldown.cooldownDuration = Duration(hours: 24);
+  }
 
-//     ctx.message.reply(content: "It hasn't been a day yet! You can collect "
-//       "again in $remainingTime.");
-//   }
-//   else {
-//     _manualCooldown.add(ctx.author.id, nowUtc.add(new Duration(days: 1)));
-//     await db.add_cookies(ctx.author.id.toInt(), dailyCookieCount, ctx.guild.id.toInt());
-//     await ctx.message.reply(content: "You have collected your daily "
-//       "`$dailyCookieCount` cookies! You can collect again in 24 hours!");
-//   }
-// }
+  static Future<bool> preRunChecks(CommandContext ctx) async {
+    if(ctx.guild == null) {
+      return false;
+    }
+
+    if(Cooldown.isCooldownActive(ctx.guild!.id, ctx.author!.id)) {
+      String timeRemaining = Cooldown.getRemainingTime(ctx.guild!.id, ctx.author!.id);
+      await ctx.reply(content: "<@${ctx.author!.id.id}>, "
+        "it hasn't been a full day yet! Try again in `$timeRemaining`");
+      return false;
+    }
+    return true;
+  }
+
+  Future<void> commandFunction(CommandContext ctx, String msg) async {
+    int streakDuration = _getStreakDuration(ctx.guild!.id, ctx.author!.id);
+    int streakRewardModifier = (streakDuration < 30) ?
+      (streakDuration / rewardIncInterval).floor() * 2 :
+      (30 / rewardIncInterval).floor() * 2;
+
+    int reward = baseReward + streakRewardModifier;
+    await _database.addCookies(ctx.author!.id.id, reward, ctx.guild!.id.id);
+
+    EmbedBuilder replyEmbed = EmbedBuilder()
+      ..description = "You have collected your daily `$reward` cookies! \n"
+        "You are now on a streak of `$streakDuration` day${(streakDuration != 1) ? "s" : ""}."
+      ..timestamp = DateTime.now().toUtc().add(Duration(days: 1))
+      ..color = DiscordColor.fromHexString("67F399");
+    replyEmbed.addAuthor((author) {
+      author.name = "Daily Cookies - ${ctx.author!.tag}";
+      author.iconUrl = ctx.author!.avatarURL(format: "png");
+    });
+    replyEmbed.addFooter((footer) {
+      footer.text = "You can collect again in 24 hours.";
+    });
+
+    await ctx.reply(embed: replyEmbed);
+    Cooldown.applyCooldown(ctx.guild!.id, ctx.author!.id);
+  }
+
+  int _getStreakDuration(Snowflake guildID, Snowflake userID) {
+    if(!_streakTracker.containsKey(guildID)) {
+      _streakTracker[guildID] = {};
+    }
+
+    var userStreakMap = _streakTracker[guildID];
+    if(userStreakMap!.containsKey(userID)) {
+      var userStreakInfo = userStreakMap[userID]!;
+      if(DateTime.now().isBefore(userStreakInfo["time"] as DateTime)) {
+        userStreakInfo["streak"] += 1;
+      } else {
+        userStreakInfo["streak"] = 1;
+      }
+      userStreakInfo["time"] = DateTime.now().add(Duration(days: 2));
+    }
+    else {
+      userStreakMap[userID] = {
+        "streak" : 1,
+        "time" : DateTime.now().add(Duration(days: 2))
+      };
+    }
+    return userStreakMap[userID]!["streak"];
+  }
+}
