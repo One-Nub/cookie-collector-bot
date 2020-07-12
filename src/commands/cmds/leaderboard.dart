@@ -1,9 +1,9 @@
 part of commands;
 
 class Leaderboard {
-  final backArrow = EmojiUtils.getEmoji("arrow_backward") as UnicodeEmoji;
-  final forwardArrow = EmojiUtils.getEmoji("arrow_forward") as UnicodeEmoji;
-  final trash = EmojiUtils.getEmoji("wastebasket") as UnicodeEmoji;
+  final backArrow = UnicodeEmoji("⬅️");
+  final forwardArrow = UnicodeEmoji("➡️");
+  final trash = UnicodeEmoji("🗑");
 
   static const int maxRowsPerPage = 10;
   Map<int, String> pages = {};
