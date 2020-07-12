@@ -9,7 +9,7 @@ dependencies:
   mysql1: ^0.17.1
   nyxx: ^1.0.0
   nyxx.commander: ^1.0.0
-  nyxx.interactivity: ^1.0.0
+  nyxx.extensions: ^1.0.0
   yaml: ^2.2.1
 
 dependency_overrides:
@@ -17,5 +17,5 @@ dependency_overrides:
     path: packages/nyxx/nyxx
   nyxx.commander:
     path: packages/nyxx/nyxx.commander
-  nyxx.interactivity:
-    path: packages/nyxx/nyxx.interactivity
+  nyxx.extensions:
+    path: packages/nyxx/nyxx.extensions
