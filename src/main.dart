@@ -17,7 +17,6 @@ Future<void> main() async {
   Stopwatch startupTimer = Stopwatch();
   startupTimer.start();
 
-  setupDefaultLogging(Level.INFO);
   Level startup = Level("START", 850);
   var startLogger = Logger("STARTUP");
   
@@ -44,7 +43,7 @@ Future<void> main() async {
   ClientOptions clOpts = ClientOptions()
     ..initialPresence = PresenceBuilder.of(game: Activity.of("the development game"));
 
-  bot = Nyxx(token, options: clOpts);
+  bot = Nyxx(token, options: clOpts, defaultLoggerLogLevel: Level.INFO);
 
   cmdr = Commander(bot, prefixHandler: (Message msg) => prefixHandler(msg, defaultPrefix))
     ..registerCommand("daily", Daily(db).commandFunction, beforeHandler: Daily.preRunChecks)
@@ -64,7 +63,7 @@ Future<void> main() async {
 
   bot.onGuildCreate.listen((event) {
     Logger("Guild Join")
-      .log(Level.INFO, "Guild ${event.guild.name}:${event.guild.id} "
+      .log(Level.INFO, "Guild \"${event.guild.name}\":${event.guild.id} "
         "was loaded at ${DateTime.now()}");
     db.createGuildTable(event.guild.id.id);
   });
