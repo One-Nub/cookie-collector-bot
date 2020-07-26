@@ -19,7 +19,7 @@ Future<void> main() async {
 
   Level startup = Level("START", 850);
   var startLogger = Logger("STARTUP");
-  
+
   //Load config.
   YamlMap botConfig = loadYaml(File('src/config.yaml').readAsStringSync());
   final token = botConfig["token"];
@@ -31,10 +31,10 @@ Future<void> main() async {
   }
 
   YamlMap dbConfig = botConfig["database_config"];
-  db = CCDatabase(dbConfig["username"], 
-    dbConfig["password"], 
-    dbConfig["host"], 
-    dbConfig["databaseName"], 
+  db = CCDatabase(dbConfig["username"],
+    dbConfig["password"],
+    dbConfig["host"],
+    dbConfig["databaseName"],
     dbConfig["port"]);
 
   var verifyConnection = await db.dbConnection();
@@ -49,11 +49,13 @@ Future<void> main() async {
     ..registerCommand("daily", Daily(db).commandFunction, beforeHandler: Daily.preRunChecks)
     ..registerCommand("eat", Eat(db).commandFunction, beforeHandler: Eat.preRunChecks)
     ..registerCommand("generate", Generate(db).argumentParser, beforeHandler: Generate.preRunChecks)
+    ..registerCommand("info", Info().commandFunction)
     ..registerCommand("leaderboard", Leaderboard(db).commandFunction, beforeHandler: Leaderboard.preRunChecks)
     ..registerCommand("lb", Leaderboard(db).commandFunction, beforeHandler: Leaderboard.preRunChecks)
     ..registerCommand("ping", Ping().commandFunction, beforeHandler: Ping.preRunChecks)
     ..registerCommand("say", Say().argParser, beforeHandler: (ctx) => Say.preRunChecks(ctx, admins))
-    ..registerCommand("stats", Stats(db).argumentParser, beforeHandler: Stats.preRunChecks);
+    ..registerCommand("stats", Stats(db).argumentParser, beforeHandler: Stats.preRunChecks)
+    ..registerCommand("status", Info().commandFunction);
 
   bot.onReady.listen((event) {
     startupTimer.stop();
