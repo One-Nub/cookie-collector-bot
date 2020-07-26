@@ -53,7 +53,7 @@ Future<void> main() async {
     ..registerCommand("leaderboard", Leaderboard(db).commandFunction, beforeHandler: Leaderboard.preRunChecks)
     ..registerCommand("lb", Leaderboard(db).commandFunction, beforeHandler: Leaderboard.preRunChecks)
     ..registerCommand("ping", Ping().commandFunction, beforeHandler: Ping.preRunChecks)
-    ..registerCommand("say", Say().argParser, beforeHandler: (ctx) => Say.preRunChecks(ctx, admins))
+    ..registerCommand("say", Say().argumentParser, beforeHandler: (ctx) => Say.preRunChecks(ctx, admins))
     ..registerCommand("stats", Stats(db).argumentParser, beforeHandler: Stats.preRunChecks)
     ..registerCommand("status", Info().commandFunction);
 

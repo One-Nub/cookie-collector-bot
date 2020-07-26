@@ -11,14 +11,14 @@ class Say {
     }
 
     CacheMember user = await ctx.guild!.getMemberById(ctx.author!.id) as CacheMember;
-    if(user.effectivePermissions.administrator || 
+    if(user.effectivePermissions.administrator ||
         user.effectivePermissions.manageGuild) {
       return true;
     }
     return false;
   }
 
-  Future<void> argParser(CommandContext ctx, String message) async {
+  Future<void> argumentParser(CommandContext ctx, String message) async {
     ChannelArgument cArg = ChannelArgument<CacheTextChannel>();
     CacheTextChannel channel;
     try {
@@ -33,8 +33,8 @@ class Say {
       return;
     }
     message = message.replaceFirst(" ", "").trim();
-    message = message.substring(message.contains(">") ? 
-      message.indexOf(">") + 1 : 
+    message = message.substring(message.contains(">") ?
+      message.indexOf(">") + 1 :
       message.indexOf(" "))
       .trim();
 
@@ -45,9 +45,9 @@ class Say {
     commandFunction(ctx, message, channel);
   }
 
-  Future<void> commandFunction(CommandContext ctx, String message, 
+  Future<void> commandFunction(CommandContext ctx, String message,
     CacheTextChannel cacheTextChannel) async {
-      var botSendPerm = 
+      var botSendPerm =
         cacheTextChannel.effectivePermissions(ctx.guild!.selfMember as CacheMember).sendMessages;
       if(botSendPerm) {
         cacheTextChannel.send(content: message);
