@@ -67,10 +67,10 @@ class CCDatabase {
       "CONSTRAINT `fk_user_id` "
           "FOREIGN KEY (user_id) REFERENCES users (id) "
           "ON DELETE CASCADE, "
-      "CONSTRAINT `fk_guild_id` " 
+      "CONSTRAINT `fk_guild_id` "
           "FOREIGN KEY (guild_id) REFERENCES guilds (id)"
           "ON DELETE CASCADE)");
-    
+
     await connection.close();
   }
 
@@ -110,7 +110,7 @@ class CCDatabase {
     var connection = await dbConnection();
     String query = "SELECT * FROM ("
   	"SELECT ROW_NUMBER() OVER(ORDER BY cookies DESC) "
-  	"AS row_num, user_id, cookies"
+  	"AS row_num, user_id, cookies "
   	"FROM users_guilds WHERE (guild_id = $guildID) ORDER BY row_num) rnt "
     "WHERE rnt.row_num > ${pageNumber * pageEntryMax} LIMIT $pageEntryMax";
 
@@ -136,7 +136,7 @@ class CCDatabase {
     var connection = await dbConnection();
     String query = "SELECT * FROM ("
       "SELECT ROW_NUMBER() OVER(ORDER BY cookies DESC) "
-      "AS row_num, user_id, cookies, level "
+      "AS row_num, user_id, cookies "
       "FROM users_guilds WHERE (guild_id = $guildID) ORDER BY row_num) rnt "
       "WHERE user_id = $userID";
     var results = await connection.query(query);
@@ -152,8 +152,8 @@ class CCDatabase {
     await addGuildRow(guildID);
     await addUserRow(userID);
     var connection = await dbConnection();
-    String query = "INSERT INTO users_guilds (user_id, guild_id, cookies) " 
-      "VALUES ($userID, $guildID, $numCookies)" 
+    String query = "INSERT INTO users_guilds (user_id, guild_id, cookies) "
+      "VALUES ($userID, $guildID, $numCookies)"
       "ON DUPLICATE KEY UPDATE cookies = cookies + $numCookies";
     await connection.query(query);
     await connection.close();
@@ -163,8 +163,8 @@ class CCDatabase {
     await addGuildRow(guildID);
     await addUserRow(userID);
     var connection = await dbConnection();
-    String query = "INSERT INTO users_guilds (user_id, guild_id, cookies) " 
-      "VALUES ($userID, $guildID, -$numCookies)" 
+    String query = "INSERT INTO users_guilds (user_id, guild_id, cookies) "
+      "VALUES ($userID, $guildID, -$numCookies)"
       "ON DUPLICATE KEY UPDATE cookies = cookies - $numCookies";
     await connection.query(query);
     await connection.close();
