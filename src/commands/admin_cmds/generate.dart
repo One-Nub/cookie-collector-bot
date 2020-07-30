@@ -38,7 +38,7 @@ class Generate {
       return;
     }
     int? cookieCnt = int.tryParse(args.last);
-    if(cookieCnt == null) {
+    if(cookieCnt == null || cookieCnt == user.id.id) {
       ctx.reply(content: "An amount of cookies to generate was expected.");
       return;
     }
