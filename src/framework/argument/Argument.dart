@@ -7,7 +7,7 @@ final RegExp _mentionIDRegex = RegExp("^<.+\?(\\d+)>");
 /// Searches for any numbers at the start of the string 
 /// with more than the expected minimum length a discord ID can be, 
 /// which is 17 characters.
-final RegExp _rawIDRegex = RegExp("^(\\d{17,})");
+final RegExp _rawIDRegex = RegExp("(\\d{17,})");
 
 /// Basis for argument parsing classes
 abstract class Argument<T> {

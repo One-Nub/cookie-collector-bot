@@ -1,7 +1,7 @@
 part of framework;
 
 /// Facilitates the ability of getting a User from a passed input.
-/// 
+///
 /// Throws [MissingArgumentException] if an argument cannot be found.
 /// Throws [InvalidUserException] when a valid user cannot be found.
 class UserArgument extends Argument {
@@ -16,7 +16,9 @@ class UserArgument extends Argument {
 
   @override
   Future<User> parseArg(CommandContext ctx, String message) async {
-    message = message.replaceFirst(" ", "");
+    if(message.startsWith(" ")) {
+      message = message.replaceFirst(" ", "");
+    }
     message = message.replaceFirst(ctx.commandMatcher, "");
     //Only check for empty message since this does not need to be triggered in guild context.
     if (message == "") {
