@@ -29,10 +29,10 @@ class Stats {
   }
 
   Future<void> commandFunction(CommandContext ctx, String message, User user) async {
-    var userRow = await _database.getStoredUserAndRank(user.id.id, ctx.guild!.id.id);
+    var userRow = await _database.getRankedUserGuildData(user.id.id, ctx.guild!.id.id);
     Map<String, dynamic> userMap = {
       "user_id" : user.id,
-      "available_cookies" : 0,
+      "cookies" : 0,
       "row_num" : "N/A"
     };
     if(userRow != null) {
@@ -40,11 +40,11 @@ class Stats {
     }
 
     EmbedBuilder statsEmbed = EmbedBuilder()
-      ..addField(name: "**Cookies**", content: userMap["available_cookies"], inline: true)
+      ..addField(name: "**Cookies**", content: userMap["cookies"], inline: true)
       ..addField(name: "**Leaderboard Position**", content: userMap["row_num"], inline: true)
       ..color = DiscordColor.fromHexString("87CEEB")
       ..description = (userRow == null)
-          ? "**This user does not have any data stored in the database!**" : ""
+          ? "**This user does not have any data stored in the database for this server!**" : ""
       ..thumbnailUrl = user.avatarURL(format: "png", size: 512)
       ..timestamp = DateTime.now().toUtc()
       ..title = "${user.tag}'s Stats";

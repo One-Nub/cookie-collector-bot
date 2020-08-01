@@ -131,7 +131,7 @@ class CCDatabase {
     return returnRow;
   }
 
-  Future<Row?> getStoredUserAndRank(int userID, int guildID) async {
+  Future<Row?> getRankedUserGuildData(int userID, int guildID) async {
     Row? returnRow = null;
     var connection = await dbConnection();
     String query = "SELECT * FROM ("
