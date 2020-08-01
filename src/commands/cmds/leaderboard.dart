@@ -25,7 +25,8 @@ class Leaderboard {
       await _getPageString(ctx.client, ctx.guild!.id.id, pageMax: maxRowsPerPage);
 
     var dbConnection = await _database.dbConnection();
-    var query = await dbConnection.query("SELECT COUNT(*) FROM `${ctx.guild!.id.id}`");
+    var query = await dbConnection.query("SELECT COUNT(*) FROM users_guilds "
+      "WHERE guild_id = ${ctx.guild!.id.id}");
     await dbConnection.close();
 
     int numRows = query.first.values[0];
@@ -121,7 +122,7 @@ class Leaderboard {
         Row row = pageIterator.current;
         Map<String, dynamic> rowInfo = row.fields;
         User? user = await client.getUser(Snowflake(rowInfo["user_id"]));
-        output += "**${rowInfo["row_num"]}.** ${user!.tag} - `${rowInfo["available_cookies"]}`\n";
+        output += "**${rowInfo["row_num"]}.** ${user!.tag} - `${rowInfo["cookies"]}`\n";
       }
       pages[pageNumber] = output;
       return output;

@@ -30,6 +30,11 @@ Future<void> main() async {
     admins.add(Snowflake(value));
   }
 
+  ClientOptions clOpts = ClientOptions()
+    ..initialPresence = PresenceBuilder.of(game: Activity.of("the development game"));
+
+  bot = Nyxx(token, options: clOpts, defaultLoggerLogLevel: Level.INFO);
+
   YamlMap dbConfig = botConfig["database_config"];
   db = CCDatabase(dbConfig["username"],
     dbConfig["password"],
@@ -40,10 +45,7 @@ Future<void> main() async {
   var verifyConnection = await db.dbConnection();
   verifyConnection.close();
 
-  ClientOptions clOpts = ClientOptions()
-    ..initialPresence = PresenceBuilder.of(game: Activity.of("the development game"));
-
-  bot = Nyxx(token, options: clOpts, defaultLoggerLogLevel: Level.INFO);
+  db.initializeTables();
 
   cmdr = Commander(bot, prefixHandler: (Message msg) => prefixHandler(msg, defaultPrefix))
     ..registerCommand("daily", Daily(db).commandFunction, beforeHandler: Daily.preRunChecks)
@@ -67,7 +69,7 @@ Future<void> main() async {
     Logger("Guild Join")
       .log(Level.INFO, "Guild \"${event.guild.name}\":${event.guild.id} "
         "was loaded at ${DateTime.now()}");
-    db.createGuildTable(event.guild.id.id);
+    db.addGuildRow(event.guild.id.id);
   });
 }
 
