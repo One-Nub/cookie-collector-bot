@@ -41,7 +41,7 @@ class Stats {
 
     EmbedBuilder statsEmbed = EmbedBuilder()
       ..addField(name: "**Cookies**", content: userMap["cookies"], inline: true)
-      ..addField(name: "**Leaderboard Position**", content: userMap["row_num"], inline: true)
+      ..addField(name: "**Rank**", content: userMap["row_num"], inline: true)
       ..color = DiscordColor.fromHexString("87CEEB")
       ..description = (userRow == null)
           ? "**This user does not have any data stored in the database for this server!**" : ""
