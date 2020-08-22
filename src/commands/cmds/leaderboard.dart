@@ -21,6 +21,7 @@ class Leaderboard {
   }
 
   Future<void> commandFunction(CommandContext ctx, String message) async {
+    pages.clear();
     String pageLeaderboard =
       await _getPageString(ctx.client, ctx.guild!.id.id, pageMax: maxRowsPerPage);
 
@@ -46,8 +47,9 @@ class Leaderboard {
     embed.footer = embedFooter;
 
     var leaderboardMessage = await ctx.channel.send(embed: embed);
-
-    paginationHandler(ctx, leaderboardMessage, embed, pageMax);
+    if(pageMax > 1) {
+      paginationHandler(ctx, leaderboardMessage, embed, pageMax);
+    }
   }
 
   Future<void> paginationHandler(CommandContext ctx, Message lbMessage,
