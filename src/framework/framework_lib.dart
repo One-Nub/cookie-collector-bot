@@ -5,7 +5,7 @@ import 'dart:collection';
 
 import 'package:date_time_format/date_time_format.dart';
 import 'package:nyxx/nyxx.dart';
-import 'package:nyxx.commander/commander.dart';
+import 'package:nyxx_commander/commander.dart';
 import 'package:logging/logging.dart';
 
 //Argument handlers

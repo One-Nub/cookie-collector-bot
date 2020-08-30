@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:logging/logging.dart';
 import 'package:nyxx/nyxx.dart';
-import 'package:nyxx.commander/commander.dart';
+import 'package:nyxx_commander/commander.dart';
 import 'package:yaml/yaml.dart';
 
 import 'CCDatabase.dart';

@@ -8,7 +8,7 @@ import 'dart:async';
 import 'package:date_time_format/date_time_format.dart';
 import 'package:mysql1/mysql1.dart' show Row;
 import 'package:nyxx/nyxx.dart';
-import 'package:nyxx.commander/commander.dart';
+import 'package:nyxx_commander/commander.dart';
 
 import '../CCDatabase.dart';
 import '../framework/framework_lib.dart';
