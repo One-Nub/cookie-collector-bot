@@ -43,10 +43,10 @@ class Leaderboard {
 
     var embedFooter = EmbedFooterBuilder()
       ..text = "Page 1 / $pageMax"
-      ..iconUrl = ctx.author!.avatarURL(format: "png");
+      ..iconUrl = ctx.author.avatarURL(format: "png");
     embed.footer = embedFooter;
 
-    var leaderboardMessage = await ctx.channel.send(embed: embed);
+    var leaderboardMessage = await ctx.channel.sendMessage(embed: embed);
     if(pageMax > 1) {
       paginationHandler(ctx, leaderboardMessage, embed, pageMax);
     }
@@ -67,7 +67,7 @@ class Leaderboard {
     var reactionStream = ctx.client.onMessageReactionAdded;
     reactionStream = reactionStream.where((event) {
         return event.messageId == lbMessage.id &&
-          event.userId == ctx.author!.id;
+          event.user.getFromCache()!.id == ctx.author.id;
     });
     reactionStream = reactionStream.timeout(promptTimeout, onTimeout: (sink) async {
         lbMessage.edit(content: "Prompt terminated.");
@@ -92,7 +92,7 @@ class Leaderboard {
           lbEmbed.footer = lbEmbed.footer!
             ..text = "Page ${currentPageIndex + 1} / $maxPages";
           lbMessage.edit(embed: lbEmbed);
-          lbMessage.deleteUserReaction(userReaction, ctx.author!.id.toString());
+          lbMessage.deleteUserReaction(userReaction, ctx.author);
         }
       }
       else if(userReaction == backArrow) {
@@ -104,7 +104,7 @@ class Leaderboard {
           lbEmbed.footer = lbEmbed.footer!
             ..text = "Page ${currentPageIndex + 1} / $maxPages";
           lbMessage.edit(embed: lbEmbed);
-          lbMessage.deleteUserReaction(userReaction, ctx.author!.id.toString());
+          lbMessage.deleteUserReaction(userReaction, ctx.author);
         }
       }
     });
@@ -123,8 +123,8 @@ class Leaderboard {
       while (pageIterator.moveNext()) {
         Row row = pageIterator.current;
         Map<String, dynamic> rowInfo = row.fields;
-        User? user = await client.getUser(Snowflake(rowInfo["user_id"]));
-        output += "**${rowInfo["row_num"]}.** ${user!.tag} - `${rowInfo["cookies"]}`\n";
+        User? user = await client.fetchUser(Snowflake(rowInfo["user_id"]));
+        output += "**${rowInfo["row_num"]}.** ${user.tag} - `${rowInfo["cookies"]}`\n";
       }
       pages[pageNumber] = output;
       return output;

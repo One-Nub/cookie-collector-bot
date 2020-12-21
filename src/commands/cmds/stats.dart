@@ -18,7 +18,7 @@ class Stats {
       user = await userArg.parseArg(ctx, message);
     }
     on MissingArgumentException {
-      user = await ctx.client.getUser(ctx.author!.id) as User;
+      user = await ctx.client.fetchUser(ctx.author.id);
     }
     on InvalidUserException catch (e) {
       ctx.reply(content: e);
@@ -49,6 +49,6 @@ class Stats {
       ..timestamp = DateTime.now().toUtc()
       ..title = "${user.tag}'s Stats";
 
-    ctx.channel.send(embed: statsEmbed);
+    ctx.channel.sendMessage(embed: statsEmbed);
   }
 }

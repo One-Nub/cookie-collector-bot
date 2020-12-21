@@ -22,14 +22,14 @@ class Daily with Cooldown {
       return false;
     }
 
-    if(Cooldown.isCooldownActive(ctx.guild!.id, ctx.author!.id)) {
-      String timeRemaining = Cooldown.getRemainingTime(ctx.guild!.id, ctx.author!.id);
+    if(Cooldown.isCooldownActive(ctx.guild!.id, ctx.author.id)) {
+      String timeRemaining = Cooldown.getRemainingTime(ctx.guild!.id, ctx.author.id);
       EmbedBuilder errorEmbed = EmbedBuilder()
         ..color = DiscordColor.fromHexString("6B0504")
         ..description = "It hasn't been a full day yet! Try again in `$timeRemaining`"
         ..addAuthor((author) {
-          author.name = ctx.author!.tag;
-          author.iconUrl = ctx.author!.avatarURL(format: "png");
+          author.name = ctx.author.tag;
+          author.iconUrl = ctx.author.avatarURL(format: "png");
         });
       await ctx.reply(embed: errorEmbed);
       return false;
@@ -38,13 +38,13 @@ class Daily with Cooldown {
   }
 
   Future<void> commandFunction(CommandContext ctx, String msg) async {
-    int streakDuration = _getStreakDuration(ctx.guild!.id, ctx.author!.id);
+    int streakDuration = _getStreakDuration(ctx.guild!.id, ctx.author.id);
     int streakRewardModifier = (streakDuration < 30) ?
       (streakDuration / rewardIncInterval).floor() * 2 :
       (30 / rewardIncInterval).floor() * 2;
 
     int reward = baseReward + streakRewardModifier;
-    await _database.addCookies(ctx.author!.id.id, reward, ctx.guild!.id.id);
+    await _database.addCookies(ctx.author.id.id, reward, ctx.guild!.id.id);
 
     EmbedBuilder replyEmbed = EmbedBuilder()
       ..description = "You have collected your daily `$reward` cookies! \n"
@@ -52,15 +52,15 @@ class Daily with Cooldown {
       ..timestamp = DateTime.now().toUtc().add(Duration(days: 1))
       ..color = DiscordColor.fromHexString("67F399");
     replyEmbed.addAuthor((author) {
-      author.name = "Daily Cookies - ${ctx.author!.tag}";
-      author.iconUrl = ctx.author!.avatarURL(format: "png");
+      author.name = "Daily Cookies - ${ctx.author.tag}";
+      author.iconUrl = ctx.author.avatarURL(format: "png");
     });
     replyEmbed.addFooter((footer) {
       footer.text = "You can collect again in 24 hours.";
     });
 
     await ctx.reply(embed: replyEmbed);
-    Cooldown.applyCooldown(ctx.guild!.id, ctx.author!.id);
+    Cooldown.applyCooldown(ctx.guild!.id, ctx.author.id);
   }
 
   int _getStreakDuration(Snowflake guildID, Snowflake userID) {
