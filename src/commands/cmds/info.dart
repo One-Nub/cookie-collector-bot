@@ -18,7 +18,7 @@ class Info {
     var embed = await EmbedBuilder()
       ..addField(name: "Uptime", content: runtime, inline: true)
       ..addField(name: "Memory Usage", content: "$memUsage MB", inline: true)
-      ..addField(name: "Version", content: "v1.0.0-DEV", inline: true)
+      ..addField(name: "Version", content: "v1.0.1", inline: true)
       ..addField(name: "(Cached) Guilds", content: ctx.client.guilds.count, inline: true)
       ..addField(name: "(Cached) Users", content: ctx.client.users.count, inline: true)
       ..addField(name: "Prefix", content: prefix, inline: true)
