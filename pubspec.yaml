@@ -2,17 +2,32 @@ name: cookie_collector_bot
 description: A little discord bot that lets you collect and do stuff with cookies
 
 environment:
-  sdk: '>=2.9.0-11.0.dev <3.0.0'
+  sdk: '>=2.12.0-100.beta <3.0.0'
 
 dependencies:
   date_time_format: ^1.1.0
   mysql1: ^0.17.1
-  nyxx: ^1.0.1
-  nyxx_commander: ^1.0.0
+  nyxx: ^1.1.0
+  nyxx_commander: ^1.0.1
   yaml: ^2.2.1
 
-# dependency_overrides:
-#   nyxx:
-#     path: packages/nyxx/nyxx
-#   nyxx.commander:
-#     path: packages/nyxx/nyxx.commander
+dependency_overrides:
+  nyxx:
+    git:
+      url: https://github.com/l7ssha/nyxx.git
+      ref: "1.1"
+      path: nyxx
+  nyxx_commander:
+    git:
+      url: https://github.com/l7ssha/nyxx.git
+      ref: "1.1"
+      path: nyxx.commander
+  http:
+    git:
+      url: git://github.com/dart-lang/http.git
+  logging:
+    git:
+      url: git://github.com/dart-lang/logging.git
+  http_parser:
+    git:
+      url: git://github.com/dart-lang/http_parser.git
