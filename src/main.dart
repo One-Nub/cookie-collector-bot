@@ -30,18 +30,14 @@ Future<void> main() async {
     admins.add(Snowflake(value));
   }
 
-  GatewayIntents gatewayIntents = GatewayIntents()
-    ..directMessages = true
-    ..guildMembers = true
-    ..guildMessageReactions = true
-    ..guildMessages = true
-    ..guilds = true;
+  int gatewayIntents =
+    GatewayIntents.directMessages + GatewayIntents.guildMessageReactions +
+    GatewayIntents.guildMessages + GatewayIntents.guilds;
 
   ClientOptions clOpts = ClientOptions()
-    ..initialPresence = PresenceBuilder.of(game: Activity.of("the development game"))
-    ..gatewayIntents = gatewayIntents;
+    ..initialPresence = PresenceBuilder.of(game: Activity.of("the development game"));
 
-  bot = Nyxx(token, options: clOpts, defaultLoggerLogLevel: Level.INFO);
+  bot = Nyxx(token, gatewayIntents, options: clOpts, defaultLoggerLogLevel: Level.INFO);
 
   YamlMap dbConfig = botConfig["database_config"];
   db = CCDatabase(dbConfig["username"],
