@@ -6,7 +6,7 @@ class Generate {
 
   static bool preRunChecks(CommandContext ctx) {
     //Must be run in guild & must be me
-    if(ctx.guild == null || ctx.author!.id.id != 156872400145874944) {
+    if(ctx.guild == null || ctx.author.id.id != 156872400145874944) {
       return false;
     }
     return true;
@@ -47,11 +47,11 @@ class Generate {
   }
 
   Future<void> commandFunction(CommandContext ctx, String msg, User user, int cookieCnt) async {
-    var confirmPrompt = await ctx.reply(content:
+    Message confirmPrompt = await ctx.reply(content:
       "Please verify your intentions: `${user.tag}` will recieve `${cookieCnt}` cookies");
-    final emoteGuild = await ctx.client.getGuild(Snowflake(440350951572897812));
-    final confirm = await emoteGuild.getEmoji(Snowflake(724438115791667220));
-    final deny = await emoteGuild.getEmoji(Snowflake(724438115384557579));
+    final emoteGuild = await ctx.client.fetchGuild(Snowflake(440350951572897812));
+    final confirm = await emoteGuild.fetchEmoji(Snowflake(724438115791667220));
+    final deny = await emoteGuild.fetchEmoji(Snowflake(724438115384557579));
 
     Duration emoteDelay = Duration(milliseconds: 250);
     await Future.delayed(emoteDelay, () => confirmPrompt.createReaction(confirm));
@@ -59,7 +59,7 @@ class Generate {
 
     MessageReactionEvent? reactionStream = await ctx.client.onMessageReactionAdded
     .firstWhere((element) {
-      return element.userId == ctx.author!.id &&
+      return element.member.id == ctx.author.id &&
         (element.emoji == confirm || element.emoji == deny);
     })
     .timeout(Duration(seconds: 15))
@@ -69,17 +69,17 @@ class Generate {
 
     var result = await reactionStream;
     if(result == null) {
-      confirmPrompt.deleteReaction(confirm);
+      confirmPrompt.deleteSelfReaction(confirm);
       await ctx.reply(content: "Cancelled due to timeout.");
     }
     else if(result.emoji == confirm) {
-      await confirmPrompt.deleteReaction(deny);
+      await confirmPrompt.deleteSelfReaction(deny);
       await _database.addCookies(user.id.id, cookieCnt, ctx.guild!.id.id);
       await confirmPrompt.edit(content: "Done - `${user.tag}` has recieved "
         "`$cookieCnt` cookies.");
     }
     else {
-      confirmPrompt.deleteReaction(confirm);
+      confirmPrompt.deleteSelfReaction(confirm);
       await confirmPrompt.edit(content: "Cancelled - `${user.tag}`'s cookies "
         "have not been modified.");
     }

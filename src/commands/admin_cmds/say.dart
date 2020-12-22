@@ -6,23 +6,23 @@ class Say {
       return false;
     }
 
-    if(admins.contains(ctx.author!.id)) {
+    if(admins.contains(ctx.author.id)) {
       return true;
     }
 
-    CacheMember user = await ctx.guild!.getMemberById(ctx.author!.id) as CacheMember;
-    if(user.effectivePermissions.administrator ||
-        user.effectivePermissions.manageGuild) {
+    Member user = await ctx.guild!.fetchMember(ctx.author.id);
+    Permissions userPerms = await user.effectivePermissions;
+    if(userPerms.administrator || userPerms.manageGuild) {
       return true;
     }
     return false;
   }
 
   Future<void> argumentParser(CommandContext ctx, String message) async {
-    ChannelArgument cArg = ChannelArgument<CacheTextChannel>();
-    CacheTextChannel channel;
+    ChannelArgument cArg = ChannelArgument<TextGuildChannel>();
+    TextGuildChannel channel;
     try {
-      channel = await cArg.parseArg(ctx, message) as CacheTextChannel;
+      channel = await cArg.parseArg(ctx, message) as TextGuildChannel;
     }
     on MissingArgumentException catch (e) {
       ctx.reply(content: "$e A channel identifier was expected.");
@@ -46,16 +46,20 @@ class Say {
   }
 
   Future<void> commandFunction(CommandContext ctx, String message,
-    CacheTextChannel cacheTextChannel) async {
+    TextGuildChannel textChannel) async {
+      Member? botMember = ctx.guild!.selfMember;
+      if(botMember == null) {
+        botMember = await ctx.guild!.fetchMember(ctx.client.self.id);
+      }
       var botSendPerm =
-        cacheTextChannel.effectivePermissions(ctx.guild!.selfMember as CacheMember).sendMessages;
-      if(botSendPerm) {
-        cacheTextChannel.send(content: message);
+        await textChannel.effectivePermissions(botMember);
+      if(botSendPerm.sendMessages && botSendPerm.viewChannel) {
+        textChannel.sendMessage(content: message);
       }
       else {
-        var emojiGuild = await ctx.client.getGuild(Snowflake(440350951572897812));
-        var emote = await emojiGuild.getEmoji(Snowflake(724785215838617770));
-        ctx.reply(content: "I can't send messages in that channel! $emote");
+        var emojiGuild = await ctx.client.fetchGuild(Snowflake(440350951572897812));
+        var emote = await emojiGuild.fetchEmoji(Snowflake(724785215838617770));
+        ctx.reply(content: "I can't send messages in that channel! <a:confuse:724785215838617770>");
       }
   }
 }
