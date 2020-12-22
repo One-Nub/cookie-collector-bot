@@ -57,8 +57,6 @@ class Say {
         textChannel.sendMessage(content: message);
       }
       else {
-        var emojiGuild = await ctx.client.fetchGuild(Snowflake(440350951572897812));
-        var emote = await emojiGuild.fetchEmoji(Snowflake(724785215838617770));
         ctx.reply(content: "I can't send messages in that channel! <a:confuse:724785215838617770>");
       }
   }
