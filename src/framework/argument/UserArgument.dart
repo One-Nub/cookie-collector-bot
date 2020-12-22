@@ -35,15 +35,22 @@ class UserArgument extends Argument {
     //If a noticeable ID can't be found & (want to search names & the guild exists)...
     if (!_rawIDRegex.hasMatch(message) &&
         (searchMemberNames && ctx.guild != null)) {
-      //Attempt to search member cache for a username containing the string, or
-      //for a member tag username#discrim that matches the message.
-      List<IMember> cachedMembers = ctx.guild!.members.values.toList();
-      for (var member in cachedMembers) {
-        if (member.username.startsWith(message) || member.tag == message) {
-          userID = member.id.id;
-          break;
-        }
+
+      //Remove discriminator if it exists - search methods don't like discrim
+      RegExp rmvDiscrim = new RegExp(r"#\d{4}");
+      if(rmvDiscrim.hasMatch(message)) {
+        int matchPos = message.lastIndexOf(rmvDiscrim);
+        message = message.replaceRange(matchPos, matchPos + 5, "");
       }
+
+      //This doesn't work currently
+      // var findMember = ctx.guild!.searchMembers(message, limit: 2);
+      // Member findResult = await findMember.single;
+      // userID = findResult.id.id;
+
+      var findMember = await ctx.guild!.searchMembersGateway(message);
+      Member findResult = await findMember.single;
+      userID = findResult.id.id;
     } else {
       userID = _parseIDHelper(message) ?? 0;
     }
@@ -54,7 +61,7 @@ class UserArgument extends Argument {
     }
 
     try {
-      User returnMe = await ctx.client.getUser(Snowflake(userID)) as User;
+      User returnMe = await ctx.client.fetchUser(Snowflake(userID));
       return returnMe;
     } catch (exception) {
       //This should trigger if the found ID is not a user ID (aka the 'user' does not exist).

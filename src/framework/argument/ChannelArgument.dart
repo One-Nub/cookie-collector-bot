@@ -2,11 +2,11 @@ part of framework;
 
 /// Facilitates the ability of getting a Channel from a passed input.
 ///
-/// Accepted types: CachelessTextChannel, CacheTextChannel, CacheVoiceChannel, CategoryChannel
+/// Accepted types: TextGuildChannel, VoiceGuildChannel, CategoryGuildChannel
 /// Throws [GuildContextRequiredException] when run from a non-guild context.
 /// Throws [MissingArgumentException] if an argument cannot be found.
 /// Throws [InvalidChannelException] if a valid channel cannot be found.
-class ChannelArgument<T extends Channel> extends Argument {
+class ChannelArgument<T extends GuildChannel> extends Argument {
   late bool searchChannelNames;
 
   ChannelArgument(
@@ -21,12 +21,13 @@ class ChannelArgument<T extends Channel> extends Argument {
       throw GuildContextRequiredException();
     }
 
+    //Remove leading space and then the content used to run the command
     message = message.replaceFirst(" ", "");
     message = message.replaceFirst(ctx.commandMatcher, "");
     if(message == "") {
       throw MissingArgumentException();
     }
-    
+
     message = message.trim();
     int channelID = 0;
 
@@ -35,52 +36,39 @@ class ChannelArgument<T extends Channel> extends Argument {
       message = message.split("|").first.trim();
     } else {
       //Text channels can't have spaces while categories & voice channels can.
-      if (T == CachelessTextChannel || T == CacheTextChannel)
+      if (T == TextGuildChannel)
         message = message.split(RegExp("\\s+")).first.trim();
     }
 
-    //Actions to set id.
+    //Actions to set id. If there's no Regex match for an ID & searching channel names
     if (!_rawIDRegex.hasMatch(message) && searchChannelNames) {
-      List<Channel> guildChannels = ctx.guild!.channels.values.toList();
-
-      //O(n) for every channel of T
-      for (var channel in guildChannels) {
-        if (channel.type == ChannelType.text && T == CacheTextChannel) {
-          channel = channel as CacheTextChannel;
-          if (channel.name.toLowerCase() == message.toLowerCase()) {
-            channelID = channel.id.id;
-            break;
-          }
-        } else if(channel.type == ChannelType.text && T == CachelessTextChannel) {
-          channel = channel as CachelessTextChannel;
-          if (channel.name.toLowerCase() == message.toLowerCase()) {
-            channelID = channel.id.id;
-            break;
-          }
-        } else if (channel.type == ChannelType.voice && T == CacheVoiceChannel) {
-          channel = channel as CacheVoiceChannel;
-          if (channel.name.toLowerCase() == message.toLowerCase()) {
-            channelID = channel.id.id;
-            break;
-          }
-        } else if (channel.type == ChannelType.category && T == CategoryChannel) {
-          channel = channel as CategoryChannel;
-          if (channel.name.toLowerCase() == message.toLowerCase()) {
-            channelID = channel.id.id;
-            break;
-          }
+      List<T> typedChannelList = ctx.guild!.channels.whereType<T>().toList();
+      for(T channel in typedChannelList) {
+        if (channel.name.toLowerCase() == message.toLowerCase()) {
+          channelID = channel.id.id;
+          break;
         }
       }
     } else {
       channelID = _parseIDHelper(message) ?? 0;
     }
 
+
+    var guildChannels = ctx.guild!.channels.toList();
+    List<Snowflake> guildChannelIDList = [];
+
+    //Get a list of the IDs of the channels in the guild
+    for(int inc = 0; inc < guildChannels.length; inc++) {
+      guildChannelIDList.add(guildChannels[inc].id);
+    }
+
     //ID wasn't updated/couldn't be found, or guild does not have a matching channel id.
-    if (channelID == 0 || !ctx.guild!.channels.hasKey(Snowflake(channelID))) {
+    if (channelID == 0 || !guildChannelIDList.contains(channelID)) {
       throw InvalidChannelException("A matching channel could not be found within the guild.");
     }
 
-    var returnChannel = await ctx.client.getChannel(Snowflake(channelID));
+    //Since by now the channel exists, get the first channel that matches the found channel ID.
+    var returnChannel = guildChannels.firstWhere((element) { return element.id == channelID; });
     if(returnChannel.runtimeType != T) {
       throw InvalidChannelException("A channel was found, but it's type "
         "does not match the expected type.");
