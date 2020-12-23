@@ -21,7 +21,7 @@ class Generate {
       user = await userArg.parseArg(ctx, message);
     }
     on MissingArgumentException catch (e) {
-      ctx.reply(content: e);
+      ctx.reply(content: "$e This command requires `[user] [amount]`");
       return;
     }
     on InvalidUserException catch (e) {
@@ -49,9 +49,12 @@ class Generate {
   Future<void> commandFunction(CommandContext ctx, String msg, User user, int cookieCnt) async {
     Message confirmPrompt = await ctx.reply(content:
       "Please verify your intentions: `${user.tag}` will recieve `${cookieCnt}` cookies");
-    final emoteGuild = await ctx.client.fetchGuild(Snowflake(440350951572897812));
-    final confirm = await emoteGuild.fetchEmoji(Snowflake(724438115791667220));
-    final deny = await emoteGuild.fetchEmoji(Snowflake(724438115384557579));
+
+    // final emoteGuild = await ctx.client.fetchGuild(Snowflake(440350951572897812));
+    // final confirm = await emoteGuild.fetchEmoji(Snowflake(724438115791667220));
+    // final deny = await emoteGuild.fetchEmoji(Snowflake(724438115384557579));
+    UnicodeEmoji confirm = UnicodeEmoji("✅");
+    UnicodeEmoji deny = UnicodeEmoji("❎");
 
     Duration emoteDelay = Duration(milliseconds: 250);
     await Future.delayed(emoteDelay, () => confirmPrompt.createReaction(confirm));
@@ -59,20 +62,21 @@ class Generate {
 
     MessageReactionEvent? reactionStream = await ctx.client.onMessageReactionAdded
     .firstWhere((element) {
-      return element.member.id == ctx.author.id &&
-        (element.emoji == confirm || element.emoji == deny);
+      return element.user.id == ctx.author.id &&
+        (element.emoji.encodeForAPI() == confirm.encodeForAPI()
+        || element.emoji.encodeForAPI() == deny.encodeForAPI());
     })
     .timeout(Duration(seconds: 15))
     .catchError((event) {
       return null;
     });
 
-    var result = await reactionStream;
+    MessageReactionEvent? result = await reactionStream;
     if(result == null) {
-      confirmPrompt.deleteSelfReaction(confirm);
-      await ctx.reply(content: "Cancelled due to timeout.");
+      await confirmPrompt.delete();
+      await ctx.reply(content: "Cancelled due to timeout.", mention: false);
     }
-    else if(result.emoji == confirm) {
+    else if(result.emoji.encodeForAPI() == confirm.encodeForAPI()) {
       await confirmPrompt.deleteSelfReaction(deny);
       await _database.addCookies(user.id.id, cookieCnt, ctx.guild!.id.id);
       await confirmPrompt.edit(content: "Done - `${user.tag}` has recieved "
