@@ -1,7 +1,7 @@
 part of commands;
 
 class Leaderboard {
-  final backArrow = UnicodeEmoji("⬅️");
+  final backArrow = UnicodeEmoji("⬅");
   final forwardArrow = UnicodeEmoji("➡️");
   final trash = UnicodeEmoji("🗑");
 
@@ -67,7 +67,7 @@ class Leaderboard {
     var reactionStream = ctx.client.onMessageReactionAdded;
     reactionStream = reactionStream.where((event) {
         return event.messageId == lbMessage.id &&
-          event.user.getFromCache()!.id == ctx.author.id;
+          event.user.id == ctx.author.id;
     });
     reactionStream = reactionStream.timeout(promptTimeout, onTimeout: (sink) async {
         lbMessage.edit(content: "Prompt terminated.");
@@ -78,12 +78,12 @@ class Leaderboard {
     StreamSubscription<MessageReactionEvent>? reactionListener = null;
     reactionListener = await reactionStream.listen((event) async {
       var userReaction = event.emoji as UnicodeEmoji;
-      if(userReaction == trash) {
+      if(userReaction.encodeForAPI() == trash.encodeForAPI()) {
         await lbMessage.edit(content: "Prompt terminated.");
         await lbMessage.deleteAllReactions();
         await reactionListener!.cancel();
       }
-      else if(userReaction == forwardArrow) {
+      else if(userReaction.encodeForAPI() == forwardArrow.encodeForAPI()) {
         if(maxPages - 1 > currentPageIndex) {
           currentPageIndex++;
           String description = await _getPageString(ctx.client, ctx.guild!.id.id,
@@ -95,7 +95,7 @@ class Leaderboard {
           lbMessage.deleteUserReaction(userReaction, ctx.author);
         }
       }
-      else if(userReaction == backArrow) {
+      else if(userReaction.encodeForAPI() == backArrow.encodeForAPI()) {
         if(currentPageIndex > 0) {
           currentPageIndex--;
           String description = await _getPageString(ctx.client, ctx.guild!.id.id,
