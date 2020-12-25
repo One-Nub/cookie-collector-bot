@@ -170,6 +170,28 @@ class CCDatabase {
     await connection.close();
   }
 
+  Future<void> addLifetimeCookies(int userID, int numCookies, int guildID) async {
+    await addGuildRow(guildID);
+    await addUserRow(userID);
+    var connection = await dbConnection();
+    String query = "INSERT INTO users_guilds (user_id, guild_id, lifetime_cookies) "
+      "VALUES ($userID, $guildID, $numCookies)"
+      "ON DUPLICATE KEY UPDATE lifetime_cookies = lifetime_cookies + $numCookies";
+    await connection.query(query);
+    await connection.close();
+  }
+
+  Future<void> removeLifetimeCookies(int userID, int numCookies, int guildID) async {
+    await addGuildRow(guildID);
+    await addUserRow(userID);
+    var connection = await dbConnection();
+    String query = "INSERT INTO users_guilds (user_id, guild_id, lifetime_cookies) "
+      "VALUES ($userID, $guildID, -$numCookies)"
+      "ON DUPLICATE KEY UPDATE lifetime_cookies = lifetime_cookies - $numCookies";
+    await connection.query(query);
+    await connection.close();
+  }
+
   Future<int> getCookieCount(int userID, int guildID) async {
     var connection = await dbConnection();
     var numCookies = 0;
