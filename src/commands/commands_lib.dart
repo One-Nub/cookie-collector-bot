@@ -10,7 +10,7 @@ import 'package:mysql1/mysql1.dart' show Row;
 import 'package:nyxx/nyxx.dart';
 import 'package:nyxx_commander/commander.dart';
 
-import '../CCDatabase.dart';
+import '../internal/CCDatabase.dart';
 import '../framework/framework_lib.dart';
 
 //Normal commands

@@ -5,7 +5,7 @@ import 'package:nyxx/nyxx.dart';
 import 'package:nyxx_commander/commander.dart';
 import 'package:yaml/yaml.dart';
 
-import 'CCDatabase.dart';
+import 'internal/CCDatabase.dart';
 import 'commands/commands_lib.dart';
 
 late final Nyxx bot;
