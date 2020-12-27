@@ -17,8 +17,10 @@ class ChatListener {
   
   ChatListener(this.guildId) {
     guildStream = _guildStreamCreator(guildId);
-    lastSuccessfulTrigger = DateTime.now();
+    lastSuccessfulTrigger = DateTime.now().toUtc();
+    lastMessage = null;
     //TODO: Create way to get and load ignored channels (and figure out how to update)
+    _lastMessageHandler();
   }
 
   Stream<MessageReceivedEvent> _guildStreamCreator (Snowflake guildID) {
