@@ -7,6 +7,7 @@ import 'package:yaml/yaml.dart';
 
 import 'internal/CCDatabase.dart';
 import 'commands/commands_lib.dart';
+import 'internal/chat_handler.dart';
 
 late final Nyxx bot;
 late final Commander cmdr;
@@ -20,25 +21,18 @@ Future<void> main() async {
   Level startup = Level("START", 850);
   var startLogger = Logger("STARTUP");
 
-  //Load config.
+  //Load bot config.
   YamlMap botConfig = loadYaml(File('src/config.yaml').readAsStringSync());
   final token = botConfig["token"];
   final defaultPrefix = botConfig["default_prefix"];
 
+  //Load bot admin IDs
   YamlList configAdmins = botConfig["admins"];
   for(int value in configAdmins) {
     admins.add(Snowflake(value));
   }
 
-  int gatewayIntents =
-    GatewayIntents.directMessages + GatewayIntents.guildMessageReactions +
-    GatewayIntents.guildMessages + GatewayIntents.guilds;
-
-  ClientOptions clOpts = ClientOptions()
-    ..initialPresence = PresenceBuilder.of(game: Activity.of("the development game"));
-
-  bot = Nyxx(token, gatewayIntents, options: clOpts, defaultLoggerLogLevel: Level.INFO);
-
+  //Load database config (& validate)
   YamlMap dbConfig = botConfig["database_config"];
   db = CCDatabase(dbConfig["username"],
     dbConfig["password"],
@@ -50,6 +44,15 @@ Future<void> main() async {
   verifyConnection.close();
 
   db.initializeTables();
+
+  int gatewayIntents =
+    GatewayIntents.directMessages + GatewayIntents.guildMessageReactions +
+    GatewayIntents.guildMessages + GatewayIntents.guilds;
+
+  ClientOptions clOpts = ClientOptions()
+    ..initialPresence = PresenceBuilder.of(game: Activity.of("the development game"));
+
+  bot = Nyxx(token, gatewayIntents, options: clOpts, defaultLoggerLogLevel: Level.INFO);
 
   cmdr = Commander(bot, prefixHandler: (Message msg) => prefixHandler(msg, defaultPrefix))
     ..registerCommand("daily", Daily(db).commandFunction, beforeHandler: Daily.preRunChecks)
