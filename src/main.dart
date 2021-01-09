@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:io';
 
 import 'package:logging/logging.dart';
@@ -13,6 +14,8 @@ late final Nyxx bot;
 late final Commander cmdr;
 late CCDatabase db;
 final List<Snowflake> admins = [];
+
+final HashSet<GuildListener> guildList = HashSet();
 
 Future<void> main() async {
   Stopwatch startupTimer = Stopwatch();
@@ -77,6 +80,7 @@ Future<void> main() async {
       .log(Level.INFO, "Guild \"${event.guild.name}\":${event.guild.id} "
         "was loaded at ${DateTime.now()}");
     db.addGuildRow(event.guild.id.id);
+    guildList.add(GuildListener(event.guild));
   });
 }
 

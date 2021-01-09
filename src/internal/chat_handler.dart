@@ -7,26 +7,25 @@ import 'dart:collection';
 const conversationDelay = Duration(seconds: 90);
 const lastSuccessDelay = Duration(minutes: 3);
 
-class ChatListener {
-  late Snowflake guildId;
+class GuildListener {
+  late Guild guild;
+  late Snowflake guildID;
   late Stream<MessageReceivedEvent> guildStream;
+
   HashSet<Snowflake> ignoreChannels = HashSet();
-  
-  late LastMessage? lastMessage;
-  late DateTime lastSuccessfulTrigger;
-  
-  ChatListener(this.guildId) {
-    guildStream = _guildStreamCreator(guildId);
-    lastSuccessfulTrigger = DateTime.now().toUtc();
-    lastMessage = null;
-    //TODO: Create way to get and load ignored channels (and figure out how to update)
-    _lastMessageHandler();
+  HashSet<ChannelListener> listenedChannels = HashSet();
+
+  GuildListener(this.guild) {
+    guildID = guild.id;
+    guildStream = _guildStreamCreator(guildID);
+    //TODO: Populate ignoreChannels list
+    _initalize();
   }
 
   Stream<MessageReceivedEvent> _guildStreamCreator (Snowflake guildID) {
-  return bot.onMessageReceived.where((event) { 
+  return bot.onMessageReceived.where((event) {
       //Don't add to stream if it's a DM, a bot sending the message, or an ignored channel
-    if (event.message is DMMessage || event.message.author.bot || 
+    if (event.message is DMMessage || event.message.author.bot ||
       ignoreChannels.contains(event.message.channel.id)) {
         return false;
       }
@@ -35,20 +34,56 @@ class ChatListener {
     });
   }
 
+  void _initalize() async {
+    guild.channels.forEach((channel) {
+      if(!ignoreChannels.contains(channel.id)) {
+        ChannelListener cn = ChannelListener(channel, _guildStreamCreator(guildID));
+        listenedChannels.add(cn);
+      }
+    });
+  }
+}
+
+class ChannelListener {
+  bool ignoreChannel = false;
+
+  late GuildChannel channel;
+  late Snowflake channelID;
+  late Stream<MessageReceivedEvent> guildStream;
+  late Stream<MessageReceivedEvent> channelStream;
+
+  late LastMessage? lastMessage;
+  late DateTime lastTrigger;
+
+  ChannelListener(this.channel, this.guildStream) {
+    channelID = channel.id;
+    lastMessage = null;
+    lastTrigger = DateTime.now().toUtc().subtract(Duration(minutes: 5));
+    channelStream = _initializeChannelStream();
+
+    _messageHandler();
+  }
+
+  Stream<MessageReceivedEvent> _initializeChannelStream() {
+    return guildStream.where((event) {
+      return event.message.channel.id == channelID;
+    });
+  }
+
   /// Determines the ability of two messages relative to each other to trigger a cookie collection message
   /// from the bot in the chat.
-  void _lastMessageHandler() async {
-    await for (MessageReceivedEvent mre in guildStream) {
+  void _messageHandler() async {
+    await for (MessageReceivedEvent mre in channelStream) {
       LastMessage latestMessage = LastMessage(mre.message as GuildMessage);
-      
+
       //Set lastMessage if last is null, or is the same author.
-      if (lastMessage == null || mre.message.author == lastMessage?.lastGuildMessage.author) {
+      if (lastMessage == null || mre.message.author.id == lastMessage?.authorId) {
         lastMessage = latestMessage;
         continue;
       }
 
       //Handles the cooldown of triggers
-      DateTime allowedTriggerTime = lastSuccessfulTrigger.add(lastSuccessDelay);
+      DateTime allowedTriggerTime = lastTrigger.add(lastSuccessDelay);
       if (allowedTriggerTime.isAfter(latestMessage.messageTime)) {
         //Don't set the last message here or else it will trigger on first message after the cooldown
         continue;
@@ -60,9 +95,9 @@ class ChatListener {
         continue;
       }
 
-      
-      
-      //TODO: Ultimately trigger the sending method & update last trigger.
+      //TODO: Trigger collection message in channel.
+      lastMessage = latestMessage;
+      lastTrigger = DateTime.now().toUtc();
     }
   }
 }
