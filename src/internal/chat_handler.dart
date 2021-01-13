@@ -35,6 +35,7 @@ class GuildListener {
   }
 
   void _initalize() async {
+    //TODO: Fetch and populate ignored channels
     guild.channels.forEach((channel) {
       if(!ignoreChannels.contains(channel.id)) {
         ChannelListener cn = ChannelListener(channel, _guildStreamCreator(guildID));
@@ -75,6 +76,8 @@ class ChannelListener {
   void _messageHandler() async {
     await for (MessageReceivedEvent mre in channelStream) {
       LastMessage latestMessage = LastMessage(mre.message as GuildMessage);
+
+      if (ignoreChannel) return;
 
       //Set lastMessage if last is null, or is the same author.
       if (lastMessage == null || mre.message.author.id == lastMessage?.authorId) {
