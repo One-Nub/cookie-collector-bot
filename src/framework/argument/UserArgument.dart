@@ -31,6 +31,9 @@ class UserArgument extends Argument {
     if (pipeDelimiterExpected && message.contains("|")) {
       message = message.split("|").first.trim();
     }
+    else {
+      throw MissingArgumentException("When searching for a user a `|` is expected.");
+    }
 
     //If a noticeable ID can't be found & (want to search names & the guild exists)...
     if (!_rawIDRegex.hasMatch(message) &&

@@ -1,6 +1,10 @@
 part of framework;
 
 class MissingArgumentException implements Exception{
-  @override 
-  String toString() => "No arguments could be found in the given message.";
+  final String message;
+
+  MissingArgumentException([this.message = "No arguments could be found in the given message."]);
+
+  @override
+  String toString() => message;
 }
