@@ -9,7 +9,7 @@ dependencies:
   mysql1: ^0.17.1
   nyxx: ^1.1.0-dev.2
   nyxx_commander: ^1.1.0-dev.1
-  yaml: ^2.2.1
+  toml: ^0.8.0
 
 dependency_overrides:
   http:

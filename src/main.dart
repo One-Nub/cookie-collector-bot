@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:logging/logging.dart';
 import 'package:nyxx/nyxx.dart';
 import 'package:nyxx_commander/commander.dart';
-import 'package:yaml/yaml.dart';
+import 'package:toml/toml.dart';
 
 import 'internal/CCDatabase.dart';
 import 'commands/commands_lib.dart';
@@ -21,27 +21,31 @@ Future<void> main() async {
   Stopwatch startupTimer = Stopwatch();
   startupTimer.start();
 
+  Logger.root.onRecord.listen((LogRecord rec) {
+        print(
+            "[${rec.time}] [${rec.level.name}] [${rec.loggerName}] ${rec.message}");
+      });
+
   Level startup = Level("START", 850);
   var startLogger = Logger("STARTUP");
 
   //Load bot config.
-  YamlMap botConfig = loadYaml(File('src/config.yaml').readAsStringSync());
-  final token = botConfig["token"];
-  final defaultPrefix = botConfig["default_prefix"];
+  TomlDocument tomlDocument = await TomlDocument.load("src/config.toml");
+  Map tomlConfig = tomlDocument.toMap();
+  Map databaseConfig = tomlConfig["database"];
 
   //Load bot admin IDs
-  YamlList configAdmins = botConfig["admins"];
+  List configAdmins = tomlConfig["admins"];
   for(int value in configAdmins) {
     admins.add(Snowflake(value));
   }
 
   //Load database config (& validate)
-  YamlMap dbConfig = botConfig["database_config"];
-  db = CCDatabase(dbConfig["username"],
-    dbConfig["password"],
-    dbConfig["host"],
-    dbConfig["databaseName"],
-    dbConfig["port"]);
+  db = CCDatabase(databaseConfig["username"],
+    databaseConfig["password"],
+    databaseConfig["host"],
+    databaseConfig["databaseName"],
+    databaseConfig["port"]);
 
   var verifyConnection = await db.dbConnection();
   verifyConnection.close();
@@ -55,9 +59,10 @@ Future<void> main() async {
   ClientOptions clOpts = ClientOptions()
     ..initialPresence = PresenceBuilder.of(game: Activity.of("the development game"));
 
-  bot = Nyxx(token, gatewayIntents, options: clOpts, defaultLoggerLogLevel: Level.INFO);
+  bot = Nyxx(tomlConfig["token"], gatewayIntents, options: clOpts,
+    defaultLoggerLogLevel: Level.INFO, useDefaultLogger: false);
 
-  cmdr = Commander(bot, prefixHandler: (Message msg) => prefixHandler(msg, defaultPrefix))
+  cmdr = Commander(bot, prefixHandler: (Message msg) => prefixHandler(msg, tomlConfig["default_prefix"]))
     ..registerCommand("daily", Daily(db).commandFunction, beforeHandler: Daily.preRunChecks)
     ..registerCommand("eat", Eat(db).commandFunction, beforeHandler: Eat.preRunChecks)
     ..registerCommand("generate", Generate(db).argumentParser, beforeHandler: Generate.preRunChecks)

@@ -1,0 +1,13 @@
+token = ""
+default_prefix = "."
+admins = [
+  1,
+  2
+]
+
+[database]
+username = ""
+password = ""
+host = ""
+databaseName = ""
+port = 3306
