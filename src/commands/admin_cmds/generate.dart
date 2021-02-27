@@ -74,7 +74,7 @@ class Generate {
     MessageReactionEvent? result = await reactionStream;
     if(result == null) {
       await confirmPrompt.delete();
-      await ctx.reply(content: "Cancelled due to timeout.", mention: false);
+      await ctx.reply(content: "Cancelled due to timeout.");
     }
     else if(result.emoji.encodeForAPI() == confirm.encodeForAPI()) {
       await confirmPrompt.deleteSelfReaction(deny);
