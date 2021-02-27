@@ -31,7 +31,7 @@ class CCDatabase {
     }
     on SocketException catch (e) {
       Logger("CCDB")
-        .severe("An issue was enountered with the credentials given.\n" +
+        .severe("An issue was enountered with the Socket connection.\n" +
       "Because of this the program will now exit for integrity. \n$e");
       exit(1);
     }
