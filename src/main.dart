@@ -52,14 +52,16 @@ Future<void> main() async {
 
   db.initializeTables();
 
-  int gatewayIntents =
-    GatewayIntents.directMessages + GatewayIntents.guildMessageReactions +
-    GatewayIntents.guildMessages + GatewayIntents.guilds;
+  // int gatewayIntents =
+  //   GatewayIntents.directMessages + GatewayIntents.guildMessageReactions +
+  //   GatewayIntents.guildMessages + GatewayIntents.guilds;
+
+  int allUnpriv = GatewayIntents.allUnprivileged;
 
   ClientOptions clOpts = ClientOptions()
     ..initialPresence = PresenceBuilder.of(game: Activity.of("the development game"));
 
-  bot = Nyxx(tomlConfig["token"], gatewayIntents, options: clOpts,
+  bot = Nyxx(tomlConfig["token"], allUnpriv, options: clOpts,
     defaultLoggerLogLevel: Level.INFO, useDefaultLogger: false);
 
   cmdr = Commander(bot, prefixHandler: (Message msg) => prefixHandler(msg, tomlConfig["default_prefix"]))

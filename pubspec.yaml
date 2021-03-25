@@ -7,8 +7,8 @@ environment:
 dependencies:
   date_time_format: ^2.0.1
   mysql1: ^0.17.1
-  nyxx: ^1.1.0-dev.5
-  nyxx_commander: ^1.1.0-dev.5
+  nyxx: 1.1.0-dev.5
+  nyxx_commander: 1.1.0-dev.6
   toml: ^0.10.0
 
 dependency_overrides:
