@@ -24,7 +24,7 @@ class GuildListener {
 
   Stream<MessageReceivedEvent> _guildStreamCreator (Snowflake guildID) {
   return bot.onMessageReceived.where((event) {
-      //Don't add to stream if it's a DM, a bot sending the message, or an ignored channel
+    //Don't add to stream if it's a DM, a bot sending the message, or an ignored channel
     if (event.message is DMMessage || event.message.author.bot ||
       ignoreChannels.contains(event.message.channel.id)) {
         return false;
@@ -77,7 +77,7 @@ class ChannelListener {
     await for (MessageReceivedEvent mre in channelStream) {
       LastMessage latestMessage = LastMessage(mre.message as GuildMessage);
 
-      if (ignoreChannel) return;
+      if (ignoreChannel) continue;
 
       //Set lastMessage if last is null, or is the same author.
       if (lastMessage == null || mre.message.author.id == lastMessage?.authorId) {
