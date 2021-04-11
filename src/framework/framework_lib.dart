@@ -8,6 +8,8 @@ import 'package:nyxx/nyxx.dart';
 import 'package:nyxx_commander/commander.dart';
 import 'package:logging/logging.dart';
 
+import '../main.dart';
+
 //Argument handlers
 part 'argument/Argument.dart';
 part 'argument/ChannelArgument.dart';
@@ -23,3 +25,8 @@ part 'exceptions/MissingArgumentException.dart';
 
 //Command related functions
 part 'commands/Cooldown.dart';
+
+//Structures
+part 'structure/CCBot.dart';
+part 'structure/ChannelListener.dart';
+part 'structure/GuildListener.dart';

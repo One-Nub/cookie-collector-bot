@@ -8,7 +8,7 @@ import 'package:toml/toml.dart';
 
 import 'internal/CCDatabase.dart';
 import 'commands/commands_lib.dart';
-import 'internal/chat_handler.dart';
+import 'framework/framework_lib.dart';
 
 late final Nyxx bot;
 late final Commander cmdr;
@@ -22,9 +22,8 @@ Future<void> main() async {
   startupTimer.start();
 
   Logger.root.onRecord.listen((LogRecord rec) {
-        print(
-            "[${rec.time}] [${rec.level.name}] [${rec.loggerName}] ${rec.message}");
-      });
+    print("[${rec.time}] [${rec.level.name}] [${rec.loggerName}] ${rec.message}");
+  });
 
   Level startup = Level("START", 850);
   var startLogger = Logger("STARTUP");
@@ -61,8 +60,8 @@ Future<void> main() async {
   ClientOptions clOpts = ClientOptions()
     ..initialPresence = PresenceBuilder.of(game: Activity.of("the development game"));
 
-  bot = Nyxx(tomlConfig["token"], allUnpriv, options: clOpts,
-    defaultLoggerLogLevel: Level.INFO, useDefaultLogger: false);
+  bot = CCBot(tomlConfig["token"], allUnpriv, options: clOpts,
+    defaultLoggerLogLevel: Level.INFO, useDefaultLogger: false, admins: admins);
 
   cmdr = Commander(bot, prefixHandler: (Message msg) => prefixHandler(msg, tomlConfig["default_prefix"]))
     ..registerCommand("daily", Daily(db).commandFunction, beforeHandler: Daily.preRunChecks)

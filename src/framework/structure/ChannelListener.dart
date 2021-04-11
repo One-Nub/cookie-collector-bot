@@ -1,52 +1,10 @@
-///This file relates to the chat management required for chat collection of cookies.
-import 'package:nyxx/nyxx.dart';
-import '../main.dart';
-
-import 'dart:collection';
+part of framework;
 
 const conversationDelay = Duration(seconds: 90);
 const lastSuccessDelay = Duration(minutes: 3);
 
-class GuildListener {
-  late Guild guild;
-  late Snowflake guildID;
-  late Stream<MessageReceivedEvent> guildStream;
-
-  HashSet<Snowflake> ignoreChannels = HashSet();
-  HashSet<ChannelListener> listenedChannels = HashSet();
-
-  GuildListener(this.guild) {
-    guildID = guild.id;
-    guildStream = _guildStreamCreator(guildID);
-    //TODO: Populate ignoreChannels list
-    _initalize();
-  }
-
-  Stream<MessageReceivedEvent> _guildStreamCreator (Snowflake guildID) {
-  return bot.onMessageReceived.where((event) {
-    //Don't add to stream if it's a DM, a bot sending the message, or an ignored channel
-    if (event.message is DMMessage || event.message.author.bot ||
-      ignoreChannels.contains(event.message.channel.id)) {
-        return false;
-      }
-      GuildMessage gMessage = event.message as GuildMessage;
-      return gMessage.guild.id == guildID;
-    });
-  }
-
-  void _initalize() async {
-    //TODO: Fetch and populate ignored channels
-    guild.channels.forEach((channel) {
-      if(!ignoreChannels.contains(channel.id)) {
-        ChannelListener cn = ChannelListener(channel, _guildStreamCreator(guildID));
-        listenedChannels.add(cn);
-      }
-    });
-  }
-}
-
 class ChannelListener {
-  bool ignoreChannel = false;
+  late bool ignoreChannel;
 
   late GuildChannel channel;
   late Snowflake channelID;
@@ -56,7 +14,7 @@ class ChannelListener {
   late LastMessage? lastMessage;
   late DateTime lastTrigger;
 
-  ChannelListener(this.channel, this.guildStream) {
+  ChannelListener(this.channel, this.guildStream, {this.ignoreChannel = false}) {
     channelID = channel.id;
     lastMessage = null;
     lastTrigger = DateTime.now().toUtc().subtract(Duration(minutes: 5));
@@ -92,7 +50,7 @@ class ChannelListener {
         continue;
       }
 
-      //Handles cooldown between messages - when positive (within 90s) will pass over this.
+      //Handles cooldown between messages - when positive (within conversationDelay) will pass over this.
       if (lastMessage!.compareTime(latestMessage) < 0) {
         lastMessage = latestMessage;
         continue;
@@ -130,4 +88,3 @@ class LastMessage {
     return nextSuccessThreshold.compareTo(message.messageTime);
   }
 }
-
