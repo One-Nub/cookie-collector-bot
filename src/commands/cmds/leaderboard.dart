@@ -30,7 +30,7 @@ class Leaderboard {
       "WHERE guild_id = ${ctx.guild!.id.id}");
     await dbConnection.close();
 
-    int numRows = query.first.values[0];
+    int numRows = query.first.first! as int;
     int pageMax = (numRows / maxRowsPerPage <= 1) ?
       1 : (numRows / maxRowsPerPage).ceil();
 
@@ -121,7 +121,7 @@ class Leaderboard {
         pageNumber: pageNumber, pageEntryMax: pageMax);
 
       while (pageIterator.moveNext()) {
-        Row row = pageIterator.current;
+        ResultRow row = pageIterator.current;
         Map<String, dynamic> rowInfo = row.fields;
         User? user = await client.fetchUser(Snowflake(rowInfo["user_id"]));
         output += "**${rowInfo["row_num"]}.** ${user.tag} - `${rowInfo["cookies"]}`\n";
