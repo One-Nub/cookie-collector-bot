@@ -12,9 +12,6 @@ import 'framework/framework_lib.dart';
 late final CCBot bot;
 late final Commander cmdr;
 late CCDatabase db;
-final List<Snowflake> admins = [];
-
-final HashSet<GuildListener> guildList = HashSet();
 
 Future<void> main() async {
   Stopwatch startupTimer = Stopwatch();
@@ -33,6 +30,7 @@ Future<void> main() async {
   Map databaseConfig = tomlConfig["database"];
 
   //Load bot admin IDs
+  final List<Snowflake> admins = [];
   List configAdmins = tomlConfig["admins"];
   for(int value in configAdmins) {
     admins.add(Snowflake(value));
@@ -85,7 +83,7 @@ Future<void> main() async {
       .log(Level.INFO, "Guild \"${event.guild.name}\":${event.guild.id} "
         "was loaded at ${DateTime.now()}");
     db.addGuildRow(event.guild.id.id);
-    guildList.add(GuildListener(event.guild));
+    bot.addGuildListener(GuildListener(event.guild));
   });
 }
 
