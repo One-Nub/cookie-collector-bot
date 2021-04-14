@@ -1,5 +1,4 @@
 import 'dart:collection';
-import 'dart:io';
 
 import 'package:logging/logging.dart';
 import 'package:nyxx/nyxx.dart';
@@ -10,7 +9,7 @@ import 'internal/CCDatabase.dart';
 import 'commands/commands_lib.dart';
 import 'framework/framework_lib.dart';
 
-late final Nyxx bot;
+late final CCBot bot;
 late final Commander cmdr;
 late CCDatabase db;
 final List<Snowflake> admins = [];
