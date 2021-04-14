@@ -1,6 +1,9 @@
 part of commands;
 
 class Info {
+  late CCDatabase _ccDatabase;
+  Info(this._ccDatabase);
+
   Future<void> commandFunction(CommandContext ctx, String msg) async {
     String memUsage = (ProcessInfo.currentRss / 1024 / 1024).toStringAsFixed(2);
     DateTime startTime = DateTime.now().subtract(ctx.client.uptime);
@@ -11,8 +14,7 @@ class Info {
       prefix = ".";
     }
     else {
-      //TODO: Get prefix from database
-      prefix = ".";
+      prefix = await _ccDatabase.getPrefix(ctx.guild!.id.id);
     }
 
     var embed = await EmbedBuilder()
