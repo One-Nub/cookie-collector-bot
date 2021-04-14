@@ -64,13 +64,14 @@ Future<void> main() async {
     ..registerCommand("daily", Daily(db).commandFunction, beforeHandler: Daily.preRunChecks)
     ..registerCommand("eat", Eat(db).commandFunction, beforeHandler: Eat.preRunChecks)
     ..registerCommand("generate", Generate(db).argumentParser, beforeHandler: Generate.preRunChecks)
-    ..registerCommand("info", Info().commandFunction)
+    ..registerCommand("info", Info(db).commandFunction)
+    ..registerCommand("status", Info(db).commandFunction)
     ..registerCommand("leaderboard", Leaderboard(db).commandFunction, beforeHandler: Leaderboard.preRunChecks)
     ..registerCommand("lb", Leaderboard(db).commandFunction, beforeHandler: Leaderboard.preRunChecks)
     ..registerCommand("ping", Ping().commandFunction, beforeHandler: Ping.preRunChecks)
     ..registerCommand("say", Say().argumentParser, beforeHandler: (ctx) => Say.preRunChecks(ctx, admins))
-    ..registerCommand("stats", Stats(db).argumentParser, beforeHandler: Stats.preRunChecks)
-    ..registerCommand("status", Info().commandFunction);
+    ..registerCommand("stats", Stats(db).argumentParser, beforeHandler: Stats.preRunChecks);
+
 
   bot.onReady.listen((event) {
     startupTimer.stop();
