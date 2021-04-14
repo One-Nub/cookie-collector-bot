@@ -175,14 +175,14 @@ class CCDatabase {
 
   Future<String> getPrefix(int guildID) async {
     var connection = await dbConnection();
-    String guildPrefix = ".";
     String query = "SELECT prefix FROM guilds WHERE id = $guildID";
-    Results result = await connection.query(query);
-    if(result.isNotEmpty) {
-      guildPrefix = result.first.first;
+    Results res = await connection.query(query);
+
+    String prefix = ".";
+    if(res.isNotEmpty) {
+      prefix = res.first.first.toString();
     }
-    await connection.close();
-    return guildPrefix;
+    return prefix;
   }
 
   Future<void> setPrefix(int guildID, String prefix) async {
