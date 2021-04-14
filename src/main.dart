@@ -90,8 +90,12 @@ Future<void> main() async {
 
 Future<String?> prefixHandler(Message message, String defaultPrefix) async {
   String mention = bot.self.mention;
-  if(message.content.startsWith(mention))
+  if(message.content.startsWith(mention) && message.runtimeType != DMMessage)
     return mention;
-  else if(message.content.startsWith(defaultPrefix))
-    return defaultPrefix;
+  else if(message.runtimeType == GuildMessage) {
+    GuildMessage guildMessage = message as GuildMessage;
+    String guildPrefix = await db.getPrefix(guildMessage.guild.id.id);
+    if(message.content.startsWith(guildPrefix))
+      return guildPrefix;
+  }
 }
