@@ -172,4 +172,25 @@ class CCDatabase {
     await connection.close();
     return numCookies;
   }
+
+  Future<String> getPrefix(int guildID) async {
+    var connection = await dbConnection();
+    String guildPrefix = ".";
+    String query = "SELECT prefix FROM guilds WHERE id = $guildID";
+    Results result = await connection.query(query);
+    if(result.isNotEmpty) {
+      guildPrefix = result.first.first;
+    }
+    await connection.close();
+    return guildPrefix;
+  }
+
+  Future<void> setPrefix(int guildID, String prefix) async {
+    var connection = await dbConnection();
+    String query = "UPDATE guilds "
+      "SET prefix = ? "
+      "WHERE id = $guildID";
+    connection.query(query, [prefix]);
+    await connection.close();
+  }
 }
