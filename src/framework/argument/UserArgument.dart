@@ -31,7 +31,7 @@ class UserArgument extends Argument {
     if (pipeDelimiterExpected && message.contains("|")) {
       message = message.split("|").first.trim();
     }
-    else {
+    else if (pipeDelimiterExpected) {
       throw MissingArgumentException("When searching for a user a `|` is expected.");
     }
 
