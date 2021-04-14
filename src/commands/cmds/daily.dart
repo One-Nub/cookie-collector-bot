@@ -39,6 +39,8 @@ class Daily with Cooldown {
 
   Future<void> commandFunction(CommandContext ctx, String msg) async {
     int streakDuration = _getStreakDuration(ctx.guild!.id, ctx.author.id);
+    //If streak is less than 30 days, divide the duration by reward interval
+    //taking the lowest number and multiply by 2. Otherwise just use 30 as duration.
     int streakRewardModifier = (streakDuration < 30) ?
       (streakDuration / rewardIncInterval).floor() * 2 :
       (30 / rewardIncInterval).floor() * 2;
@@ -65,6 +67,7 @@ class Daily with Cooldown {
   }
 
   int _getStreakDuration(Snowflake guildID, Snowflake userID) {
+    //Create empty map for guild for streak tracking
     if(!_streakTracker.containsKey(guildID)) {
       _streakTracker[guildID] = {};
     }
@@ -72,6 +75,7 @@ class Daily with Cooldown {
     var userStreakMap = _streakTracker[guildID];
     if(userStreakMap!.containsKey(userID)) {
       var userStreakInfo = userStreakMap[userID]!;
+      //Increments streak if user is collecting before streak expires
       if(DateTime.now().isBefore(userStreakInfo["time"] as DateTime)) {
         userStreakInfo["streak"] += 1;
       } else {
@@ -80,6 +84,7 @@ class Daily with Cooldown {
       userStreakInfo["time"] = DateTime.now().add(Duration(days: 2));
     }
     else {
+      //Create streak for user
       userStreakMap[userID] = {
         "streak" : 1,
         "time" : DateTime.now().add(Duration(days: 2))
