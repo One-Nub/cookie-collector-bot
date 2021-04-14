@@ -45,6 +45,7 @@ class Daily with Cooldown {
 
     int reward = baseReward + streakRewardModifier;
     await _database.addCookies(ctx.author.id.id, reward, ctx.guild!.id.id);
+    await _database.addLifetimeCookies(ctx.author.id.id, reward, ctx.guild!.id.id);
 
     EmbedBuilder replyEmbed = EmbedBuilder()
       ..description = "You have collected your daily `$reward` cookies! \n"
