@@ -56,7 +56,7 @@ class ChannelListener {
         continue;
       }
 
-      //TODO: Trigger collection message in channel.
+      CollectionMessage(channel, channelStream);
       lastMessage = latestMessage;
       lastTrigger = DateTime.now().toUtc();
     }

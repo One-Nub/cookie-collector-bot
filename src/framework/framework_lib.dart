@@ -1,13 +1,16 @@
 library framework;
 
 //Imports
+import 'dart:async';
 import 'dart:collection';
+import 'dart:math';
 
 import 'package:date_time_format/date_time_format.dart';
 import 'package:nyxx/nyxx.dart';
 import 'package:nyxx_commander/commander.dart';
 import 'package:logging/logging.dart';
 
+import '../internal/CCDatabase.dart';
 import '../main.dart';
 
 //Argument handlers
@@ -29,4 +32,5 @@ part 'commands/Cooldown.dart';
 //Structures
 part 'structure/CCBot.dart';
 part 'structure/ChannelListener.dart';
+part 'structure/CollectionMessage.dart';
 part 'structure/GuildListener.dart';
