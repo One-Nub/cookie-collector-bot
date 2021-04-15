@@ -21,8 +21,11 @@ class UserArgument extends Argument {
     }
     message = message.replaceFirst(ctx.commandMatcher, "");
     //Only check for empty message since this does not need to be triggered in guild context.
-    if (message == "") {
+    if (message == "" && isRequired) {
       throw MissingArgumentException();
+    }
+    else if(message == "" && !isRequired) {
+      throw ArgumentNotRequiredException();
     }
 
     message = message.trim();
@@ -31,7 +34,7 @@ class UserArgument extends Argument {
     if (pipeDelimiterExpected && message.contains("|")) {
       message = message.split("|").first.trim();
     }
-    else if (pipeDelimiterExpected) {
+    else if (pipeDelimiterExpected && isRequired) {
       throw MissingArgumentException("When searching for a user a `|` is expected.");
     }
 
@@ -59,8 +62,11 @@ class UserArgument extends Argument {
     }
 
     //Exhausted methods above and a user could not be found.
-    if (userID == 0) {
+    if (userID == 0 && isRequired) {
       throw InvalidUserException("Neither an ID nor username could be parsed from the given content.");
+    }
+    else if (userID == 0 && !isRequired) {
+      throw ArgumentNotRequiredException();
     }
 
     try {

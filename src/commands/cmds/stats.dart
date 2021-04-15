@@ -17,7 +17,7 @@ class Stats {
     try {
       user = await userArg.parseArg(ctx, message);
     }
-    on MissingArgumentException {
+    on ArgumentNotRequiredException {
       user = await ctx.client.fetchUser(ctx.author.id);
     }
     on InvalidUserException catch (e) {
