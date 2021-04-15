@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:logging/logging.dart';
 import 'package:mysql1/mysql1.dart';
@@ -129,6 +130,25 @@ class CCDatabase {
     return returnRow;
   }
 
+  Future<ResultRow?> getRandomUserToRob(int guildID, int excludeUserID) async {
+    var connection = await dbConnection();
+    Random rand = Random.secure();
+
+    String query = "SELECT * FROM users_guilds "
+      "WHERE cookies >= 15 AND user_id != $excludeUserID "
+      "ORDER BY RAND(${rand.nextInt(255)}) LIMIT 1";
+    Results result = await connection.query(query);
+
+    if(result.isNotEmpty) {
+      await connection.close();
+      return result.first;
+    }
+    else {
+      await connection.close();
+      return null;
+    }
+  }
+
 
   Future<void> addCookies(int userID, int numCookies, int guildID) async {
     await addGuildRow(guildID);
@@ -177,6 +197,7 @@ class CCDatabase {
     var connection = await dbConnection();
     String query = "SELECT prefix FROM guilds WHERE id = $guildID";
     Results res = await connection.query(query);
+    await connection.close();
 
     String prefix = ".";
     if(res.isNotEmpty) {
