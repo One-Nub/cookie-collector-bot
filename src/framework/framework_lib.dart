@@ -20,6 +20,7 @@ part 'argument/RoleArgument.dart';
 part 'argument/UserArgument.dart';
 
 //Exceptions
+part 'exceptions/ArgumentNotRequired.dart';
 part 'exceptions/GuildContextRequired.dart';
 part 'exceptions/InvalidChannelException.dart';
 part 'exceptions/InvalidRoleException.dart';
