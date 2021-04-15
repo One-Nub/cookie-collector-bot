@@ -15,13 +15,13 @@ class Generate {
   Future<void> argumentParser(CommandContext ctx, String message) async {
     message = message.replaceFirst(" ", "");
     message = message.replaceFirst(ctx.commandMatcher, "");
-    var userArg = UserArgument(searchMemberNames: true, pipeDelimiter: true);
+    var userArg = UserArgument(searchMemberNames: true, pipeDelimiter: true, isRequired: true);
     User user;
     try {
       user = await userArg.parseArg(ctx, message);
     }
     on MissingArgumentException catch (e) {
-      ctx.reply(content: "$e This command requires `[user] [amount]`");
+      ctx.reply(content: "$e \nThis command requires `[user] [amount]`");
       return;
     }
     on InvalidUserException catch (e) {
