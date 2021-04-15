@@ -60,6 +60,9 @@ class UserArgument extends Argument {
         Member findResult = memberList.first;
         userID = findResult.id.id;
       }
+      else {
+        throw InvalidUserException("I couldn't find that user in the server");
+      }
     } else {
       userID = _parseIDHelper(message) ?? 0;
     }
