@@ -34,7 +34,7 @@ class UserArgument extends Argument {
     if (pipeDelimiterExpected && message.contains("|")) {
       message = message.split("|").first.trim();
     }
-    else if (pipeDelimiterExpected && isRequired) {
+    else if (pipeDelimiterExpected && isRequired && !_rawIDRegex.hasMatch(message)) {
       throw MissingArgumentException("When searching for a user a `|` is expected.");
     }
 
@@ -55,8 +55,11 @@ class UserArgument extends Argument {
       // userID = findResult.id.id;
 
       var findMember = await ctx.guild!.searchMembersGateway(message);
-      Member findResult = await findMember.single;
-      userID = findResult.id.id;
+      List<Member> memberList = await findMember.toList();
+      if(memberList.isNotEmpty) {
+        Member findResult = memberList.first;
+        userID = findResult.id.id;
+      }
     } else {
       userID = _parseIDHelper(message) ?? 0;
     }
