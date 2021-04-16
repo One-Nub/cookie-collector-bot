@@ -130,12 +130,12 @@ class CCDatabase {
     return returnRow;
   }
 
-  Future<ResultRow?> getRandomUserToRob(int guildID, int excludeUserID) async {
+  Future<ResultRow?> getRandomUserToRob(int guildID, int excludeUserID, int minCookieCount) async {
     var connection = await dbConnection();
     Random rand = Random.secure();
 
     String query = "SELECT * FROM users_guilds "
-      "WHERE cookies >= 15 AND user_id != $excludeUserID "
+      "WHERE cookies >= $minCookieCount AND user_id != $excludeUserID "
       "ORDER BY RAND(${rand.nextInt(255)}) LIMIT 1";
     Results result = await connection.query(query);
 
