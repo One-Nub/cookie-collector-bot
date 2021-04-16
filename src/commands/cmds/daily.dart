@@ -1,6 +1,6 @@
 part of commands;
 
-class Daily with Cooldown {
+class Daily extends Cooldown {
   static const int baseReward = 15;
   static const int rewardIncInterval = 5;
   CCDatabase _database;
@@ -13,17 +13,17 @@ class Daily with Cooldown {
   ///   time: DateTime when streak expires (2 days from now)
   Map<Snowflake, Map<Snowflake, Map<String, dynamic>>> _streakTracker = {};
 
-  Daily(this._database) {
-    Cooldown.cooldownDuration = Duration(hours: 24);
+  Daily(this._database) : super(Duration(hours: 24)){
+
   }
 
-  static Future<bool> preRunChecks(CommandContext ctx) async {
+  Future<bool> preRunChecks(CommandContext ctx) async {
     if(ctx.guild == null) {
       return false;
     }
 
-    if(Cooldown.isCooldownActive(ctx.guild!.id, ctx.author.id)) {
-      String timeRemaining = Cooldown.getRemainingTime(ctx.guild!.id, ctx.author.id);
+    if(super.isCooldownActive(ctx.guild!.id, ctx.author.id)) {
+      String timeRemaining = super.getRemainingTime(ctx.guild!.id, ctx.author.id);
       EmbedBuilder errorEmbed = EmbedBuilder()
         ..color = DiscordColor.fromHexString("6B0504")
         ..description = "It hasn't been a full day yet! Try again in `$timeRemaining`"
@@ -63,7 +63,7 @@ class Daily with Cooldown {
     });
 
     await ctx.reply(embed: replyEmbed);
-    Cooldown.applyCooldown(ctx.guild!.id, ctx.author.id);
+    super.applyCooldown(ctx.guild!.id, ctx.author.id);
   }
 
   int _getStreakDuration(Snowflake guildID, Snowflake userID) {
