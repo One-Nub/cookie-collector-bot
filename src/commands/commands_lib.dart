@@ -4,6 +4,7 @@ library commands;
 import 'dart:io';
 import 'dart:math';
 import 'dart:async';
+import 'dart:collection';
 
 import 'package:date_time_format/date_time_format.dart';
 import 'package:mysql1/mysql1.dart';
@@ -21,7 +22,7 @@ part 'cmds/eat.dart';
 part 'cmds/info.dart';
 part 'cmds/leaderboard.dart';
 part 'cmds/ping.dart';
-// part 'cmds/rob.dart';
+part 'cmds/rob.dart';
 part 'cmds/stats.dart';
 
 // //Admin commands

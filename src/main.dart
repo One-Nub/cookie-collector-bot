@@ -60,8 +60,12 @@ Future<void> main() async {
   bot = CCBot(tomlConfig["token"], allUnpriv, options: clOpts,
     defaultLoggerLogLevel: Level.INFO, useDefaultLogger: false, admins: admins);
 
+  //Required for cooldown currently
+  Daily daily = Daily(db);
+  Rob rob = Rob(db);
+
   cmdr = Commander(bot, prefixHandler: (Message msg) => prefixHandler(msg, tomlConfig["default_prefix"]))
-    ..registerCommand("daily", Daily(db).commandFunction, beforeHandler: Daily.preRunChecks)
+    ..registerCommand("daily", daily.commandFunction, beforeHandler: daily.preRunChecks)
     ..registerCommand("eat", Eat(db).commandFunction, beforeHandler: Eat.preRunChecks)
     ..registerCommand("generate", Generate(db).argumentParser, beforeHandler: Generate.preRunChecks)
     ..registerCommand("info", Info(db).commandFunction)
@@ -69,6 +73,7 @@ Future<void> main() async {
     ..registerCommand("leaderboard", Leaderboard(db).commandFunction, beforeHandler: Leaderboard.preRunChecks)
     ..registerCommand("lb", Leaderboard(db).commandFunction, beforeHandler: Leaderboard.preRunChecks)
     ..registerCommand("ping", Ping().commandFunction, beforeHandler: Ping.preRunChecks)
+    ..registerCommand("rob", rob.argumentParser, beforeHandler: (ctx) => rob.preRunChecks(ctx, db))
     ..registerCommand("say", Say().argumentParser, beforeHandler: (ctx) => Say.preRunChecks(ctx, admins))
     ..registerCommand("stats", Stats(db).argumentParser, beforeHandler: Stats.preRunChecks);
 
