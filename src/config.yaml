@@ -1,9 +1,0 @@
-token: ""
-prefix: ""
-
-database_config:
-  username: ""
-  password: ""
-  host: ""
-  databaseName: ""
-  port: 3306

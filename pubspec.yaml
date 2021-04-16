@@ -1,15 +1,12 @@
 name: cookie_collector_bot
 description: A little discord bot that lets you collect and do stuff with cookies
 
-dependencies:
-  nyxx:
-    path: packages/nyxx/nyxx
-  nyxx.commands:
-    path: packages/nyxx/nyxx.commands
-  safe_config: ^2.0.2
-  mysql1: ^0.17.1
-  date_time_format: ^1.0.0+4
+environment:
+  sdk: '>=2.12.0-100.beta <3.0.0'
 
-dependency_override:
-  nyxx:
-    path: packages/nyxx/nyxx
+dependencies:
+  date_time_format: ^2.0.1
+  mysql1: ^0.19.0
+  nyxx: 2.0.0-rc.1
+  nyxx_commander: 2.0.0-rc.1
+  toml: ^0.10.0
