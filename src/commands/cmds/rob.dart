@@ -113,6 +113,7 @@ class Rob extends Cooldown {
       }
 
       _database.addCookies(ctx.author.id.id, randomAmt, ctx.guild!.id.id);
+      _database.addLifetimeCookies(ctx.author.id.id, randomAmt, ctx.guild!.id.id);
       _database.removeCookies(victimUser.id.id, randomAmt, ctx.guild!.id.id);
 
       String successMsg = _successMessages[Random().nextInt(_successMessages.length)];
