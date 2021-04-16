@@ -13,9 +13,7 @@ class Daily extends Cooldown {
   ///   time: DateTime when streak expires (2 days from now)
   Map<Snowflake, Map<Snowflake, Map<String, dynamic>>> _streakTracker = {};
 
-  Daily(this._database) : super(Duration(hours: 24)){
-
-  }
+  Daily(this._database) : super(Duration(hours: 24));
 
   Future<bool> preRunChecks(CommandContext ctx) async {
     if(ctx.guild == null) {
