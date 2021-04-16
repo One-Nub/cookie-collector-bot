@@ -89,7 +89,7 @@ Future<void> main() async {
       .log(Level.INFO, "Guild \"${event.guild.name}\":${event.guild.id} "
         "was loaded at ${DateTime.now()}");
     db.addGuildRow(event.guild.id.id);
-    bot.addGuildListener(GuildListener(event.guild));
+    bot.addGuildListener(event.guild.id, GuildListener(event.guild));
   });
 }
 

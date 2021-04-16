@@ -3,17 +3,22 @@ part of framework;
 class CCBot extends Nyxx {
 
   late List<Snowflake> admins = [];
-  HashSet<GuildListener> guildListeners = HashSet();
+  HashMap<Snowflake, GuildListener> guildListeners = HashMap();
 
   CCBot(String token, int intents,
       {ClientOptions? options, CacheOptions? cacheOptions,
       bool ignoreExceptions = true, bool useDefaultLogger = true,
       Level? defaultLoggerLogLevel,
-      admins}) : 
+      admins}) :
         super(token, intents, options: options, cacheOptions: cacheOptions,
               ignoreExceptions: ignoreExceptions, useDefaultLogger: useDefaultLogger,
               defaultLoggerLogLevel: defaultLoggerLogLevel);
 
-  bool addGuildListener(GuildListener gl) => guildListeners.add(gl);
-  bool removeGuildListener(GuildListener gl) => guildListeners.remove(gl);
+  void addGuildListener(Snowflake guildID, GuildListener gl) {
+    guildListeners.putIfAbsent(guildID, () => gl);
+  }
+
+  void removeGuildListener(Snowflake guildID, GuildListener gl) {
+    guildListeners.removeWhere((key, value) => key == guildID);
+  }
 }
