@@ -14,6 +14,10 @@ class CCBot extends Nyxx {
               ignoreExceptions: ignoreExceptions, useDefaultLogger: useDefaultLogger,
               defaultLoggerLogLevel: defaultLoggerLogLevel);
 
+  bool checkForGuildListener(Snowflake guildID) {
+    return guildListeners.containsKey(guildID);
+  }
+
   void addGuildListener(Snowflake guildID, GuildListener gl) {
     guildListeners.putIfAbsent(guildID, () => gl);
   }

@@ -89,7 +89,10 @@ Future<void> main() async {
       .log(Level.INFO, "Guild \"${event.guild.name}\":${event.guild.id} "
         "was loaded at ${DateTime.now()}");
     db.addGuildRow(event.guild.id.id);
-    bot.addGuildListener(event.guild.id, GuildListener(event.guild));
+    if(!bot.checkForGuildListener(event.guild.id)) {
+      print("added guild listener");
+      bot.addGuildListener(event.guild.id, GuildListener(event.guild));
+    }
   });
 }
 
@@ -97,7 +100,7 @@ Future<String?> prefixHandler(Message message, String defaultPrefix) async {
   if(message.author.bot) {
     return null;
   }
-  
+
   String mention = bot.self.mention;
   if(message.content.startsWith(mention) && message.runtimeType != DMMessage)
     return mention;
