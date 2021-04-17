@@ -136,6 +136,7 @@ class CCDatabase {
 
     String query = "SELECT * FROM users_guilds "
       "WHERE cookies >= $minCookieCount AND user_id != $excludeUserID "
+      "AND guild_id = $guildID "
       "ORDER BY RAND(${rand.nextInt(255)}) LIMIT 1";
     Results result = await connection.query(query);
 
