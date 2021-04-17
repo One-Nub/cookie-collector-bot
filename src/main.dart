@@ -55,7 +55,7 @@ Future<void> main() async {
   int allUnpriv = GatewayIntents.allUnprivileged;
 
   ClientOptions clOpts = ClientOptions()
-    ..initialPresence = PresenceBuilder.of(game: Activity.of("the development game"));
+    ..initialPresence = PresenceBuilder.of(game: Activity.of("the chat go by", type: ActivityType.from(3)));
 
   bot = CCBot(tomlConfig["token"], allUnpriv, options: clOpts,
     defaultLoggerLogLevel: Level.INFO, useDefaultLogger: false, admins: admins);
@@ -94,6 +94,10 @@ Future<void> main() async {
 }
 
 Future<String?> prefixHandler(Message message, String defaultPrefix) async {
+  if(message.author.bot) {
+    return null;
+  }
+  
   String mention = bot.self.mention;
   if(message.content.startsWith(mention) && message.runtimeType != DMMessage)
     return mention;
