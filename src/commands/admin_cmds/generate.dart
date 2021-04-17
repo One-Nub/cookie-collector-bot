@@ -1,8 +1,11 @@
 part of commands;
 
 class Generate {
+  late AllowedMentions _mentions;
   CCDatabase _database;
-  Generate(this._database);
+  Generate(this._database) {
+    _mentions = AllowedMentions()..allow(reply: false);
+  }
 
   static bool preRunChecks(CommandContext ctx) {
     //Must be run in guild & must be me
@@ -21,11 +24,11 @@ class Generate {
       user = await userArg.parseArg(ctx, message);
     }
     on MissingArgumentException catch (e) {
-      ctx.reply(content: "$e \nThis command requires `[user] [amount]`");
+      ctx.reply(content: "$e \nThis command requires `[user] [amount]`", allowedMentions: _mentions);
       return;
     }
     on InvalidUserException catch (e) {
-      ctx.reply(content: e);
+      ctx.reply(content: e, allowedMentions: _mentions);
       return;
     }
 
@@ -34,12 +37,14 @@ class Generate {
     message = message.split("|").last;
     List<String> args = message.split(" ").toList();
     if(args.isEmpty) {
-      ctx.reply(content: "An amount of cookies to generate was expected.");
+      ctx.reply(content: "An amount of cookies to generate was expected.", 
+        allowedMentions: _mentions);
       return;
     }
     int? cookieCnt = int.tryParse(args.last);
     if(cookieCnt == null || cookieCnt == user.id.id) {
-      ctx.reply(content: "An amount of cookies to generate was expected.");
+      ctx.reply(content: "An amount of cookies to generate was expected.", 
+        allowedMentions: _mentions);
       return;
     }
 
@@ -48,7 +53,8 @@ class Generate {
 
   Future<void> commandFunction(CommandContext ctx, String msg, User user, int cookieCnt) async {
     Message confirmPrompt = await ctx.reply(content:
-      "Please verify your intentions: `${user.tag}` will recieve `${cookieCnt}` cookies");
+      "Please verify your intentions: `${user.tag}` will recieve `${cookieCnt}` cookies",
+      allowedMentions: _mentions);
 
     // final emoteGuild = await ctx.client.fetchGuild(Snowflake(440350951572897812));
     // final confirm = await emoteGuild.fetchEmoji(Snowflake(724438115791667220));
@@ -74,18 +80,18 @@ class Generate {
     MessageReactionEvent? result = await reactionStream;
     if(result == null) {
       await confirmPrompt.delete();
-      await ctx.reply(content: "Cancelled due to timeout.");
+      await ctx.reply(content: "Cancelled due to timeout.", allowedMentions: _mentions);
     }
     else if(result.emoji.encodeForAPI() == confirm.encodeForAPI()) {
       await confirmPrompt.deleteSelfReaction(deny);
       await _database.addCookies(user.id.id, cookieCnt, ctx.guild!.id.id);
       await confirmPrompt.edit(content: "Done - `${user.tag}` has recieved "
-        "`$cookieCnt` cookies.");
+        "`$cookieCnt` cookies.", allowedMentions: _mentions);
     }
     else {
       confirmPrompt.deleteSelfReaction(confirm);
       await confirmPrompt.edit(content: "Cancelled - `${user.tag}`'s cookies "
-        "have not been modified.");
+        "have not been modified.", allowedMentions: _mentions);
     }
   }
 }

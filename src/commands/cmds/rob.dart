@@ -1,6 +1,7 @@
 part of commands;
 
 class Rob extends Cooldown {
+  late AllowedMentions _mentions;
   late CCDatabase _database;
   static const minCookieCountToRob = 15;
   static const minVictimCookieCount = 20;
@@ -11,7 +12,9 @@ class Rob extends Cooldown {
   /// List: 10 bools, 3 of which will be true, 7 false.
   Map<Snowflake, Map<Snowflake, Queue<bool>>> _userRobRate = {};
 
-  Rob(this._database) : super(Duration(hours: 3));
+  Rob(this._database) : super(Duration(hours: 3)) {
+    _mentions = AllowedMentions()..allow(reply: false, users: false);
+  }
 
   ///Ensures that the command is run in a guild
   ///Checks that the user is not on a cooldown
@@ -23,14 +26,15 @@ class Rob extends Cooldown {
 
     if(super.isCooldownActive(ctx.guild!.id, ctx.author.id)) {
       ctx.reply(content: "Your prep time has not expired yet! You can rob someone in "
-        "`${super.getRemainingTime(ctx.guild!.id, ctx.author.id)}`");
+        "`${super.getRemainingTime(ctx.guild!.id, ctx.author.id)}`", allowedMentions: _mentions);
       return false;
     }
 
     int userCookies = await _database.getCookieCount(ctx.author.id.id, ctx.guild!.id.id);
     if(userCookies < minCookieCountToRob) {
       ctx.reply(content: "Hold up there partner! You need at least "
-        "$minCookieCountToRob cookies to rob people! Debt isn't allowed round here");
+        "$minCookieCountToRob cookies to rob people! Debt isn't allowed round here",
+        allowedMentions: _mentions);
       return false;
     }
 
@@ -53,19 +57,22 @@ class Rob extends Cooldown {
     try {
       User victimUser = await victimArg.parseArg(ctx, msg);
       if(victimUser.id.id == ctx.author.id.id) {
-        await ctx.reply(content: "I don't think you can rob yourself... right?");
+        await ctx.reply(content: "I don't think you can rob yourself... right?", 
+          allowedMentions: _mentions);
         return;
       }
 
       ResultRow? victim = await _database.getUserGuildData(victimUser.id.id, ctx.guild!.id.id);
       if(victim == null) {
-        await ctx.reply(content: "That user could not be found in the database.");
+        await ctx.reply(content: "That user could not be found in the database.", 
+          allowedMentions: _mentions);
         return;
       }
       victimMap = victim.fields;
 
       if(victimMap["cookies"] < minVictimCookieCount) {
-        await ctx.reply(content: "This user doesn't have enough cookies to be robbed from!");
+        await ctx.reply(content: "This user doesn't have enough cookies to be robbed from!", 
+          allowedMentions: _mentions);
         return;
       }
     }
@@ -74,13 +81,14 @@ class Rob extends Cooldown {
       ResultRow? victim = await _database.getRandomUserToRob(ctx.guild!.id.id,
         ctx.author.id.id, minVictimCookieCount);
       if(victim == null) {
-        await ctx.reply(content: "Nobody can be robbed at this time, sorry!");
+        await ctx.reply(content: "Nobody can be robbed at this time, sorry!", 
+          allowedMentions: _mentions);
         return;
       }
       victimMap = victim.fields;
     }
     on InvalidUserException catch (e) {
-      await ctx.reply(content: e);
+      await ctx.reply(content: e, allowedMentions: _mentions);
       return;
     }
 
@@ -95,9 +103,6 @@ class Rob extends Cooldown {
 
     String missionResult = "";
     User victimUser = await ctx.client.fetchUser(Snowflake(victimMap["user_id"]));
-
-    AllowedMentions mentions = AllowedMentions();
-    mentions.allow(everyone: false, users: false, roles: false, reply: false);
 
     //Used for both success and failure
     int randomAmt = Random.secure().nextInt(high - low) + low;
@@ -142,7 +147,7 @@ class Rob extends Cooldown {
       ..description = missionResult
       ..title = "Robbery Result!";
 
-    ctx.reply(embed: resultEmbed, allowedMentions: mentions);
+    ctx.reply(embed: resultEmbed, allowedMentions: _mentions);
     super.applyCooldown(ctx.guild!.id, ctx.author.id);
   }
 

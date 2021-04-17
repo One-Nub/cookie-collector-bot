@@ -1,6 +1,12 @@
 part of commands;
 
 class Say {
+  late AllowedMentions _mentions;
+
+  Say() {
+    _mentions = AllowedMentions()..allow(reply: false, everyone: false);
+  }
+
   static Future<bool> preRunChecks(CommandContext ctx, List<Snowflake> admins) async {
     if(ctx.guild == null) {
       return false;
@@ -25,11 +31,11 @@ class Say {
       channel = await cArg.parseArg(ctx, message) as TextGuildChannel;
     }
     on MissingArgumentException catch (e) {
-      ctx.reply(content: "$e A channel identifier was expected.");
+      ctx.reply(content: "$e A channel identifier was expected.", allowedMentions: _mentions);
       return;
     }
     on InvalidChannelException catch (e) {
-      ctx.reply(content: e);
+      ctx.reply(content: e, allowedMentions: _mentions);
       return;
     }
     message = message.replaceFirst(" ", "").trim();
@@ -39,7 +45,7 @@ class Say {
       .trim();
 
     if(message.isEmpty) {
-      ctx.reply(content: "I needed something to say..");
+      ctx.reply(content: "I needed something to say..", allowedMentions: _mentions);
       return;
     }
     commandFunction(ctx, message, channel);
@@ -54,10 +60,11 @@ class Say {
       var botSendPerm =
         await textChannel.effectivePermissions(botMember);
       if(botSendPerm.sendMessages && botSendPerm.viewChannel) {
-        textChannel.sendMessage(content: message);
+        textChannel.sendMessage(content: message, allowedMentions: _mentions);
       }
       else {
-        ctx.reply(content: "I can't send messages in that channel! <a:confuse:724785215838617770>");
+        ctx.reply(content: "I can't send messages in that channel! <a:confuse:724785215838617770>",
+          allowedMentions: _mentions);
       }
   }
 }

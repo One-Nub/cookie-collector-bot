@@ -20,8 +20,10 @@ class Ping {
   Future<void> commandFunction(CommandContext ctx, String msg) async {
     Stopwatch timer = Stopwatch();
     timer.start();
-    var msg = await ctx.channel.sendMessage(content: "Pinging...");
+    AllowedMentions _mentions = AllowedMentions()..allow(reply: false);
+    var msg = await ctx.reply(content: "Pinging...", allowedMentions: _mentions);
     timer.stop();
-    msg.edit(content: ":stopwatch: Pong! `${timer.elapsedMilliseconds}ms`");
+    msg.edit(content: ":stopwatch: Pong! `${timer.elapsedMilliseconds}ms`", 
+      allowedMentions: _mentions);
   }
 }

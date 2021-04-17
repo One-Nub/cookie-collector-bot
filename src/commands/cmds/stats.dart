@@ -1,8 +1,12 @@
 part of commands;
 
 class Stats {
+  late AllowedMentions _mentions;
   CCDatabase _database;
-  Stats(CCDatabase this._database);
+
+  Stats(CCDatabase this._database) {
+    _mentions = AllowedMentions()..allow(reply: false);
+  }
 
   static bool preRunChecks(CommandContext ctx) {
     if(ctx.guild == null) {
@@ -21,7 +25,7 @@ class Stats {
       user = await ctx.client.fetchUser(ctx.author.id);
     }
     on InvalidUserException catch (e) {
-      ctx.reply(content: e);
+      ctx.reply(content: e, allowedMentions: _mentions);
       return;
     }
 
@@ -49,6 +53,6 @@ class Stats {
       ..timestamp = DateTime.now().toUtc()
       ..title = "${user.tag}'s Stats";
 
-    ctx.channel.sendMessage(embed: statsEmbed);
+    ctx.reply(embed: statsEmbed, allowedMentions: _mentions);
   }
 }

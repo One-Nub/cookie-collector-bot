@@ -4,6 +4,7 @@ class Daily extends Cooldown {
   static const int baseReward = 15;
   static const int rewardIncInterval = 5;
   CCDatabase _database;
+  late AllowedMentions _allowedMentions;
 
   ///Snowflake: Guild ID
   ///Guild Users Map:
@@ -13,7 +14,10 @@ class Daily extends Cooldown {
   ///   time: DateTime when streak expires (2 days from now)
   Map<Snowflake, Map<Snowflake, Map<String, dynamic>>> _streakTracker = {};
 
-  Daily(this._database) : super(Duration(hours: 24));
+  Daily(this._database) : super(Duration(hours: 24)) {
+    _allowedMentions = AllowedMentions();
+    _allowedMentions.allow(users: false, reply: false);
+  }
 
   Future<bool> preRunChecks(CommandContext ctx) async {
     if(ctx.guild == null) {
@@ -29,7 +33,7 @@ class Daily extends Cooldown {
           author.name = ctx.author.tag;
           author.iconUrl = ctx.author.avatarURL(format: "png");
         });
-      await ctx.reply(embed: errorEmbed);
+      await ctx.reply(embed: errorEmbed, allowedMentions: _allowedMentions);
       return false;
     }
     return true;
@@ -60,7 +64,7 @@ class Daily extends Cooldown {
       footer.text = "You can collect again in 24 hours.";
     });
 
-    await ctx.reply(embed: replyEmbed);
+    await ctx.reply(embed: replyEmbed, allowedMentions: _allowedMentions);
     super.applyCooldown(ctx.guild!.id, ctx.author.id);
   }
 

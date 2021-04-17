@@ -9,9 +9,12 @@ class Leaderboard {
   Map<int, String> pages = {};
   final Duration promptTimeout = Duration(seconds: 60);
 
+  late AllowedMentions _mentions;
   CCDatabase _database;
 
-  Leaderboard(this._database);
+  Leaderboard(this._database) {
+    _mentions = AllowedMentions()..allow(reply: false, everyone: false);
+  }
 
   static bool preRunChecks(CommandContext ctx) {
     if (ctx.guild == null) {
@@ -46,7 +49,7 @@ class Leaderboard {
       ..iconUrl = ctx.author.avatarURL(format: "png");
     embed.footer = embedFooter;
 
-    var leaderboardMessage = await ctx.channel.sendMessage(embed: embed);
+    var leaderboardMessage = await ctx.reply(embed: embed, allowedMentions: _mentions);
     if(pageMax > 1) {
       paginationHandler(ctx, leaderboardMessage, embed, pageMax);
     }
@@ -70,7 +73,7 @@ class Leaderboard {
           event.user.id == ctx.author.id;
     });
     reactionStream = reactionStream.timeout(promptTimeout, onTimeout: (sink) async {
-        lbMessage.edit(content: "Prompt terminated.");
+        lbMessage.edit(content: "Prompt terminated.", allowedMentions: _mentions);
         lbMessage.deleteAllReactions();
         sink.close();
     });
@@ -79,7 +82,7 @@ class Leaderboard {
     reactionListener = await reactionStream.listen((event) async {
       var userReaction = event.emoji as UnicodeEmoji;
       if(userReaction.encodeForAPI() == trash.encodeForAPI()) {
-        await lbMessage.edit(content: "Prompt terminated.");
+        await lbMessage.edit(content: "Prompt terminated.", allowedMentions: _mentions);
         await lbMessage.deleteAllReactions();
         await reactionListener!.cancel();
       }
@@ -91,7 +94,7 @@ class Leaderboard {
           lbEmbed.description = description;
           lbEmbed.footer = lbEmbed.footer!
             ..text = "Page ${currentPageIndex + 1} / $maxPages";
-          lbMessage.edit(embed: lbEmbed);
+          lbMessage.edit(embed: lbEmbed, allowedMentions: _mentions);
           lbMessage.deleteUserReaction(userReaction, ctx.author);
         }
       }
@@ -103,7 +106,7 @@ class Leaderboard {
           lbEmbed.description = description;
           lbEmbed.footer = lbEmbed.footer!
             ..text = "Page ${currentPageIndex + 1} / $maxPages";
-          lbMessage.edit(embed: lbEmbed);
+          lbMessage.edit(embed: lbEmbed, allowedMentions: _mentions);
           lbMessage.deleteUserReaction(userReaction, ctx.author);
         }
       }
