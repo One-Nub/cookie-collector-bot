@@ -17,7 +17,7 @@ import '../framework/framework_lib.dart';
 //Normal commands
 part 'cmds/daily.dart';
 part 'cmds/eat.dart';
-// part 'cmds/give.dart';
+part 'cmds/give.dart';
 // part 'cmds/help.dart';
 part 'cmds/info.dart';
 part 'cmds/leaderboard.dart';

@@ -68,6 +68,7 @@ Future<void> main() async {
     ..registerCommand("daily", daily.commandFunction, beforeHandler: daily.preRunChecks)
     ..registerCommand("eat", Eat(db).commandFunction, beforeHandler: Eat.preRunChecks)
     ..registerCommand("generate", Generate(db).argumentParser, beforeHandler: Generate.preRunChecks)
+    ..registerCommand("give", Give(db).argumentParser, beforeHandler: (ctx) => Give.preRunChecks(ctx, db))
     ..registerCommand("info", Info(db).commandFunction)
     ..registerCommand("status", Info(db).commandFunction)
     ..registerCommand("leaderboard", Leaderboard(db).commandFunction, beforeHandler: Leaderboard.preRunChecks)
