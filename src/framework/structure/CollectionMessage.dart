@@ -67,9 +67,10 @@ class CollectionMessage {
       collectionEvent.message.delete();
 
       int authorID = collectionEvent.message.author.id.id;
+      String authorTag = collectionEvent.message.author.tag;
 
       AllowedMentions mentions = AllowedMentions()..allow(users: false);
-      tgChannel.sendMessage(content: "<@$authorID> "
+      tgChannel.sendMessage(content: "<@$authorID> ($authorTag) "
         "collected $pluaralization!", allowedMentions: mentions)
           .then((msg) {
             Timer(Duration(seconds: 5), () => msg.delete());
