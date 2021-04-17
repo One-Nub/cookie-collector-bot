@@ -75,6 +75,7 @@ Future<void> main() async {
     ..registerCommand("ping", Ping().commandFunction, beforeHandler: Ping.preRunChecks)
     ..registerCommand("rob", rob.argumentParser, beforeHandler: (ctx) => rob.preRunChecks(ctx, db))
     ..registerCommand("say", Say().argumentParser, beforeHandler: (ctx) => Say.preRunChecks(ctx, admins))
+    ..registerCommand("bal", Stats(db).argumentParser, beforeHandler: Stats.preRunChecks)
     ..registerCommand("stats", Stats(db).argumentParser, beforeHandler: Stats.preRunChecks);
 
 
