@@ -25,7 +25,7 @@ class Stats {
       user = await ctx.client.fetchUser(ctx.author.id);
     }
     on InvalidUserException catch (e) {
-      ctx.reply(content: e, allowedMentions: _mentions);
+      ctx.reply(MessageBuilder.content(e.toString())..allowedMentions = _mentions);
       return;
     }
 
@@ -53,6 +53,6 @@ class Stats {
       ..timestamp = DateTime.now().toUtc()
       ..title = "${user.tag}'s Stats";
 
-    ctx.reply(embed: statsEmbed, allowedMentions: _mentions);
+    ctx.reply(MessageBuilder.embed(statsEmbed)..allowedMentions = _mentions);
   }
 }

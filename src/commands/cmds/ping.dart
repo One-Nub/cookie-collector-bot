@@ -10,7 +10,7 @@ class Ping {
     }
     GuildChannel channel = ctx.channel as GuildChannel;
     var botPerms = await channel.effectivePermissions(botMember);
-    
+
     if(botPerms.sendMessages) {
       return true;
     }
@@ -21,9 +21,10 @@ class Ping {
     Stopwatch timer = Stopwatch();
     timer.start();
     AllowedMentions _mentions = AllowedMentions()..allow(reply: false);
-    var msg = await ctx.reply(content: "Pinging...", allowedMentions: _mentions);
+    var msg = await ctx.reply(MessageBuilder.content("Pinging...")
+      ..allowedMentions = _mentions);
     timer.stop();
-    msg.edit(content: ":stopwatch: Pong! `${timer.elapsedMilliseconds}ms`", 
-      allowedMentions: _mentions);
+    msg.edit(MessageBuilder.content(":stopwatch: Pong! `${timer.elapsedMilliseconds}ms`")
+      ..allowedMentions = _mentions);
   }
 }

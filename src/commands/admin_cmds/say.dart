@@ -31,11 +31,13 @@ class Say {
       channel = await cArg.parseArg(ctx, message) as TextGuildChannel;
     }
     on MissingArgumentException catch (e) {
-      ctx.reply(content: "$e A channel identifier was expected.", allowedMentions: _mentions);
+      ctx.reply(MessageBuilder.content("$e A channel identifier was expected.")
+        ..allowedMentions = _mentions);
       return;
     }
     on InvalidChannelException catch (e) {
-      ctx.reply(content: e, allowedMentions: _mentions);
+      ctx.reply(MessageBuilder.content(e.toString())
+        ..allowedMentions = _mentions);
       return;
     }
     message = message.replaceFirst(" ", "").trim();
@@ -45,7 +47,8 @@ class Say {
       .trim();
 
     if(message.isEmpty) {
-      ctx.reply(content: "I needed something to say..", allowedMentions: _mentions);
+      ctx.reply(MessageBuilder.content("I needed something to say..")
+        ..allowedMentions = _mentions);
       return;
     }
     commandFunction(ctx, message, channel);
@@ -60,11 +63,12 @@ class Say {
       var botSendPerm =
         await textChannel.effectivePermissions(botMember);
       if(botSendPerm.sendMessages && botSendPerm.viewChannel) {
-        textChannel.sendMessage(content: message, allowedMentions: _mentions);
+        textChannel.sendMessage(MessageBuilder.content(message)
+          ..allowedMentions = _mentions);
       }
       else {
-        ctx.reply(content: "I can't send messages in that channel! <a:confuse:724785215838617770>",
-          allowedMentions: _mentions);
+        ctx.reply(MessageBuilder.content("I can't send messages in that channel! <a:confuse:724785215838617770>")
+          ..allowedMentions = _mentions);
       }
   }
 }

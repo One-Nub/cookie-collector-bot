@@ -57,7 +57,7 @@ class CollectionMessage {
     }
 
     try {
-      botMessage = await tgChannel.sendMessage(embed: collectionEmbed);
+      botMessage = await tgChannel.sendMessage(MessageBuilder.embed(collectionEmbed));
 
       var collectionEvent = await channelStream.firstWhere((element) {
         return element.message.content == triggerMessage;
@@ -70,9 +70,12 @@ class CollectionMessage {
       String authorTag = collectionEvent.message.author.tag;
 
       AllowedMentions mentions = AllowedMentions()..allow(users: false);
-      tgChannel.sendMessage(content: "<@$authorID> ($authorTag) "
-        "collected $pluaralization!", allowedMentions: mentions)
-          .then((msg) {
+
+      tgChannel.sendMessage(
+        MessageBuilder()
+          ..content = "<@$authorID> ($authorTag) collected $pluaralization!"
+          ..allowedMentions = mentions)
+        .then((msg) {
             Timer(Duration(seconds: 5), () => msg.delete());
           });
 

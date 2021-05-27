@@ -12,6 +12,7 @@ class Eat {
   Future<void> commandFunction(CommandContext ctx, String message) async {
     await _database.removeCookies(ctx.author.id.id, 1, ctx.guild!.id.id);
     AllowedMentions _mentions = AllowedMentions()..allow(reply:false);
-    ctx.reply(content: "You ate 1 cookie! very yummy :cookie:", allowedMentions: _mentions);
+    ctx.reply(MessageBuilder.content("You ate 1 cookie! very yummy :cookie:")
+      ..allowedMentions = _mentions);
   }
 }

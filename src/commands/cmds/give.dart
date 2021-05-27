@@ -15,8 +15,8 @@ class Give {
     int userCookies = await _database.getCookieCount(ctx.author.id.id, ctx.guild!.id.id);
     if(userCookies <= 0) {
       var _staticMentions = AllowedMentions()..allow(reply: false);
-      ctx.reply(content: "You at least need *a* cookie before you can give some away", 
-        allowedMentions: _staticMentions);
+      ctx.reply(MessageBuilder.content("You at least need *a* cookie before you can give some away")
+        ..allowedMentions = _staticMentions);
       return false;
     }
 
@@ -32,35 +32,38 @@ class Give {
       recipient = await recipientArg.parseArg(ctx, msg);
     }
     on MissingArgumentException catch (e) {
-      ctx.reply(content: "$e \nThis command requires `[user] [amount]`",
-        allowedMentions: _mentions);
+      ctx.reply(MessageBuilder.content("$e \nThis command requires `[user] [amount]`")
+        ..allowedMentions = _mentions);
       return;
     }
     on InvalidUserException catch (e) {
-      ctx.reply(content: e, allowedMentions: _mentions);
+      ctx.reply(MessageBuilder.content(e.toString())..allowedMentions = _mentions);
       return;
     }
 
     if(recipient.id == ctx.author.id) {
-      ctx.reply(content: "You can't give cookies to yourself... Right?", 
-        allowedMentions: _mentions);
+      ctx.reply(MessageBuilder.content("You can't give cookies to yourself... Right?")
+        ..allowedMentions = _mentions);
       return;
     }
 
     List<String> args = msg.split(" ").toList();
     if(args.isEmpty) {
-      ctx.reply(content: "An amount of cookies to give was expected.", allowedMentions: _mentions);
+      ctx.reply(MessageBuilder.content("An amount of cookies to give was expected.")
+        ..allowedMentions = _mentions);
       return;
     }
 
     int? cookiesToGive = int.tryParse(args.last);
     int userCookies = await _database.getCookieCount(ctx.author.id.id, ctx.guild!.id.id);
     if(cookiesToGive == null || cookiesToGive == recipient.id.id) {
-      ctx.reply(content: "An amount of cookies to give was expected.", allowedMentions: _mentions);
+      ctx.reply(MessageBuilder.content("An amount of cookies to give was expected.")
+        ..allowedMentions = _mentions);
       return;
     }
     else if(cookiesToGive <= 0 || cookiesToGive > userCookies) {
-      ctx.reply(content: "You can't give that amount of cookies!", allowedMentions: _mentions);
+      ctx.reply(MessageBuilder.content("You can't give that amount of cookies!")
+        ..allowedMentions = _mentions);
       return;
     }
 
@@ -70,15 +73,16 @@ class Give {
   Future<void> commandFunction(CommandContext ctx, String msg, User recipient, int cookieCnt) async {
     if(cookieCnt >= 50)
     {
-      var botConfirm = await ctx.reply(content: "Please confirm that you want to send"
-      " **${recipient.tag}** `$cookieCnt` cookies. (`Yes/No`)");
+      var botConfirm = await ctx.reply(MessageBuilder.content("Please confirm that you want to send"
+      " **${recipient.tag}** `$cookieCnt` cookies. (`Yes/No`)"));
 
       var userConfirmStream = await ctx.nextMessagesWhere(
         (msg) => msg.message.author.id == (ctx.author.id), limit: 1);
 
       MessageReceivedEvent userConfirm = await userConfirmStream.first;
       if(!userConfirm.message.content.toLowerCase().startsWith("y")) {
-        var cancelMsg = await ctx.reply(content: "Cancelled.", allowedMentions: _mentions);
+        var cancelMsg = await ctx.reply(MessageBuilder.content("Cancelled.")
+          ..allowedMentions = _mentions);
         botConfirm.delete();
         ctx.message.delete();
         await Future.delayed(Duration(seconds: 3));
@@ -94,10 +98,11 @@ class Give {
     await _database.removeCookies(ctx.author.id.id, cookieCnt, ctx.guild!.id.id);
 
     User authorUser = await ctx.client.fetchUser(ctx.author.id);
-    
+
     var giveEmbed = EmbedBuilder()
       ..title = "How generous! :cookie:"
       ..description = "${authorUser.mention} gave ${recipient.mention} $cookieCnt cookies!";
-    ctx.reply(embed: giveEmbed, allowedMentions: _mentions);
+    ctx.reply(MessageBuilder.embed(giveEmbed)
+      ..allowedMentions = _mentions);
   }
 }

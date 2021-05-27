@@ -25,16 +25,17 @@ class Rob extends Cooldown {
     }
 
     if(super.isCooldownActive(ctx.guild!.id, ctx.author.id)) {
-      ctx.reply(content: "Your prep time has not expired yet! You can rob someone in "
-        "`${super.getRemainingTime(ctx.guild!.id, ctx.author.id)}`", allowedMentions: _mentions);
+      ctx.reply(MessageBuilder.content("Your prep time has not expired yet! You can rob someone in "
+        "`${super.getRemainingTime(ctx.guild!.id, ctx.author.id)}`")
+        ..allowedMentions = _mentions);
       return false;
     }
 
     int userCookies = await _database.getCookieCount(ctx.author.id.id, ctx.guild!.id.id);
     if(userCookies < minCookieCountToRob) {
-      ctx.reply(content: "Hold up there partner! You need at least "
-        "$minCookieCountToRob cookies to rob people! Debt isn't allowed round here",
-        allowedMentions: _mentions);
+      ctx.reply(MessageBuilder.content("Hold up there partner! You need at least "
+        "$minCookieCountToRob cookies to rob people! Debt isn't allowed round here")
+        ..allowedMentions = _mentions);
       return false;
     }
 
@@ -57,22 +58,22 @@ class Rob extends Cooldown {
     try {
       User victimUser = await victimArg.parseArg(ctx, msg);
       if(victimUser.id.id == ctx.author.id.id) {
-        await ctx.reply(content: "I don't think you can rob yourself... right?", 
-          allowedMentions: _mentions);
+        await ctx.reply(MessageBuilder.content("I don't think you can rob yourself... right?")
+          ..allowedMentions = _mentions);
         return;
       }
 
       ResultRow? victim = await _database.getUserGuildData(victimUser.id.id, ctx.guild!.id.id);
       if(victim == null) {
-        await ctx.reply(content: "That user could not be found in the database.", 
-          allowedMentions: _mentions);
+        await ctx.reply(MessageBuilder.content("That user could not be found in the database.")
+          ..allowedMentions = _mentions);
         return;
       }
       victimMap = victim.fields;
 
       if(victimMap["cookies"] < minVictimCookieCount) {
-        await ctx.reply(content: "This user doesn't have enough cookies to be robbed from!", 
-          allowedMentions: _mentions);
+        await ctx.reply(MessageBuilder.content("This user doesn't have enough cookies to be robbed from!")
+          ..allowedMentions = _mentions);
         return;
       }
     }
@@ -81,14 +82,15 @@ class Rob extends Cooldown {
       ResultRow? victim = await _database.getRandomUserToRob(ctx.guild!.id.id,
         ctx.author.id.id, minVictimCookieCount);
       if(victim == null) {
-        await ctx.reply(content: "Nobody can be robbed at this time, sorry!", 
-          allowedMentions: _mentions);
+        await ctx.reply(MessageBuilder.content("Nobody can be robbed at this time, sorry!")
+          ..allowedMentions = _mentions);
         return;
       }
       victimMap = victim.fields;
     }
     on InvalidUserException catch (e) {
-      await ctx.reply(content: e, allowedMentions: _mentions);
+      await ctx.reply(MessageBuilder.content(e.toString())
+        ..allowedMentions = _mentions);
       return;
     }
 
@@ -147,7 +149,7 @@ class Rob extends Cooldown {
       ..description = missionResult
       ..title = "Robbery Result!";
 
-    ctx.reply(embed: resultEmbed, allowedMentions: _mentions);
+    ctx.reply(MessageBuilder.embed(resultEmbed)..allowedMentions = _mentions);
     super.applyCooldown(ctx.guild!.id, ctx.author.id);
   }
 

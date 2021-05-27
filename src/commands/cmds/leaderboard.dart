@@ -49,7 +49,8 @@ class Leaderboard {
       ..iconUrl = ctx.author.avatarURL(format: "png");
     embed.footer = embedFooter;
 
-    var leaderboardMessage = await ctx.reply(embed: embed, allowedMentions: _mentions);
+    var leaderboardMessage = await ctx.reply(MessageBuilder.embed(embed)
+      ..allowedMentions = _mentions);
     if(pageMax > 1) {
       paginationHandler(ctx, leaderboardMessage, embed, pageMax);
     }
@@ -73,7 +74,8 @@ class Leaderboard {
           event.user.id == ctx.author.id;
     });
     reactionStream = reactionStream.timeout(promptTimeout, onTimeout: (sink) async {
-        lbMessage.edit(content: "Prompt terminated.", allowedMentions: _mentions);
+        lbMessage.edit(MessageBuilder.content("Prompt terminated.")
+          ..allowedMentions = _mentions);
         lbMessage.deleteAllReactions();
         sink.close();
     });
@@ -82,7 +84,8 @@ class Leaderboard {
     reactionListener = await reactionStream.listen((event) async {
       var userReaction = event.emoji as UnicodeEmoji;
       if(userReaction.encodeForAPI() == trash.encodeForAPI()) {
-        await lbMessage.edit(content: "Prompt terminated.", allowedMentions: _mentions);
+        await lbMessage.edit(MessageBuilder.content("Prompt terminated.")
+          ..allowedMentions = _mentions);
         await lbMessage.deleteAllReactions();
         await reactionListener!.cancel();
       }
@@ -94,7 +97,8 @@ class Leaderboard {
           lbEmbed.description = description;
           lbEmbed.footer = lbEmbed.footer!
             ..text = "Page ${currentPageIndex + 1} / $maxPages";
-          lbMessage.edit(embed: lbEmbed, allowedMentions: _mentions);
+          lbMessage.edit(MessageBuilder.embed(lbEmbed)
+            ..allowedMentions = _mentions);
           lbMessage.deleteUserReaction(userReaction, ctx.author);
         }
       }
@@ -106,7 +110,8 @@ class Leaderboard {
           lbEmbed.description = description;
           lbEmbed.footer = lbEmbed.footer!
             ..text = "Page ${currentPageIndex + 1} / $maxPages";
-          lbMessage.edit(embed: lbEmbed, allowedMentions: _mentions);
+          lbMessage.edit(MessageBuilder.embed(lbEmbed)
+            ..allowedMentions = _mentions);
           lbMessage.deleteUserReaction(userReaction, ctx.author);
         }
       }

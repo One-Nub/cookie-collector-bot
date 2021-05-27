@@ -32,6 +32,7 @@ class Info {
       ..timestamp = DateTime.now().toUtc()
       ..color = DiscordColor.fromHexString("87CEEB");
 
-    await ctx.reply(embed: embed, allowedMentions: AllowedMentions()..allow(reply: false));
+    await ctx.reply(MessageBuilder.embed(embed)
+      ..allowedMentions = (AllowedMentions()..allow(reply: false)));
   }
 }

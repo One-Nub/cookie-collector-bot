@@ -33,7 +33,7 @@ class Daily extends Cooldown {
           author.name = ctx.author.tag;
           author.iconUrl = ctx.author.avatarURL(format: "png");
         });
-      await ctx.reply(embed: errorEmbed, allowedMentions: _allowedMentions);
+      await ctx.reply(MessageBuilder.embed(errorEmbed)..allowedMentions = _allowedMentions);
       return false;
     }
     return true;
@@ -64,7 +64,7 @@ class Daily extends Cooldown {
       footer.text = "You can collect again in 24 hours.";
     });
 
-    await ctx.reply(embed: replyEmbed, allowedMentions: _allowedMentions);
+    await ctx.reply(MessageBuilder.embed(replyEmbed)..allowedMentions = _allowedMentions);
     super.applyCooldown(ctx.guild!.id, ctx.author.id);
   }
 
