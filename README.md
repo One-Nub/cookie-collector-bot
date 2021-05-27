@@ -1,6 +1,14 @@
 # Cookie Collector
 
-Awesome, thanks for checking out the repository \o/
-This discord bot is supposed to let people chatting collect cookies and then maybe use those cookies for stuff
+Cookie Collector is a Discord bot meant to help encourage chat activity through a simple, yet fun
+way of letting people collect cookies!
 
-I don't think I'm planning on making this something for generic use (at the moment of writing this) so we'll see if this can be easily adjusted for other servers 
+It is currently in development and is not publically available for inviting just yet. But when it is available, the bot can be invited from [here](https://discord.com/oauth2/authorize?client_id=659480764915777536&scope=bot&permissions=2416241856).
+
+# Self Hosting
+Cookie Collector runs on [Dart](https://dart.dev).
+It also requires a MySQL or MariaDB database with a user who has access to `CREATE, INSERT, SELECT, UPDATE`.
+
+Once cloning the repository, run `pub get` in the source folder to get the required dependencies. Then adjust `src/config.toml` as necessary.
+
+After that run (from the source folder) `dart run src/main.dart`.
