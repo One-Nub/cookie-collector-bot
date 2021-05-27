@@ -1,6 +1,6 @@
 part of commands;
 
-class Leaderboard {
+class Leaderboard extends Cooldown {
   final backArrow = UnicodeEmoji("⬅");
   final forwardArrow = UnicodeEmoji("➡️");
   final trash = UnicodeEmoji("🗑");
@@ -12,14 +12,25 @@ class Leaderboard {
   late AllowedMentions _mentions;
   CCDatabase _database;
 
-  Leaderboard(this._database) {
+  Leaderboard(this._database) : super(Duration(seconds: 60)) {
     _mentions = AllowedMentions()..allow(reply: false, everyone: false);
   }
 
-  static bool preRunChecks(CommandContext ctx) {
+  Future<bool> preRunChecks(CommandContext ctx) async {
     if (ctx.guild == null) {
       return false;
     }
+
+    if(super.isCooldownActive(ctx.guild!.id, ctx.author.id)) {
+      String timeRemaining = super.getRemainingTime(ctx.guild!.id, ctx.author.id);
+      EmbedBuilder errorEmbed = EmbedBuilder()
+        ..color = DiscordColor.fromHexString("6B0504")
+        ..description = "You're being restricted. Try again in `$timeRemaining`";
+      await ctx.reply(MessageBuilder.embed(errorEmbed)
+        ..allowedMentions = (AllowedMentions()..allow(users: false, reply: false)));
+      return false;
+    }
+
     return true;
   }
 
@@ -54,6 +65,8 @@ class Leaderboard {
     if(pageMax > 1) {
       paginationHandler(ctx, leaderboardMessage, embed, pageMax);
     }
+
+    super.applyCooldown(ctx.guild!.id, ctx.author.id);
   }
 
   Future<void> paginationHandler(CommandContext ctx, Message lbMessage,

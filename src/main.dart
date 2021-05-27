@@ -68,6 +68,7 @@ Future<void> main() async {
 
   //Required for cooldown currently
   Daily daily = Daily(db);
+  Leaderboard leaderboard = Leaderboard(db);
   Rob rob = Rob(db);
 
   cmdr = Commander(bot, prefixHandler: (Message msg) => prefixHandler(msg, tomlConfig["default_prefix"]))
@@ -77,8 +78,8 @@ Future<void> main() async {
     ..registerCommand("give", Give(db).argumentParser, beforeHandler: (ctx) => Give.preRunChecks(ctx, db))
     ..registerCommand("info", Info(db).commandFunction)
     ..registerCommand("status", Info(db).commandFunction)
-    ..registerCommand("leaderboard", Leaderboard(db).commandFunction, beforeHandler: Leaderboard.preRunChecks)
-    ..registerCommand("lb", Leaderboard(db).commandFunction, beforeHandler: Leaderboard.preRunChecks)
+    ..registerCommand("leaderboard", leaderboard.commandFunction, beforeHandler: leaderboard.preRunChecks)
+    ..registerCommand("lb", leaderboard.commandFunction, beforeHandler: leaderboard.preRunChecks)
     ..registerCommand("ping", Ping().commandFunction, beforeHandler: Ping.preRunChecks)
     ..registerCommand("rob", rob.argumentParser, beforeHandler: (ctx) => rob.preRunChecks(ctx, db))
     ..registerCommand("say", Say().argumentParser, beforeHandler: (ctx) => Say.preRunChecks(ctx, admins))
