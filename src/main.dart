@@ -92,7 +92,6 @@ Future<void> main() async {
         "was loaded at ${DateTime.now()}");
     db.addGuildRow(event.guild.id.id);
     if(!bot.checkForGuildListener(event.guild.id)) {
-      print("added guild listener");
       bot.addGuildListener(event.guild.id, GuildListener(event.guild));
     }
   });
