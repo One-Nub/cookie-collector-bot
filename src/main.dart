@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 
 import 'package:logging/logging.dart';
@@ -57,8 +58,13 @@ Future<void> main() async {
   ClientOptions clOpts = ClientOptions()
     ..initialPresence = PresenceBuilder.of(game: Activity.of("the chat go by", type: ActivityType.from(3)));
 
+  CacheOptions cacheOptions = CacheOptions()
+    ..memberCachePolicyLocation = CachePolicyLocation.all()
+    ..userCachePolicyLocation = CachePolicyLocation.all();
+
   bot = CCBot(tomlConfig["token"], allUnpriv, options: clOpts,
-    defaultLoggerLogLevel: Level.INFO, useDefaultLogger: false, admins: admins);
+    defaultLoggerLogLevel: Level.INFO, useDefaultLogger: false, admins: admins,
+    cacheOptions: cacheOptions);
 
   //Required for cooldown currently
   Daily daily = Daily(db);
@@ -94,6 +100,11 @@ Future<void> main() async {
     if(!bot.checkForGuildListener(event.guild.id)) {
       bot.addGuildListener(event.guild.id, GuildListener(event.guild));
     }
+  });
+
+  // Clears the users cache on a bi-daily basis.
+  Timer.periodic(Duration(days: 2), (timer) {
+    bot.users.dispose();
   });
 }
 

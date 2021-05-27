@@ -131,7 +131,12 @@ class Leaderboard {
       while (pageIterator.moveNext()) {
         ResultRow row = pageIterator.current;
         Map<String, dynamic> rowInfo = row.fields;
-        User? user = await client.fetchUser(Snowflake(rowInfo["user_id"]));
+
+        // Get users from cache (and if they're not in cache get from upstream then cache)
+        User? user = client.users[Snowflake(rowInfo["user_id"])];
+        user ??= await client.fetchUser(Snowflake(rowInfo["user_id"]));
+        client.users.addIfAbsent(Snowflake(rowInfo["user_id"]), user);
+
         output += "**${rowInfo["row_num"]}.** ${user.tag} - `${rowInfo["cookies"]}`\n";
       }
       pages[pageNumber] = output;
