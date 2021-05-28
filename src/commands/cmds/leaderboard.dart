@@ -1,18 +1,15 @@
 part of commands;
 
 class Leaderboard extends Cooldown {
-  final backArrow = UnicodeEmoji("⬅");
-  final forwardArrow = UnicodeEmoji("➡️");
-  final trash = UnicodeEmoji("🗑");
-
   static const int maxRowsPerPage = 10;
   Map<int, String> pages = {};
   final Duration promptTimeout = Duration(seconds: 60);
+  final Interactions _interactions;
 
   late AllowedMentions _mentions;
   CCDatabase _database;
 
-  Leaderboard(this._database) : super(Duration(seconds: 60)) {
+  Leaderboard(this._database, this._interactions) : super(Duration(seconds: 60)) {
     _mentions = AllowedMentions()..allow(reply: false, everyone: false);
   }
 
@@ -27,7 +24,7 @@ class Leaderboard extends Cooldown {
         ..color = DiscordColor.fromHexString("6B0504")
         ..description = "You're being restricted. Try again in `$timeRemaining`";
       await ctx.reply(MessageBuilder.embed(errorEmbed)
-        ..allowedMentions = (AllowedMentions()..allow(users: false, reply: false)));
+        ..allowedMentions = _mentions);
       return false;
     }
 
@@ -37,7 +34,7 @@ class Leaderboard extends Cooldown {
   Future<void> commandFunction(CommandContext ctx, String message) async {
     pages.clear();
     String pageLeaderboard =
-      await _getPageString(ctx.client, ctx.guild!.id.id, pageMax: maxRowsPerPage);
+      await _getPageString(ctx.client, ctx.guild!.id.id);
 
     var dbConnection = await _database.dbConnection();
     var query = await dbConnection.query("SELECT COUNT(*) FROM users_guilds "
@@ -60,86 +57,115 @@ class Leaderboard extends Cooldown {
       ..iconUrl = ctx.author.avatarURL(format: "png");
     embed.footer = embedFooter;
 
-    var leaderboardMessage = await ctx.reply(MessageBuilder.embed(embed)
-      ..allowedMentions = _mentions);
+    ComponentMessageBuilder leaderboardMessageBuilder = ComponentMessageBuilder()
+      ..embed = embed
+      ..allowedMentions = _mentions;
+
     if(pageMax > 1) {
-      paginationHandler(ctx, leaderboardMessage, embed, pageMax);
+      int sourceMessageID = ctx.message.id.id;
+      ButtonBuilder previousButton = ButtonBuilder("Previous", "lb_prev_$sourceMessageID",
+        ComponentStyle.primary,
+        disabled: true);
+      ButtonBuilder nextButton = ButtonBuilder("Next", "lb_next_$sourceMessageID",
+        ComponentStyle.primary);
+      ButtonBuilder deleteButton = ButtonBuilder(" ", "lb_delete_$sourceMessageID",
+        ComponentStyle.danger,
+        emoji: UnicodeEmoji("🗑"));
+
+      List<IComponentBuilder> buttonList = [previousButton, nextButton, deleteButton];
+      leaderboardMessageBuilder.addButtonRow(buttonList);
+      Message leaderboardMessage = await ctx.reply(leaderboardMessageBuilder);
+
+      paginationHandler(ctx, leaderboardMessage, embed, pageMax, buttonList);
+    }
+    else {
+      await ctx.reply(leaderboardMessageBuilder);
     }
 
     super.applyCooldown(ctx.guild!.id, ctx.author.id);
   }
 
   Future<void> paginationHandler(CommandContext ctx, Message lbMessage,
-  EmbedBuilder lbEmbed, int maxPages) async {
-    //Help against rate limiting by delaying time it takes to add emojis.
-    final delay = Duration(milliseconds: 250);
-    await Future.delayed(delay, () =>
-      lbMessage.createReaction(backArrow));
-    await Future.delayed(delay, () =>
-      lbMessage.createReaction(trash));
-    await Future.delayed(delay, () =>
-      lbMessage.createReaction(forwardArrow));
-
+  EmbedBuilder lbEmbed, int maxPages, List<IComponentBuilder> buttonList) async {
     int currentPageIndex = 0;
-    var reactionStream = ctx.client.onMessageReactionAdded;
-    reactionStream = reactionStream.where((event) {
-        return event.messageId == lbMessage.id &&
-          event.user.id == ctx.author.id;
+
+    var buttonStream = _interactions.onButtonEvent;
+    buttonStream = buttonStream.where((event) {
+      int sourceMessageID = ctx.message.id.id;
+
+      return (event.interaction.metadata == "lb_prev_$sourceMessageID" ||
+        event.interaction.metadata == "lb_next_$sourceMessageID" ||
+        event.interaction.metadata == "lb_delete_$sourceMessageID") &&
+        event.interaction.memberAuthor.id == ctx.author.id;
     });
-    reactionStream = reactionStream.timeout(promptTimeout, onTimeout: (sink) async {
-        lbMessage.edit(MessageBuilder.content("Prompt terminated.")
-          ..allowedMentions = _mentions);
-        lbMessage.deleteAllReactions();
-        sink.close();
+    buttonStream = buttonStream.timeout(promptTimeout, onTimeout: (sink) {
+      lbMessage.edit(ComponentMessageBuilder()
+        ..content = "Prompt timed out."
+        ..buttons = []);
+      sink.close();
+      return;
     });
 
-    StreamSubscription<MessageReactionEvent>? reactionListener = null;
-    reactionListener = await reactionStream.listen((event) async {
-      var userReaction = event.emoji as UnicodeEmoji;
-      if(userReaction.encodeForAPI() == trash.encodeForAPI()) {
-        await lbMessage.edit(MessageBuilder.content("Prompt terminated.")
-          ..allowedMentions = _mentions);
-        await lbMessage.deleteAllReactions();
-        await reactionListener!.cancel();
+    await for (ComponentInteractionEvent buttonEvent in buttonStream) {
+      //Remove the added message ID on the end.
+      String metadata = buttonEvent.interaction.metadata.replaceAll(RegExp(r"_\d+"), "");
+
+      if(metadata == "lb_prev") {
+        currentPageIndex--;
       }
-      else if(userReaction.encodeForAPI() == forwardArrow.encodeForAPI()) {
-        if(maxPages - 1 > currentPageIndex) {
-          currentPageIndex++;
-          String description = await _getPageString(ctx.client, ctx.guild!.id.id,
-            pageNumber: currentPageIndex, pageMax: maxRowsPerPage);
-          lbEmbed.description = description;
-          lbEmbed.footer = lbEmbed.footer!
-            ..text = "Page ${currentPageIndex + 1} / $maxPages";
-          lbMessage.edit(MessageBuilder.embed(lbEmbed)
-            ..allowedMentions = _mentions);
-          lbMessage.deleteUserReaction(userReaction, ctx.author);
-        }
+      else if(metadata == "lb_next") {
+        currentPageIndex++;
       }
-      else if(userReaction.encodeForAPI() == backArrow.encodeForAPI()) {
-        if(currentPageIndex > 0) {
-          currentPageIndex--;
-          String description = await _getPageString(ctx.client, ctx.guild!.id.id,
-            pageNumber: currentPageIndex, pageMax: maxRowsPerPage);
-          lbEmbed.description = description;
-          lbEmbed.footer = lbEmbed.footer!
-            ..text = "Page ${currentPageIndex + 1} / $maxPages";
-          lbMessage.edit(MessageBuilder.embed(lbEmbed)
-            ..allowedMentions = _mentions);
-          lbMessage.deleteUserReaction(userReaction, ctx.author);
-        }
+      else if(metadata == "lb_delete") {
+        lbMessage.edit(ComponentMessageBuilder()
+        ..content = "Prompt terminated."
+        ..buttons = []);
+        return;
       }
-    });
+
+      // Prevent page count above max pages.
+      if(currentPageIndex > maxPages - 1) {
+        currentPageIndex = maxPages - 1;
+      }
+
+      // Prevent negative page count
+      if(currentPageIndex < 0) {
+        currentPageIndex = 0;
+      }
+
+      if(currentPageIndex == 0) {
+        buttonList[0].disabled = true;
+        buttonList[1].disabled = false;
+      }
+      else if(currentPageIndex == maxPages - 1) {
+        buttonList[0].disabled = false;
+        buttonList[1].disabled = true;
+      }
+      else {
+        buttonList.forEach((element) {element.disabled = false;});
+      }
+
+      lbEmbed.description = await _getPageString(ctx.client, ctx.guild!.id.id,
+        pageIndex: currentPageIndex);
+      lbEmbed.footer = lbEmbed.footer!
+        ..text = "Page ${currentPageIndex + 1} / $maxPages";
+
+      lbMessage.edit(ComponentMessageBuilder()
+        ..embed = lbEmbed
+        ..buttons = [buttonList]);
+      buttonEvent.acknowledge();
+    }
   }
 
-  Future<String> _getPageString(Nyxx client, int guildID, {int pageNumber = 0,
-    int pageMax = maxRowsPerPage}) async {
-      if(pages.containsKey(pageNumber)) {
-        return pages[pageNumber]!;
+  Future<String> _getPageString(Nyxx client, int guildID, {int pageIndex = 0,
+    int pageMaxRows = maxRowsPerPage}) async {
+      if(pages.containsKey(pageIndex)) {
+        return pages[pageIndex]!;
       }
 
       String output = "";
       var pageIterator = await _database.leaderboardSelection(guildID,
-        pageNumber: pageNumber, pageEntryMax: pageMax);
+        pageNumber: pageIndex, pageEntryMax: pageMaxRows);
 
       while (pageIterator.moveNext()) {
         ResultRow row = pageIterator.current;
@@ -152,7 +178,7 @@ class Leaderboard extends Cooldown {
 
         output += "**${rowInfo["row_num"]}.** ${user.tag} - `${rowInfo["cookies"]}`\n";
       }
-      pages[pageNumber] = output;
+      pages[pageIndex] = output;
       return output;
     }
 }

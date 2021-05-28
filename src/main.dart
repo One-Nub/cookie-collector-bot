@@ -4,6 +4,7 @@ import 'dart:collection';
 import 'package:logging/logging.dart';
 import 'package:nyxx/nyxx.dart';
 import 'package:nyxx_commander/commander.dart';
+import 'package:nyxx_interactions/interactions.dart';
 import 'package:toml/toml.dart';
 
 import 'internal/CCDatabase.dart';
@@ -12,6 +13,7 @@ import 'framework/framework_lib.dart';
 
 late final CCBot bot;
 late final Commander cmdr;
+late final Interactions interactions;
 late CCDatabase db;
 
 Future<void> main() async {
@@ -66,9 +68,11 @@ Future<void> main() async {
     defaultLoggerLogLevel: Level.INFO, useDefaultLogger: false, admins: admins,
     cacheOptions: cacheOptions);
 
+  interactions = Interactions(bot);
+
   //Required for cooldown currently
   Daily daily = Daily(db);
-  Leaderboard leaderboard = Leaderboard(db);
+  Leaderboard leaderboard = Leaderboard(db, interactions);
   Rob rob = Rob(db);
 
   cmdr = Commander(bot, prefixHandler: (Message msg) => prefixHandler(msg, tomlConfig["default_prefix"]))
