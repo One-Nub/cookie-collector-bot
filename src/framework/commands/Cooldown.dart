@@ -1,5 +1,8 @@
 part of framework;
 
+typedef GuildCooldown = HashMap<Snowflake, UserCooldown>;
+typedef UserCooldown = HashMap<Snowflake, DateTime>;
+
 /// Enables different classes with different heirarchies to potentially implement
 /// a cooldown.
 class Cooldown {
@@ -9,7 +12,7 @@ class Cooldown {
   Duration cooldownDuration = Duration(seconds: 5);
   
   /// Guild ID, Map<User ID, End time>
-  HashMap<Snowflake, HashMap<Snowflake, DateTime>> _cooldownCache = new HashMap();
+  GuildCooldown _cooldownCache = new HashMap();
   
   /// Adds a user to the cooldown
   void applyCooldown(Snowflake guildID, Snowflake userSnowflake) {
