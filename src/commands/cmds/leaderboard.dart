@@ -58,7 +58,7 @@ class Leaderboard extends Cooldown {
     embed.footer = embedFooter;
 
     ComponentMessageBuilder leaderboardMessageBuilder = ComponentMessageBuilder()
-      ..embed = embed
+      ..embeds = [embed]
       ..allowedMentions = _mentions;
 
     if(pageMax > 1) {
@@ -151,7 +151,7 @@ class Leaderboard extends Cooldown {
         ..text = "Page ${currentPageIndex + 1} / $maxPages";
 
       lbMessage.edit(ComponentMessageBuilder()
-        ..embed = lbEmbed
+        ..embeds = [lbEmbed]
         ..buttons = [buttonList]);
       buttonEvent.acknowledge();
     }
