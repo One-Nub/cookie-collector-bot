@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:collection';
 
 import 'package:logging/logging.dart';
 import 'package:nyxx/nyxx.dart';
@@ -7,9 +6,8 @@ import 'package:nyxx_commander/commander.dart';
 import 'package:nyxx_interactions/interactions.dart';
 import 'package:toml/toml.dart';
 
-import 'internal/CCDatabase.dart';
-import 'commands/commands_lib.dart';
-import 'framework/framework_lib.dart';
+import 'package:cookie_collector_bot/core.dart';
+import 'package:cookie_collector_bot/modules.dart';
 
 late final CCBot bot;
 late final Commander cmdr;
@@ -64,7 +62,7 @@ Future<void> main() async {
     ..memberCachePolicyLocation = CachePolicyLocation.all()
     ..userCachePolicyLocation = CachePolicyLocation.all();
 
-  bot = CCBot(tomlConfig["token"], allUnpriv, options: clOpts,
+  bot = CCBot(tomlConfig["token"], allUnpriv, db, options: clOpts,
     defaultLoggerLogLevel: Level.INFO, useDefaultLogger: false, admins: admins,
     cacheOptions: cacheOptions);
 
@@ -103,7 +101,7 @@ Future<void> main() async {
         "was loaded at ${DateTime.now()}");
     db.addGuildRow(event.guild.id.id);
     if(!bot.checkForGuildListener(event.guild.id)) {
-      bot.addGuildListener(event.guild.id, GuildListener(event.guild));
+      bot.addGuildListener(event.guild.id, GuildListener(bot, event.guild));
     }
   });
 
