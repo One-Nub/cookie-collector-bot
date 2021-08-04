@@ -14,6 +14,3 @@ export 'src/framework/exceptions/MissingArgumentException.dart';
 
 //Command related functions
 export 'src/framework/commands/Cooldown.dart';
-
-//Structures
-export 'src/framework/structure/CCBot.dart';
