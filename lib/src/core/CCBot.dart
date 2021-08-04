@@ -3,7 +3,7 @@ import 'dart:collection';
 import 'package:nyxx/nyxx.dart';
 import 'package:logging/logging.dart';
 
-import '../../modules/chat_collection/GuildListener.dart';
+import '../modules/chat_collection/GuildListener.dart';
 
 class CCBot extends Nyxx {
 
