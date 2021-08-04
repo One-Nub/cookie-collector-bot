@@ -1,5 +1,3 @@
-part of framework;
-
 class InvalidRoleException implements Exception {
   final String message;
 

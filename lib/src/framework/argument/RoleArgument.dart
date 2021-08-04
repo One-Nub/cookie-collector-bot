@@ -1,4 +1,10 @@
-part of framework;
+import 'package:nyxx/nyxx.dart';
+import 'package:nyxx_commander/commander.dart';
+
+import 'Argument.dart';
+import '../exceptions/GuildContextRequired.dart';
+import '../exceptions/InvalidRoleException.dart';
+import '../exceptions/MissingArgumentException.dart';
 
 /// Facilitates the ability of getting a Role from a passed input.
 ///
@@ -33,8 +39,8 @@ class RoleArgument extends Argument {
       message = message.split("|").first.trim();
     }
 
-    if (_rawIDRegex.hasMatch(message)) {
-      roleID = _parseIDHelper(message) ?? 0;
+    if (rawIDRegex.hasMatch(message)) {
+      roleID = parseIDHelper(message) ?? 0;
       if (roleID == 0) {
         throw InvalidRoleException("An ID could not be found in the given message.");
       }

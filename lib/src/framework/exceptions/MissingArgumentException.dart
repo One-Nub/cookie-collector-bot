@@ -1,5 +1,3 @@
-part of framework;
-
 class MissingArgumentException implements Exception{
   final String message;
 

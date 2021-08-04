@@ -1,4 +1,7 @@
-part of framework;
+import 'dart:collection';
+
+import 'package:date_time_format/date_time_format.dart';
+import 'package:nyxx/nyxx.dart';
 
 typedef GuildCooldown = HashMap<Snowflake, UserCooldown>;
 typedef UserCooldown = HashMap<Snowflake, DateTime>;

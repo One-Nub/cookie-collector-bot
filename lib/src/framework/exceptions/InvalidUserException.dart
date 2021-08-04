@@ -1,5 +1,3 @@
-part of framework;
-
 class InvalidUserException implements Exception {
   final String message;
 

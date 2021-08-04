@@ -1,4 +1,11 @@
-part of framework;
+import 'package:nyxx/nyxx.dart';
+import 'package:nyxx_commander/commander.dart';
+
+import 'Argument.dart';
+import '../exceptions/GuildContextRequired.dart';
+import '../exceptions/InvalidChannelException.dart';
+import '../exceptions/MissingArgumentException.dart';
+
 
 /// Facilitates the ability of getting a Channel from a passed input.
 ///
@@ -41,7 +48,7 @@ class ChannelArgument<T extends GuildChannel> extends Argument {
     }
 
     //Actions to set id. If there's no Regex match for an ID & searching channel names
-    if (!_rawIDRegex.hasMatch(message) && searchChannelNames) {
+    if (!rawIDRegex.hasMatch(message) && searchChannelNames) {
       List<T> typedChannelList = ctx.guild!.channels.whereType<T>().toList();
       for(T channel in typedChannelList) {
         if (channel.name.toLowerCase() == message.toLowerCase()) {
@@ -50,7 +57,7 @@ class ChannelArgument<T extends GuildChannel> extends Argument {
         }
       }
     } else {
-      channelID = _parseIDHelper(message) ?? 0;
+      channelID = parseIDHelper(message) ?? 0;
     }
 
 

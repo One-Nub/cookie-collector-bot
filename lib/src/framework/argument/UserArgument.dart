@@ -1,4 +1,10 @@
-part of framework;
+import 'package:nyxx/nyxx.dart';
+import 'package:nyxx_commander/commander.dart';
+
+import 'Argument.dart';
+import '../exceptions/ArgumentNotRequired.dart';
+import '../exceptions/InvalidUserException.dart';
+import '../exceptions/MissingArgumentException.dart';
 
 /// Facilitates the ability of getting a User from a passed input.
 ///
@@ -34,12 +40,12 @@ class UserArgument extends Argument {
     if (pipeDelimiterExpected && message.contains("|")) {
       message = message.split("|").first.trim();
     }
-    else if (pipeDelimiterExpected && isRequired && !_rawIDRegex.hasMatch(message)) {
+    else if (pipeDelimiterExpected && isRequired && !rawIDRegex.hasMatch(message)) {
       throw MissingArgumentException("When searching for a user a `|` is expected.");
     }
 
     //If a noticeable ID can't be found & (want to search names & the guild exists)...
-    if (!_rawIDRegex.hasMatch(message) &&
+    if (!rawIDRegex.hasMatch(message) &&
         (searchMemberNames && ctx.guild != null)) {
 
       //Remove discriminator if it exists - search methods don't like discrim
@@ -64,7 +70,7 @@ class UserArgument extends Argument {
         throw InvalidUserException("I couldn't find that user in the server");
       }
     } else {
-      userID = _parseIDHelper(message) ?? 0;
+      userID = parseIDHelper(message) ?? 0;
     }
 
     //Exhausted methods above and a user could not be found.

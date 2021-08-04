@@ -1,5 +1,3 @@
-part of framework;
-
 class InvalidChannelException implements Exception {
   final String message;
 
