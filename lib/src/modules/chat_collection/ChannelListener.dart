@@ -1,4 +1,7 @@
-part of framework;
+import 'package:nyxx/nyxx.dart';
+
+import 'CollectionMessage.dart';
+import '../../core/CCBot.dart';
 
 const conversationDelay = Duration(seconds: 90);
 const lastSuccessDelay = Duration(minutes: 3);
@@ -6,6 +9,7 @@ const lastSuccessDelay = Duration(minutes: 3);
 class ChannelListener {
   late bool ignoreChannel;
 
+  late CCBot bot;
   late GuildChannel channel;
   late Snowflake channelID;
   late Stream<MessageReceivedEvent> guildStream;
@@ -14,7 +18,7 @@ class ChannelListener {
   late LastMessage? lastMessage;
   late DateTime lastTrigger;
 
-  ChannelListener(this.channel, this.guildStream, {this.ignoreChannel = false}) {
+  ChannelListener(this.bot, this.channel, this.guildStream, {this.ignoreChannel = false}) {
     channelID = channel.id;
     lastMessage = null;
     lastTrigger = DateTime.now().toUtc().subtract(Duration(minutes: 5));
@@ -56,7 +60,7 @@ class ChannelListener {
         continue;
       }
 
-      CollectionMessage(channel, channelStream);
+      CollectionMessage(bot, bot.database, channel, channelStream);
       lastMessage = latestMessage;
       lastTrigger = DateTime.now().toUtc();
     }

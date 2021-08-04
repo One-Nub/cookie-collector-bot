@@ -1,4 +1,5 @@
-part of commands;
+import 'package:nyxx/nyxx.dart';
+import 'package:nyxx_commander/commander.dart';
 
 class Ping {
   static Future<bool> preRunChecks(CommandContext ctx) async {

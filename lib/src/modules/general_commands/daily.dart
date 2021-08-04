@@ -1,4 +1,8 @@
-part of commands;
+import 'package:nyxx/nyxx.dart';
+import 'package:nyxx_commander/commander.dart';
+
+import '../../core/CCDatabase.dart';
+import '../../framework/commands/Cooldown.dart';
 
 class Daily extends Cooldown {
   static const int baseReward = 15;

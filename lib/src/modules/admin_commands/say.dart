@@ -1,4 +1,9 @@
-part of commands;
+import 'package:nyxx/nyxx.dart';
+import 'package:nyxx_commander/commander.dart';
+
+import '../../framework/argument/ChannelArgument.dart';
+import '../../framework/exceptions/InvalidChannelException.dart';
+import '../../framework/exceptions/MissingArgumentException.dart';
 
 class Say {
   late AllowedMentions _mentions;

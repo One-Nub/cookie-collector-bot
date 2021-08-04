@@ -1,4 +1,10 @@
-part of framework;
+import 'dart:async';
+import 'dart:math';
+
+import 'package:nyxx/nyxx.dart';
+
+import '../../core/CCDatabase.dart';
+
 
 const promptTimeout = Duration(seconds: 75);
 const List<String> collectTriggers = [
@@ -21,14 +27,16 @@ const List<String> collectTriggers = [
 
 class CollectionMessage {
 
+  late Nyxx bot;
   late GuildChannel channel;
   late int cookieAmount;
+  late CCDatabase db;
   late String triggerMessage;
   late Stream<MessageReceivedEvent> channelStream;
 
   late Message botMessage;
 
-  CollectionMessage(this.channel, this.channelStream) {
+  CollectionMessage(this.bot, this.db, this.channel, this.channelStream) {
     cookieAmount = 1 + Random().nextInt(7);
     setTrigger();
     sendMessage();

@@ -1,4 +1,10 @@
-part of commands;
+import 'package:mysql1/mysql1.dart';
+import 'package:nyxx/nyxx.dart';
+import 'package:nyxx_commander/commander.dart';
+import 'package:nyxx_interactions/interactions.dart';
+
+import '../../core/CCDatabase.dart';
+import '../../framework/commands/Cooldown.dart';
 
 class Leaderboard extends Cooldown {
   static const int maxRowsPerPage = 10;

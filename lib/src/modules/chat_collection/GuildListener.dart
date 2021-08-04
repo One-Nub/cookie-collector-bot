@@ -1,6 +1,12 @@
-part of framework;
+import 'dart:collection';
+
+import 'package:nyxx/nyxx.dart';
+
+import 'ChannelListener.dart';
+import '../../core/CCBot.dart';
 
 class GuildListener {
+  late CCBot bot;
   late Guild guild;
   late Snowflake guildID;
   late Stream<MessageReceivedEvent> guildStream;
@@ -8,7 +14,7 @@ class GuildListener {
   HashSet<Snowflake> ignoredChannels = HashSet();
   HashMap<Snowflake, ChannelListener> listenedChannels = HashMap();
 
-  GuildListener(this.guild) {
+  GuildListener(this.bot, this.guild) {
     guildID = guild.id;
     guildStream = _guildStreamCreator(guildID);
     _initalize();
@@ -30,7 +36,7 @@ class GuildListener {
     //TODO: Fetch and populate ignored channels (ignoredChannels list)
     guild.channels.forEach((channel) {
       if(!ignoredChannels.contains(channel.id)) {
-        ChannelListener chnl = ChannelListener(channel, _guildStreamCreator(guildID));
+        ChannelListener chnl = ChannelListener(bot, channel, _guildStreamCreator(guildID));
         listenedChannels.putIfAbsent(channel.id, () => chnl);
       }
     });
@@ -61,7 +67,7 @@ class GuildListener {
     }
     else {
       var guildChannel = await bot.fetchChannel(channelID) as GuildChannel;
-      ChannelListener channelListener = ChannelListener(guildChannel, guildStream);
+      ChannelListener channelListener = ChannelListener(bot, guildChannel, guildStream);
       listenedChannels.putIfAbsent(channelID, () => channelListener);
       return true;
     }

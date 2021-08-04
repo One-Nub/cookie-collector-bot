@@ -1,4 +1,10 @@
-part of commands;
+import 'package:nyxx/nyxx.dart';
+import 'package:nyxx_commander/commander.dart';
+
+import '../../core/CCDatabase.dart';
+import '../../framework/argument/UserArgument.dart';
+import '../../framework/exceptions/InvalidUserException.dart';
+import '../../framework/exceptions/MissingArgumentException.dart';
 
 class Give {
   CCDatabase _database;

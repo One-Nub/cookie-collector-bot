@@ -3,14 +3,16 @@ import 'dart:collection';
 import 'package:nyxx/nyxx.dart';
 import 'package:logging/logging.dart';
 
+import 'CCDatabase.dart';
 import '../modules/chat_collection/GuildListener.dart';
 
 class CCBot extends Nyxx {
 
+  final CCDatabase database;
   late List<Snowflake> admins = [];
   HashMap<Snowflake, GuildListener> guildListeners = HashMap();
 
-  CCBot(String token, int intents,
+  CCBot(String token, int intents, this.database,
       {ClientOptions? options, CacheOptions? cacheOptions,
       bool ignoreExceptions = true, bool useDefaultLogger = true,
       Level? defaultLoggerLogLevel,
