@@ -26,7 +26,7 @@ Future<void> main() async {
   var startLogger = Logger("STARTUP");
 
   //Load bot config.
-  TomlDocument tomlDocument = await TomlDocument.load("src/config.toml");
+  TomlDocument tomlDocument = await TomlDocument.load("bin/config.toml");
   Map tomlConfig = tomlDocument.toMap();
   Map databaseConfig = tomlConfig["database"];
 

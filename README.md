@@ -9,6 +9,6 @@ It is currently in development and is not publically available for inviting just
 Cookie Collector runs on [Dart](https://dart.dev).
 It also requires a MySQL or MariaDB database with a user who has access to `CREATE, INSERT, SELECT, UPDATE`.
 
-Once cloning the repository, run `pub get` in the source folder to get the required dependencies. Then adjust `src/config.toml` as necessary.
+Once cloning the repository, run `pub get` in the source folder to get the required dependencies. Then adjust `bin/config.toml` as necessary.
 
-After that run (from the source folder) `dart run src/main.dart`.
+After that run (from the root folder of the bot) `dart run bin/main.dart`.
