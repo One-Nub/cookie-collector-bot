@@ -78,8 +78,8 @@ class Leaderboard extends Cooldown {
         ComponentStyle.danger,
         emoji: UnicodeEmoji("🗑"));
 
-      List<IComponentBuilder> buttonList = [previousButton, nextButton, deleteButton];
-      leaderboardMessageBuilder.addButtonRow(buttonList);
+      List<IButtonBuilder> buttonList = [previousButton, nextButton, deleteButton];
+      leaderboardMessageBuilder.components = [buttonList];
       Message leaderboardMessage = await ctx.reply(leaderboardMessageBuilder);
 
       paginationHandler(ctx, leaderboardMessage, embed, pageMax, buttonList);
@@ -92,29 +92,29 @@ class Leaderboard extends Cooldown {
   }
 
   Future<void> paginationHandler(CommandContext ctx, Message lbMessage,
-  EmbedBuilder lbEmbed, int maxPages, List<IComponentBuilder> buttonList) async {
+  EmbedBuilder lbEmbed, int maxPages, List<IButtonBuilder> buttonList) async {
     int currentPageIndex = 0;
 
     var buttonStream = _interactions.onButtonEvent;
     buttonStream = buttonStream.where((event) {
       int sourceMessageID = ctx.message.id.id;
 
-      return (event.interaction.metadata == "lb_prev_$sourceMessageID" ||
-        event.interaction.metadata == "lb_next_$sourceMessageID" ||
-        event.interaction.metadata == "lb_delete_$sourceMessageID") &&
-        event.interaction.memberAuthor.id == ctx.author.id;
+      return (event.interaction.customId == "lb_prev_$sourceMessageID" ||
+        event.interaction.customId == "lb_next_$sourceMessageID" ||
+        event.interaction.customId == "lb_delete_$sourceMessageID") &&
+        event.interaction.memberAuthor!.id == ctx.author.id;
     });
     buttonStream = buttonStream.timeout(promptTimeout, onTimeout: (sink) {
       lbMessage.edit(ComponentMessageBuilder()
         ..content = "Prompt timed out."
-        ..buttons = []);
+        ..components = []);
       sink.close();
       return;
     });
 
     await for (ComponentInteractionEvent buttonEvent in buttonStream) {
       //Remove the added message ID on the end.
-      String metadata = buttonEvent.interaction.metadata.replaceAll(RegExp(r"_\d+"), "");
+      String metadata = buttonEvent.interaction.customId.replaceAll(RegExp(r"_\d+"), "");
 
       if(metadata == "lb_prev") {
         currentPageIndex--;
@@ -125,7 +125,7 @@ class Leaderboard extends Cooldown {
       else if(metadata == "lb_delete") {
         lbMessage.edit(ComponentMessageBuilder()
         ..content = "Prompt terminated."
-        ..buttons = []);
+        ..components = []);
         return;
       }
 
@@ -158,7 +158,7 @@ class Leaderboard extends Cooldown {
 
       lbMessage.edit(ComponentMessageBuilder()
         ..embeds = [lbEmbed]
-        ..buttons = [buttonList]);
+        ..components = [buttonList]);
       buttonEvent.acknowledge();
     }
   }
@@ -178,6 +178,8 @@ class Leaderboard extends Cooldown {
         Map<String, dynamic> rowInfo = row.fields;
 
         // Get users from cache (and if they're not in cache get from upstream then cache)
+        // TODO: Wait until next Nyxx release, this won't work without
+        // https://github.com/nyxx-discord/nyxx/commit/b233f87d1f3bf47fa3407a91b3435382dbaf6a28
         User? user = client.users[Snowflake(rowInfo["user_id"])];
         user ??= await client.fetchUser(Snowflake(rowInfo["user_id"]));
         client.users.addIfAbsent(Snowflake(rowInfo["user_id"]), user);

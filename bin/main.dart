@@ -18,6 +18,7 @@ Future<void> main() async {
   Stopwatch startupTimer = Stopwatch();
   startupTimer.start();
 
+  Logger.root.level = Level.INFO;
   Logger.root.onRecord.listen((LogRecord rec) {
     print("[${rec.time}] [${rec.level.name}] [${rec.loggerName}] ${rec.message}");
   });
@@ -56,15 +57,16 @@ Future<void> main() async {
   int allUnpriv = GatewayIntents.allUnprivileged;
 
   ClientOptions clOpts = ClientOptions()
-    ..initialPresence = PresenceBuilder.of(game: Activity.of("the chat go by", type: ActivityType.from(3)));
+    ..initialPresence = PresenceBuilder.of(
+      activity: ActivityBuilder("the chat go by.", ActivityType.from(3))
+    );
 
   CacheOptions cacheOptions = CacheOptions()
     ..memberCachePolicyLocation = CachePolicyLocation.all()
     ..userCachePolicyLocation = CachePolicyLocation.all();
 
   bot = CCBot(tomlConfig["token"], allUnpriv, db, options: clOpts,
-    defaultLoggerLogLevel: Level.INFO, useDefaultLogger: false, admins: admins,
-    cacheOptions: cacheOptions);
+    useDefaultLogger: false, admins: admins, cacheOptions: cacheOptions);
 
   interactions = Interactions(bot);
 

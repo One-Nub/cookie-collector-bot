@@ -14,12 +14,9 @@ class CCBot extends Nyxx {
 
   CCBot(String token, int intents, this.database,
       {ClientOptions? options, CacheOptions? cacheOptions,
-      bool ignoreExceptions = true, bool useDefaultLogger = true,
-      Level? defaultLoggerLogLevel,
-      admins}) :
+      bool ignoreExceptions = true, bool useDefaultLogger = true, admins}) :
         super(token, intents, options: options, cacheOptions: cacheOptions,
-              ignoreExceptions: ignoreExceptions, useDefaultLogger: useDefaultLogger,
-              defaultLoggerLogLevel: defaultLoggerLogLevel);
+              ignoreExceptions: ignoreExceptions, useDefaultLogger: useDefaultLogger);
 
   bool checkForGuildListener(Snowflake guildID) {
     return guildListeners.containsKey(guildID);

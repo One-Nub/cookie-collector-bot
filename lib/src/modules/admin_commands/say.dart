@@ -61,10 +61,8 @@ class Say {
 
   Future<void> commandFunction(CommandContext ctx, String message,
     TextGuildChannel textChannel) async {
-      Member? botMember = ctx.guild!.selfMember;
-      if(botMember == null) {
-        botMember = await ctx.guild!.fetchMember(ctx.client.self.id);
-      }
+      Member? botMember = await ctx.guild!.selfMember.getOrDownload();
+
       var botSendPerm =
         await textChannel.effectivePermissions(botMember);
       if(botSendPerm.sendMessages && botSendPerm.viewChannel) {

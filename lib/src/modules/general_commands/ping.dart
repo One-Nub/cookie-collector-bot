@@ -5,10 +5,8 @@ class Ping {
   static Future<bool> preRunChecks(CommandContext ctx) async {
     if(ctx.guild == null) return false;
 
-    Member? botMember = ctx.guild!.selfMember;
-    if(botMember == null) {
-      botMember = await ctx.guild!.fetchMember(ctx.client.self.id);
-    }
+    Member? botMember = await ctx.guild!.selfMember.getOrDownload();
+
     GuildChannel channel = ctx.channel as GuildChannel;
     var botPerms = await channel.effectivePermissions(botMember);
 
