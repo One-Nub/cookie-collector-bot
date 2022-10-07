@@ -24,6 +24,7 @@ class CCDatabase {
           userName: username!,
           password: password,
           maxConnections: maxConnections,
+          databaseName: databaseName,
           secure: false);
     }
     return _instance;
