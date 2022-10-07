@@ -45,3 +45,4 @@ doc/api/
 packages/
 src/config.yaml
 .atom/
+src/config.toml
