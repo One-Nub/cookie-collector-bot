@@ -23,7 +23,7 @@ void main() async {
       databaseName: databaseConfig["databaseName"],
       port: databaseConfig["port"]);
 
-  CCBot bot = CCBot(token: tomlConfig["token"]);
+  CCBot bot = CCBot(token: tomlConfig["token"], adminList: admins);
   bot.startGateway();
   bot.startInteractions();
 }

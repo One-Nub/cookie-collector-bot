@@ -24,12 +24,15 @@ class CCBot {
   late final IInteractions interactions;
   late final OnyxChat onyxChat;
 
+  late final List<Snowflake> adminList;
+
   static final CCBot _instance = CCBot._init();
 
   CCBot._init();
 
-  factory CCBot({String? token}) {
+  factory CCBot({String? token, List<Snowflake>? adminList}) {
     if (token != null) _instance.token = token;
+    if (adminList != null) _instance.adminList = adminList;
 
     return _instance;
   }
@@ -53,7 +56,7 @@ class CCBot {
     });
 
     onyxChat = OnyxChat(gateway, prefix: ".");
-    onyxChat.addCommandList([GenerateCommand(), EatCommand(), GiveCommand()]);
+    onyxChat.addCommandList([GenerateCommand(), SayCommand(), EatCommand(), GiveCommand()]);
 
     gateway.eventsWs.onMessageReceived.listen((event) {
       if (event.message.author.bot) return;
