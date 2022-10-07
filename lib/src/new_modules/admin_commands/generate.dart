@@ -5,7 +5,6 @@ import 'package:nyxx/nyxx.dart';
 import 'package:nyxx_interactions/nyxx_interactions.dart';
 import 'package:onyx_chat/onyx_chat.dart';
 
-import '../../core/CCBot.dart';
 import '../../utilities/parse_id.dart';
 
 class GenerateCommand extends TextCommand {
