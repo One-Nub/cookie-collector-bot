@@ -25,4 +25,5 @@ void main() async {
 
   CCBot bot = CCBot(token: tomlConfig["token"]);
   bot.startGateway();
+  bot.startInteractions();
 }

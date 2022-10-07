@@ -1,4 +1,5 @@
 import 'package:nyxx/nyxx.dart';
+import 'package:nyxx_interactions/nyxx_interactions.dart';
 import 'package:logging/logging.dart';
 import 'package:onyx_chat/onyx_chat.dart';
 
@@ -18,11 +19,20 @@ import '../new_modules/general_commands/rob.dart';
 import '../new_modules/general_commands/stats.dart';
 
 class CCBot {
-  final String token;
+  late final String token;
   late final INyxxWebsocket gateway;
+  late final IInteractions interactions;
   late final OnyxChat onyxChat;
 
-  CCBot({required this.token});
+  static final CCBot _instance = CCBot._init();
+
+  CCBot._init();
+
+  factory CCBot({String? token}) {
+    if (token != null) _instance.token = token;
+
+    return _instance;
+  }
 
   void startGateway() async {
     CacheOptions cacheOptions = CacheOptions()
@@ -51,6 +61,10 @@ class CCBot {
       onyxChat.dispatchIMessage(event.message);
       cc.onMessageEvent(event);
     });
+  }
+
+  void startInteractions() async {
+    interactions = IInteractions.create(WebsocketInteractionBackend(gateway));
   }
 }
 
