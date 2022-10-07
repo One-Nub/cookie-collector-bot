@@ -53,7 +53,7 @@ class CCBot {
     });
 
     onyxChat = OnyxChat(gateway, prefix: ".");
-    onyxChat.addCommandList([GenerateCommand()]);
+    onyxChat.addCommandList([GenerateCommand(), EatCommand()]);
 
     gateway.eventsWs.onMessageReceived.listen((event) {
       if (event.message.author.bot) return;
