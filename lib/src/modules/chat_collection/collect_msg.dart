@@ -4,7 +4,7 @@ import 'dart:math';
 import 'package:cookie_collector_bot/core.dart';
 import 'package:nyxx/nyxx.dart';
 
-const promptTimeout = Duration(seconds: 75);
+const _promptTimeout = Duration(seconds: 75);
 const List<String> collectTriggers = [
   "collect",
   "grab",
@@ -54,7 +54,7 @@ class CollectionMessage {
       ..title = triggerMessage
       ..description = "Say **$triggerMessage** to collect $cookieAmountString! (Or don't that on you...)"
       ..addFooter((footer) {
-        footer.text = "This will expire in ${promptTimeout.inSeconds} seconds!";
+        footer.text = "This will expire in ${_promptTimeout.inSeconds} seconds!";
       });
 
     var collectionMsg = await trigger.channel.sendMessage(MessageBuilder.embed(messageEmbed));
@@ -63,7 +63,7 @@ class CollectionMessage {
     try {
       var collectionEvent = await client.eventsWs.onMessageReceived
           .firstWhere((element) => element.message.content == triggerMessage)
-          .timeout(promptTimeout);
+          .timeout(_promptTimeout);
 
       await collectionMsg.delete();
       await collectionEvent.message.delete();

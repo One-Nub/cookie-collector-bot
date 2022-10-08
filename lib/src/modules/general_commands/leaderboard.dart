@@ -9,8 +9,8 @@ import '../../core/CCBot.dart';
 import '../../core/CCDatabase.dart';
 
 final Map<String, DateTime> lastCommandRun = Map();
-final Duration cooldown = Duration(minutes: 1);
-final Duration promptTimeout = Duration(seconds: 60);
+final Duration _cooldown = Duration(minutes: 1);
+final Duration _promptTimeout = Duration(seconds: 60);
 final AllowedMentions _allowedMentions = AllowedMentions()..allow(reply: false, everyone: false);
 
 class LeaderboardCommand extends TextCommand {
@@ -39,7 +39,7 @@ class LeaderboardCommand extends TextCommand {
     String mapEntry = "$guildID-$authorID";
 
     if (lastCommandRun.containsKey(mapEntry)) {
-      if (lastCommandRun[mapEntry]!.add(cooldown).isAfter(DateTime.now())) {
+      if (lastCommandRun[mapEntry]!.add(_cooldown).isAfter(DateTime.now())) {
         EmbedBuilder errorEmbed = EmbedBuilder()
           ..color = DiscordColor.fromHexString("6B0504")
           ..description = "You're being restricted. Try again in little bit.";
@@ -94,7 +94,7 @@ class LeaderboardCommand extends TextCommand {
     });
 
     /// Reassign value to a stream that times out after a minute.
-    lbBStream = lbBStream.timeout(promptTimeout, onTimeout: (sink) {
+    lbBStream = lbBStream.timeout(_promptTimeout, onTimeout: (sink) {
       lbMessage.edit(ComponentMessageBuilder()
         ..content = "Prompt timed out."
         ..componentRows = []

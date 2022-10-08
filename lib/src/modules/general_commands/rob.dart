@@ -14,7 +14,7 @@ final Map<String, Queue<bool>> robChances = Map();
 /// Stores the last time a successful robbery was made for the user.
 final Map<String, DateTime> cooldownMap = Map();
 
-const Duration cooldown = Duration(hours: 3);
+const Duration _cooldown = Duration(hours: 3);
 const minCookieCount = 15;
 const minVictimCookieCount = 20;
 
@@ -46,7 +46,7 @@ class RobCommand extends TextCommand {
 
     if (cooldownMap.containsKey(mapEntry)) {
       // check cooldown
-      DateTime cooldownExpiry = cooldownMap[mapEntry]!.add(cooldown);
+      DateTime cooldownExpiry = cooldownMap[mapEntry]!.add(_cooldown);
       if (cooldownExpiry.isAfter(DateTime.now())) {
         ctx.channel
             .sendMessage(MessageBuilder.content("Your prep time has not expired yet! You can rob someone"
