@@ -43,5 +43,5 @@ doc/api/
 
 .vscode/
 packages/
-src/config.yaml
-.atom/
+bin/config.toml
+bin/.env

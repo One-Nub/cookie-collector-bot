@@ -2,12 +2,13 @@ name: cookie_collector_bot
 description: A little discord bot that lets you collect and do stuff with cookies
 
 environment:
-  sdk: '>=2.13.0 <3.0.0'
+  sdk: ">=2.18.0 <3.0.0"
 
 dependencies:
   date_time_format: ^2.0.1
-  mysql1: ^0.19.0
-  nyxx: 2.0.0-rc.7
-  nyxx_commander: 2.0.0-rc.10
-  nyxx_interactions: 2.0.0-rc.8
-  toml: ^0.11.0
+  dotenv: ^4.0.1
+  mysql_client: ^0.0.27
+  nyxx: ^4.1.0
+  nyxx_interactions: ^4.3.0
+  onyx_chat:
+    git: https://github.com/One-Nub/Onyx_Chat.git

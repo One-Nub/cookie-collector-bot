@@ -1,0 +1,242 @@
+import 'dart:collection';
+import 'dart:math';
+
+import 'package:mysql_client/mysql_client.dart';
+import 'package:nyxx/nyxx.dart';
+import 'package:onyx_chat/onyx_chat.dart';
+
+import '../../core/CCBot.dart';
+import '../../core/CCDatabase.dart';
+
+/// String is guildid-userid, queue is a t/f list (4 true, 6 false)
+final Map<String, Queue<bool>> robChances = Map();
+
+/// Stores the last time a successful robbery was made for the user.
+final Map<String, DateTime> cooldownMap = Map();
+
+const Duration _cooldown = Duration(hours: 3);
+const minCookieCount = 15;
+const minVictimCookieCount = 20;
+
+const int robVarLow = 5;
+const int robVarHigh = 10;
+const double lowPercentMult = 0.008; //0.8%
+const double highPercentMult = 0.016; //0.16%
+
+class RobCommand extends TextCommand {
+  @override
+  String get name => "rob";
+
+  @override
+  String get description => "Rob a random user! Be careful, you may not always succeed...";
+
+  @override
+  Future<void> commandEntry(TextCommandContext ctx, String message, List<String> args) async {
+    int authorID = ctx.author.id.id;
+    int guildID = ctx.guild!.id.id;
+
+    String mapEntry = "$guildID-$authorID";
+    if (!robChances.containsKey(mapEntry)) {
+      // generate rob queue first if it doesn't exist
+      robChances[mapEntry] = _resetQueue();
+    } else if (robChances[mapEntry]!.isEmpty) {
+      // generate rob queue if the current one is empty
+      robChances[mapEntry] = _resetQueue();
+    }
+
+    if (cooldownMap.containsKey(mapEntry)) {
+      // check cooldown
+      DateTime cooldownExpiry = cooldownMap[mapEntry]!.add(_cooldown);
+      if (cooldownExpiry.isAfter(DateTime.now())) {
+        ctx.channel
+            .sendMessage(MessageBuilder.content("Your prep time has not expired yet! You can rob someone"
+                "<t:${(cooldownExpiry.millisecondsSinceEpoch / 1000).round()}:R>.")
+              ..allowedMentions = (AllowedMentions()..allow(reply: false))
+              ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
+        return;
+      }
+    }
+
+    CCDatabase db = CCDatabase(initializing: false);
+    int authorCookies = await db.getCookieCount(authorID, guildID);
+    // check author cookie count
+    if (authorCookies < minCookieCount) {
+      ctx.channel.sendMessage(MessageBuilder.content("Hold up there partner! You need at least "
+          "$minCookieCount cookies to rob people! Debt isn't allowed round here")
+        ..allowedMentions = (AllowedMentions()..allow(reply: false))
+        ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
+      return;
+    }
+
+    //skip logic to be able to rob a specific person.. maybe one day if i work on features it would come back
+    //but for now we grab a random user from the database and rob them.
+    //yk what i could do is increase the cooldown of robbing someone to an annoyingly high cooldown (think like 48hr)
+    //but leave it low for normal random chance robbing... /shrug
+
+    IResultSet? randomUserSet = await db.getRandomUserToRob(guildID, authorID, minVictimCookieCount);
+    if (randomUserSet == null) {
+      ctx.channel.sendMessage(
+          MessageBuilder.content("Nobody could be robbed at this time, sorry! Might want to consider "
+              "moving out of your ghost town..")
+            ..allowedMentions = (AllowedMentions()..allow(reply: false))
+            ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
+      return;
+    }
+
+    var victimData = randomUserSet.rows.first.typedAssoc();
+    bool robResult = robChances[mapEntry]!.removeFirst();
+
+    if (robResult) {
+      await _robVictim(ctx, victimData, db);
+    } else {
+      await _failRobbery(ctx, authorCookies, victimData, db);
+    }
+
+    cooldownMap[mapEntry] = DateTime.now();
+  }
+
+  Future<void> _robVictim(TextCommandContext ctx, Map<String, dynamic> victimData, CCDatabase db) async {
+    int stolenCount = Random.secure().nextInt(robVarHigh - robVarLow) + robVarLow;
+    int victimCookieCnt = victimData["cookies"];
+
+    if (victimCookieCnt > 100 && victimCookieCnt < 1500) {
+      stolenCount += (victimCookieCnt * highPercentMult).round();
+    } else if (victimCookieCnt >= 1500) {
+      stolenCount += (victimCookieCnt * lowPercentMult).round();
+    }
+
+    int authorID = ctx.author.id.id;
+    int guildID = ctx.guild!.id.id;
+    int victimID = victimData["user_id"];
+
+    // these should be grouped or in a transaction in good practice... consider doing that
+    await db.addCookies(authorID, stolenCount, guildID);
+    await db.addLifetimeCookies(authorID, stolenCount, guildID);
+    await db.removeCookies(victimID, stolenCount, guildID);
+
+    var bot = CCBot();
+    var victimUser = await bot.gateway.fetchUser(Snowflake(victimID));
+
+    String successMsg = _successMessages[Random.secure().nextInt(_successMessages.length)];
+    String missionResult = "You stole `$stolenCount` cookies from ${victimUser.mention} (${victimUser.tag}) "
+        "by $successMsg";
+
+    EmbedBuilder resultEmbed = EmbedBuilder()
+      ..color = DiscordColor.fromHexString("67F399")
+      ..description = missionResult
+      ..title = "Robbery Result!";
+
+    await ctx.channel.sendMessage(MessageBuilder.embed(resultEmbed)
+      ..allowedMentions = (AllowedMentions()..allow(reply: false))
+      ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
+  }
+
+  Future<void> _failRobbery(
+      TextCommandContext ctx, int authorCookies, Map<String, dynamic> victimData, CCDatabase db) async {
+    int lostAmount = Random.secure().nextInt(robVarHigh - robVarLow) + robVarLow;
+    int taxAmount = (authorCookies * lowPercentMult).round();
+
+    if (authorCookies - lostAmount > taxAmount) {
+      lostAmount += taxAmount;
+    }
+
+    await db.removeCookies(ctx.author.id.id, lostAmount, ctx.guild!.id.id);
+
+    var bot = CCBot();
+    var victimUser = await bot.gateway.fetchUser(Snowflake(victimData["user_id"]));
+
+    String failMsg = _failMessages[Random.secure().nextInt(_failMessages.length)];
+    String missionResult = "You failed at robbing ${victimUser.mention} (${victimUser.tag}) "
+        "because $failMsg, so you lost `$lostAmount` cookies.";
+
+    EmbedBuilder resultEmbed = EmbedBuilder()
+      ..color = DiscordColor.fromHexString("6B0504")
+      ..description = missionResult
+      ..title = "Robbery Result!";
+
+    await ctx.channel.sendMessage(MessageBuilder.embed(resultEmbed)
+      ..allowedMentions = (AllowedMentions()..allow(reply: false))
+      ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
+  }
+
+  Queue<bool> _resetQueue() {
+    List<bool> chanceList = [];
+    for (int i = 0; i < 10; i++) {
+      if (i < 4) {
+        chanceList.add(true);
+      } else {
+        chanceList.add(false);
+      }
+    }
+
+    chanceList.shuffle(Random.secure());
+    return Queue.from(chanceList);
+  }
+}
+
+//by...
+//24 so far
+final List<String> _successMessages = [
+  "dodging the wild bork and crawling in through the doggy door",
+  "making them pay for the dinner date",
+  "going inside the unlocked door while they were on vacation",
+  "grabbing the fresh cookies from the windowsill, rookie mistake on their part",
+  "calling them 24/7, so they paid you to go away",
+  "tripping them on the walk home from school... you bully :frowning:",
+  "bullying them for their lunch money",
+  "taking care of their dog... They left the cookie jar out ok",
+  "ratting their hidden robberies out to the police",
+  "calling the IRS on them... Cookie Government needs its cookies bro",
+  "reaching inside the open window and into the cookie jar",
+  "taking it in the divorce... It was a long con alright",
+  "beating them in the pyramid scheme",
+  "reaching into their pocket while they weren't looking",
+  "taking their portable cookie jar",
+  "acting like a homeless person; where are your morals bro smh",
+  "selling their stocks secretly",
+  "you convinced them to invest in stonks",
+  "convincing them they had the plague, and that paying you would cure it",
+  "getting them join your *exclusive* discord server",
+  "stuffing them in your cheeks like a chipmunk while they were cooling",
+  "trading them with some plastic cookies",
+  "hosting a cookie party but sneaking out to their safe",
+  "begging a lot, like *a lot*..."
+];
+
+//because...
+//33 so far
+final List<String> _failMessages = [
+  "you walked by the police office with your bag of cookies",
+  "Nub ate your getaway car, tough luck bro",
+  "the window was made of acrylic",
+  "you left your mask in the van and you didn't feel like getting it",
+  "it was as if you were never there",
+  "even I can steal better than you, smh",
+  "the neighbor's dog needed belly rubs",
+  "you left the note for your crush behind that you signed for some reason...",
+  "the cookie jar was too well protected & you were too lazy to deal with that",
+  "the cookie jar was actually fake, causing you to fall into a trap",
+  "it was too hot outside",
+  "it was too cold outside",
+  "you actually tried to rob the police station",
+  "you told them in advance you were going to rob them, nice job mate",
+  "you felt bad and called the police and told them",
+  "you tripped and all your stolen cookies fell down the storm drain",
+  "you woke up",
+  "you ~~somehow~~ fell in love with John and left your profits behind",
+  "after a nice robbery, you realize you forgot one thing: the cookies",
+  "that's just how the cookie crumbles",
+  "all they had were stupid coins and not any cookies",
+  "for some reason they had oatmeal cookies, like who eats those?",
+  "your browser said delete cookies and you said yes",
+  "your house was set on fire by the person you robbed",
+  "I said so :eyes:",
+  "you were too comfy in bed. so you slept through the robbery",
+  "you threw out your plans while cleaning",
+  "you had a change of heart and left your robberies for the day behind",
+  "the neighbor's dog tackled you, or was that nub...",
+  "someone saw you put your very unsuspicious ski mask on",
+  "the weather was too nice, so you went to the beach instead",
+  "the weather was so bad, it would've been impossible anyway",
+  "there was a minecraft bedwars tournament",
+];
