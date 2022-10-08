@@ -15,6 +15,9 @@ class DailyCommand extends TextCommand {
   String get name => "daily";
 
   @override
+  String get description => "Collect your daily cookies!";
+
+  @override
   Future<void> commandEntry(TextCommandContext ctx, String message, List<String> args) async {
     int authorID = ctx.author.id.id;
     int guildID = ctx.guild!.id.id;

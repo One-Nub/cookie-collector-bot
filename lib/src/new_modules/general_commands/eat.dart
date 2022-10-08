@@ -8,6 +8,9 @@ class EatCommand extends TextCommand {
   String get name => "eat";
 
   @override
+  String get description => "Eat a cookie! Very tasty :D";
+
+  @override
   Future<void> commandEntry(TextCommandContext ctx, String message, List<String> args) async {
     var db = CCDatabase(initializing: false);
     int cookieCount = await db.getCookieCount(ctx.author.id.id, ctx.guild!.id.id);

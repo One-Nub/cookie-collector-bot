@@ -12,6 +12,9 @@ class StatsCommands extends TextCommand {
   String get name => "stats";
 
   @override
+  String get description => "View how many cookies someone, or yourself, has!";
+
+  @override
   HashSet<String> get aliases => HashSet.from(["bal", "balance"]);
 
   @override

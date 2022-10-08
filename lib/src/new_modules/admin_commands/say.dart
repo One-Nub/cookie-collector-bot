@@ -9,6 +9,9 @@ class SayCommand extends TextCommand {
   String get name => "say";
 
   @override
+  String get description => "Have the bot say something either in this channel, or another channel.";
+
+  @override
   Future<void> commandEntry(TextCommandContext ctx, String message, List<String> args) async {
     CCBot bot = CCBot();
     if (!bot.adminList.contains(ctx.author.id)) {

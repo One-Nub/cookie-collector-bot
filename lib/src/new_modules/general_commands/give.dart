@@ -13,6 +13,9 @@ class GiveCommand extends TextCommand {
   String get name => "give";
 
   @override
+  String get description => "Give some cookies to someone!";
+
+  @override
   Future<void> commandEntry(TextCommandContext ctx, String message, List<String> args) async {
     if (ctx.guild == null || ctx.author.id.id != 156872400145874944) return;
 

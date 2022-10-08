@@ -12,6 +12,9 @@ class GenerateCommand extends TextCommand {
   String get name => "generate";
 
   @override
+  String get description => "Generate some cookies for someone.";
+
+  @override
   Future<void> commandEntry(TextCommandContext ctx, String message, List<String> args) async {
     if (ctx.guild == null || ctx.author.id.id != 156872400145874944) return;
 

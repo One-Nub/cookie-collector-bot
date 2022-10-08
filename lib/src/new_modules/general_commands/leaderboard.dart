@@ -27,6 +27,9 @@ class LeaderboardCommand extends TextCommand {
   String get name => "leaderboard";
 
   @override
+  String get description => "View the leaderboard for this server.";
+
+  @override
   HashSet<String> get aliases => HashSet.from(["lb"]);
 
   @override

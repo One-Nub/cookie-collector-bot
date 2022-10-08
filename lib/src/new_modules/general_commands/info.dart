@@ -12,6 +12,9 @@ class InfoCommand extends TextCommand {
   String get name => "info";
 
   @override
+  String get description => "Get some information about the bot's status.";
+
+  @override
   HashSet<String> get aliases => HashSet.from(["status"]);
 
   @override

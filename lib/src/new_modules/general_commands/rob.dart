@@ -28,6 +28,9 @@ class RobCommand extends TextCommand {
   String get name => "rob";
 
   @override
+  String get description => "Rob a random user! Be careful, you may not always succeed...";
+
+  @override
   Future<void> commandEntry(TextCommandContext ctx, String message, List<String> args) async {
     int authorID = ctx.author.id.id;
     int guildID = ctx.guild!.id.id;

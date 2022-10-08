@@ -6,6 +6,9 @@ class PingCommand extends TextCommand {
   String get name => "ping";
 
   @override
+  String get description => "Pong! Get round-trip latency from the bot to Discord.";
+
+  @override
   Future<void> commandEntry(TextCommandContext ctx, String message, List<String> args) async {
     Stopwatch timer = Stopwatch();
     timer.start();
