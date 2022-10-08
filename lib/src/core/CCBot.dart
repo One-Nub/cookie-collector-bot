@@ -60,6 +60,8 @@ class CCBot {
     gateway.eventsWs.onMessageReceived.listen((event) {
       if (event.message.author.bot) return;
 
+      /// for custom prefix, here you would get the prefix for the server from the db
+      /// and pass the prefix param over the dispatch msg
       onyxChat.dispatchIMessage(event.message);
       onMessageEvent(event);
     });
