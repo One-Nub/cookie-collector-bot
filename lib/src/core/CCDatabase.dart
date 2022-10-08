@@ -68,7 +68,8 @@ class CCDatabase {
         "ON DUPLICATE KEY UPDATE id=id");
   }
 
-  Future<Iterator> leaderboardSelection(int guildID, {int pageNumber = 0, int pageEntryMax = 15}) async {
+  Future<Iterator<ResultSetRow>> leaderboardSelection(int guildID,
+      {int pageNumber = 0, int pageEntryMax = 15}) async {
     String query = "SELECT * FROM ("
         "SELECT ROW_NUMBER() OVER(ORDER BY cookies DESC) "
         "AS row_num, user_id, cookies "
