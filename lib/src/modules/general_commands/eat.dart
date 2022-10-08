@@ -1,21 +1,29 @@
 import 'package:nyxx/nyxx.dart';
-import 'package:nyxx_commander/commander.dart';
+import 'package:onyx_chat/onyx_chat.dart';
 
 import '../../core/CCDatabase.dart';
 
-class Eat {
-  CCDatabase _database;
-  Eat(this._database);
+class EatCommand extends TextCommand {
+  @override
+  String get name => "eat";
 
-  static bool preRunChecks(CommandContext ctx) {
-    if(ctx.guild == null) return false;
-    return true;
-  }
+  @override
+  String get description => "Eat a cookie! Very tasty :D";
 
-  Future<void> commandFunction(CommandContext ctx, String message) async {
-    await _database.removeCookies(ctx.author.id.id, 1, ctx.guild!.id.id);
-    AllowedMentions _mentions = AllowedMentions()..allow(reply:false);
-    ctx.reply(MessageBuilder.content("You ate 1 cookie! very yummy :cookie:")
-      ..allowedMentions = _mentions);
+  @override
+  Future<void> commandEntry(TextCommandContext ctx, String message, List<String> args) async {
+    var db = CCDatabase(initializing: false);
+    int cookieCount = await db.getCookieCount(ctx.author.id.id, ctx.guild!.id.id);
+
+    if (cookieCount >= 1) {
+      await db.removeCookies(ctx.author.id.id, 1, ctx.guild!.id.id);
+      ctx.channel.sendMessage(MessageBuilder.content("You ate 1 cookie! very tasty :cookie:")
+        ..replyBuilder = ReplyBuilder.fromMessage(ctx.message)
+        ..allowedMentions = (AllowedMentions()..allow(reply: false)));
+    } else {
+      ctx.channel.sendMessage(MessageBuilder.content("You ate your favorite imaginary cookie!")
+        ..replyBuilder = ReplyBuilder.fromMessage(ctx.message)
+        ..allowedMentions = (AllowedMentions()..allow(reply: false)));
+    }
   }
 }

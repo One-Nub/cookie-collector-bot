@@ -1,192 +1,214 @@
-import 'package:mysql1/mysql1.dart';
+import 'dart:collection';
+
+import 'package:mysql_client/mysql_client.dart';
 import 'package:nyxx/nyxx.dart';
-import 'package:nyxx_commander/commander.dart';
-import 'package:nyxx_interactions/interactions.dart';
+import 'package:nyxx_interactions/nyxx_interactions.dart';
+import 'package:onyx_chat/onyx_chat.dart';
 
+import '../../core/CCBot.dart';
 import '../../core/CCDatabase.dart';
-import '../../framework/commands/Cooldown.dart';
 
-class Leaderboard extends Cooldown {
+final Map<String, DateTime> lastCommandRun = Map();
+final Duration cooldown = Duration(minutes: 1);
+final Duration promptTimeout = Duration(seconds: 60);
+final AllowedMentions _allowedMentions = AllowedMentions()..allow(reply: false, everyone: false);
+
+class LeaderboardCommand extends TextCommand {
   static const int maxRowsPerPage = 10;
-  Map<int, String> pages = {};
-  final Duration promptTimeout = Duration(seconds: 60);
-  final Interactions _interactions;
+  final Map<int, String> pages = Map();
 
-  late AllowedMentions _mentions;
-  CCDatabase _database;
+  // no footer, thumbnail URL, or description.
+  final EmbedBuilder baseEmbed = EmbedBuilder()
+    ..color = DiscordColor.fromHexString("87CEEB")
+    ..timestamp = DateTime.now().toUtc()
+    ..title = "Leaderboard";
 
-  Leaderboard(this._database, this._interactions) : super(Duration(seconds: 60)) {
-    _mentions = AllowedMentions()..allow(reply: false, everyone: false);
-  }
+  @override
+  String get name => "leaderboard";
 
-  Future<bool> preRunChecks(CommandContext ctx) async {
-    if (ctx.guild == null) {
-      return false;
+  @override
+  String get description => "View the leaderboard for this server.";
+
+  @override
+  HashSet<String> get aliases => HashSet.from(["lb"]);
+
+  @override
+  Future<void> commandEntry(TextCommandContext ctx, String message, List<String> args) async {
+    int authorID = ctx.author.id.id;
+    int guildID = ctx.guild!.id.id;
+    String mapEntry = "$guildID-$authorID";
+
+    if (lastCommandRun.containsKey(mapEntry)) {
+      if (lastCommandRun[mapEntry]!.add(cooldown).isAfter(DateTime.now())) {
+        EmbedBuilder errorEmbed = EmbedBuilder()
+          ..color = DiscordColor.fromHexString("6B0504")
+          ..description = "You're being restricted. Try again in little bit.";
+        await ctx.channel.sendMessage(MessageBuilder.embed(errorEmbed)
+          ..allowedMentions = (AllowedMentions()..allow(reply: false))
+          ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
+        return;
+      }
+    }
+    lastCommandRun[mapEntry] = DateTime.now();
+
+    CCDatabase db = CCDatabase(initializing: false);
+    var countQuery = await db.pool.execute("SELECT COUNT(*) FROM users_guilds WHERE guild_id = $guildID");
+    var queryResultMap = countQuery.rows.first.typedAssoc();
+    int rowCount = queryResultMap["COUNT(*)"];
+
+    int maxPageCount = (rowCount / maxRowsPerPage <= 1) ? 1 : (rowCount / maxRowsPerPage).ceil();
+    int pageIndex = 0;
+
+    baseEmbed.description = await _generatePage(ctx);
+    baseEmbed.thumbnailUrl = ctx.guild!.iconURL();
+    baseEmbed.footer = EmbedFooterBuilder()
+      ..text = "Page 1 / $maxPageCount"
+      ..iconUrl = ctx.author.avatarURL();
+
+    ComponentMessageBuilder cmb = ComponentMessageBuilder()
+      ..embeds = [baseEmbed]
+      ..allowedMentions = _allowedMentions
+      ..replyBuilder = ReplyBuilder.fromMessage(ctx.message);
+
+    if (maxPageCount == 1) {
+      await ctx.channel.sendMessage(cmb);
+      return;
     }
 
-    if(super.isCooldownActive(ctx.guild!.id, ctx.author.id)) {
-      String timeRemaining = super.getRemainingTime(ctx.guild!.id, ctx.author.id);
-      EmbedBuilder errorEmbed = EmbedBuilder()
-        ..color = DiscordColor.fromHexString("6B0504")
-        ..description = "You're being restricted. Try again in `$timeRemaining`";
-      await ctx.reply(MessageBuilder.embed(errorEmbed)
-        ..allowedMentions = _mentions);
-      return false;
-    }
+    cmb.componentRows = [
+      ComponentRowBuilder()
+        ..addComponent(ButtonBuilder("<", "lb_prev", ButtonStyle.primary, disabled: true))
+        ..addComponent(ButtonBuilder(" ", "lb_delete", ButtonStyle.danger, emoji: UnicodeEmoji("🗑")))
+        ..addComponent(ButtonBuilder(">", "lb_next", ButtonStyle.primary))
+    ];
 
-    return true;
-  }
+    var lbMessage = await ctx.channel.sendMessage(cmb);
 
-  Future<void> commandFunction(CommandContext ctx, String message) async {
-    pages.clear();
-    String pageLeaderboard =
-      await _getPageString(ctx.client, ctx.guild!.id.id);
+    CCBot bot = CCBot();
+    IInteractions interactions = bot.interactions;
 
-    var dbConnection = await _database.dbConnection();
-    var query = await dbConnection.query("SELECT COUNT(*) FROM users_guilds "
-      "WHERE guild_id = ${ctx.guild!.id.id}");
-    await dbConnection.close();
-
-    int numRows = query.first.first! as int;
-    int pageMax = (numRows / maxRowsPerPage <= 1) ?
-      1 : (numRows / maxRowsPerPage).ceil();
-
-    var embed = EmbedBuilder()
-      ..color = DiscordColor.fromHexString("87CEEB")
-      ..description = pageLeaderboard
-      ..thumbnailUrl = ctx.guild!.iconURL(format: "png")
-      ..timestamp = DateTime.now().toUtc()
-      ..title = "Leaderboard";
-
-    var embedFooter = EmbedFooterBuilder()
-      ..text = "Page 1 / $pageMax"
-      ..iconUrl = ctx.author.avatarURL(format: "png");
-    embed.footer = embedFooter;
-
-    ComponentMessageBuilder leaderboardMessageBuilder = ComponentMessageBuilder()
-      ..embeds = [embed]
-      ..allowedMentions = _mentions;
-
-    if(pageMax > 1) {
-      int sourceMessageID = ctx.message.id.id;
-      ButtonBuilder previousButton = ButtonBuilder("Previous", "lb_prev_$sourceMessageID",
-        ComponentStyle.primary,
-        disabled: true);
-      ButtonBuilder nextButton = ButtonBuilder("Next", "lb_next_$sourceMessageID",
-        ComponentStyle.primary);
-      ButtonBuilder deleteButton = ButtonBuilder(" ", "lb_delete_$sourceMessageID",
-        ComponentStyle.danger,
-        emoji: UnicodeEmoji("🗑"));
-
-      List<IButtonBuilder> buttonList = [previousButton, nextButton, deleteButton];
-      leaderboardMessageBuilder.components = [buttonList];
-      Message leaderboardMessage = await ctx.reply(leaderboardMessageBuilder);
-
-      paginationHandler(ctx, leaderboardMessage, embed, pageMax, buttonList);
-    }
-    else {
-      await ctx.reply(leaderboardMessageBuilder);
-    }
-
-    super.applyCooldown(ctx.guild!.id, ctx.author.id);
-  }
-
-  Future<void> paginationHandler(CommandContext ctx, Message lbMessage,
-  EmbedBuilder lbEmbed, int maxPages, List<IButtonBuilder> buttonList) async {
-    int currentPageIndex = 0;
-
-    var buttonStream = _interactions.onButtonEvent;
-    buttonStream = buttonStream.where((event) {
-      int sourceMessageID = ctx.message.id.id;
-
-      return (event.interaction.customId == "lb_prev_$sourceMessageID" ||
-        event.interaction.customId == "lb_next_$sourceMessageID" ||
-        event.interaction.customId == "lb_delete_$sourceMessageID") &&
-        event.interaction.memberAuthor!.id == ctx.author.id;
+    /// Recreate event stream with only events by the author on this message
+    var lbBStream = interactions.events.onButtonEvent.where((event) {
+      return event.interaction.memberAuthor!.id == ctx.author.id &&
+          event.interaction.message!.id == lbMessage.id;
     });
-    buttonStream = buttonStream.timeout(promptTimeout, onTimeout: (sink) {
+
+    /// Reassign value to a stream that times out after a minute.
+    lbBStream = lbBStream.timeout(promptTimeout, onTimeout: (sink) {
       lbMessage.edit(ComponentMessageBuilder()
         ..content = "Prompt timed out."
-        ..components = []);
+        ..componentRows = []
+        ..allowedMentions = _allowedMentions);
       sink.close();
       return;
     });
 
-    await for (ComponentInteractionEvent buttonEvent in buttonStream) {
-      //Remove the added message ID on the end.
-      String metadata = buttonEvent.interaction.customId.replaceAll(RegExp(r"_\d+"), "");
-
-      if(metadata == "lb_prev") {
-        currentPageIndex--;
-      }
-      else if(metadata == "lb_next") {
-        currentPageIndex++;
-      }
-      else if(metadata == "lb_delete") {
-        lbMessage.edit(ComponentMessageBuilder()
-        ..content = "Prompt terminated."
-        ..components = []);
+    lbBStream.listen((event) async {
+      String eventValue = event.interaction.customId;
+      if (eventValue == "lb_prev") {
+        /// If at min page, don't change index
+        pageIndex = (pageIndex - 1 < 0) ? pageIndex : pageIndex - 1;
+        event.acknowledge();
+        await _prevButtonHandler(ctx, maxPageCount, pageIndex, lbMessage);
+      } else if (eventValue == "lb_next") {
+        /// If over the max page count, don't change index
+        pageIndex = (pageIndex + 1 > maxPageCount) ? pageIndex : pageIndex + 1;
+        event.acknowledge();
+        await _nextButtonHandler(ctx, maxPageCount, pageIndex, lbMessage);
+      } else if (eventValue == "lb_delete") {
+        event.acknowledge();
+        await lbMessage.edit(ComponentMessageBuilder()
+          ..content = "Prompt terminated."
+          ..componentRows = []
+          ..allowedMentions = _allowedMentions);
         return;
       }
-
-      // Prevent page count above max pages.
-      if(currentPageIndex > maxPages - 1) {
-        currentPageIndex = maxPages - 1;
-      }
-
-      // Prevent negative page count
-      if(currentPageIndex < 0) {
-        currentPageIndex = 0;
-      }
-
-      if(currentPageIndex == 0) {
-        buttonList[0].disabled = true;
-        buttonList[1].disabled = false;
-      }
-      else if(currentPageIndex == maxPages - 1) {
-        buttonList[0].disabled = false;
-        buttonList[1].disabled = true;
-      }
-      else {
-        buttonList.forEach((element) {element.disabled = false;});
-      }
-
-      lbEmbed.description = await _getPageString(ctx.client, ctx.guild!.id.id,
-        pageIndex: currentPageIndex);
-      lbEmbed.footer = lbEmbed.footer!
-        ..text = "Page ${currentPageIndex + 1} / $maxPages";
-
-      lbMessage.edit(ComponentMessageBuilder()
-        ..embeds = [lbEmbed]
-        ..components = [buttonList]);
-      buttonEvent.acknowledge();
-    }
+    });
   }
 
-  Future<String> _getPageString(Nyxx client, int guildID, {int pageIndex = 0,
-    int pageMaxRows = maxRowsPerPage}) async {
-      if(pages.containsKey(pageIndex)) {
-        return pages[pageIndex]!;
-      }
+  Future<void> _nextButtonHandler(
+      TextCommandContext ctx, int maxPageCount, int pageIndex, IMessage lbMessage) async {
+    ButtonBuilder prevButton = ButtonBuilder("<", "lb_prev", ButtonStyle.primary);
+    ButtonBuilder trashButton =
+        ButtonBuilder(" ", "lb_delete", ButtonStyle.danger, emoji: UnicodeEmoji("🗑"));
+    ButtonBuilder nextButton = ButtonBuilder(">", "lb_next", ButtonStyle.primary);
 
-      String output = "";
-      var pageIterator = await _database.leaderboardSelection(guildID,
-        pageNumber: pageIndex, pageEntryMax: pageMaxRows);
-
-      while (pageIterator.moveNext()) {
-        ResultRow row = pageIterator.current;
-        Map<String, dynamic> rowInfo = row.fields;
-
-        // Get users from cache (and if they're not in cache get from upstream then cache)
-        // TODO: Wait until next Nyxx release, this won't work without
-        // https://github.com/nyxx-discord/nyxx/commit/b233f87d1f3bf47fa3407a91b3435382dbaf6a28
-        User? user = client.users[Snowflake(rowInfo["user_id"])];
-        user ??= await client.fetchUser(Snowflake(rowInfo["user_id"]));
-        client.users.addIfAbsent(Snowflake(rowInfo["user_id"]), user);
-
-        output += "**${rowInfo["row_num"]}.** ${user.tag} - `${rowInfo["cookies"]}`\n";
-      }
-      pages[pageIndex] = output;
-      return output;
+    if (pageIndex + 1 == maxPageCount) {
+      nextButton.disabled = true;
     }
+
+    var cmb = ComponentMessageBuilder();
+    cmb.componentRows = [
+      ComponentRowBuilder()
+        ..addComponent(prevButton)
+        ..addComponent(trashButton)
+        ..addComponent(nextButton)
+    ];
+
+    baseEmbed.description = await _generatePage(ctx, pageIndex: pageIndex);
+    baseEmbed.footer = EmbedFooterBuilder()
+      ..text = "Page ${pageIndex + 1} / $maxPageCount"
+      ..iconUrl = ctx.author.avatarURL();
+    cmb.embeds = [baseEmbed];
+    cmb.allowedMentions = _allowedMentions;
+
+    await lbMessage.edit(cmb);
+  }
+
+  Future<void> _prevButtonHandler(
+      TextCommandContext ctx, int maxPageCount, int pageIndex, IMessage lbMessage) async {
+    ButtonBuilder prevButton = ButtonBuilder("<", "lb_prev", ButtonStyle.primary);
+    ButtonBuilder trashButton =
+        ButtonBuilder(" ", "lb_delete", ButtonStyle.danger, emoji: UnicodeEmoji("🗑"));
+    ButtonBuilder nextButton = ButtonBuilder(">", "lb_next", ButtonStyle.primary);
+
+    if (pageIndex == 0) {
+      prevButton.disabled = true;
+    }
+
+    var cmb = ComponentMessageBuilder();
+    cmb.componentRows = [
+      ComponentRowBuilder()
+        ..addComponent(prevButton)
+        ..addComponent(trashButton)
+        ..addComponent(nextButton)
+    ];
+
+    baseEmbed.description = await _generatePage(ctx, pageIndex: pageIndex);
+    baseEmbed.footer = EmbedFooterBuilder()
+      ..text = "Page ${pageIndex + 1} / $maxPageCount"
+      ..iconUrl = ctx.author.avatarURL();
+    cmb.embeds = [baseEmbed];
+    cmb.allowedMentions = _allowedMentions;
+
+    await lbMessage.edit(cmb);
+  }
+
+  Future<String> _generatePage(TextCommandContext ctx,
+      {int pageIndex = 0, int pageMaxRows = maxRowsPerPage}) async {
+    if (pages.containsKey(pageIndex)) {
+      return pages[pageIndex]!;
+    }
+
+    CCDatabase db = CCDatabase(initializing: false);
+
+    StringBuffer outputBuffer = StringBuffer();
+    Iterator<ResultSetRow> rowIterator =
+        await db.leaderboardSelection(ctx.guild!.id.id, pageNumber: pageIndex, pageEntryMax: pageMaxRows);
+
+    while (rowIterator.moveNext()) {
+      var thisRow = rowIterator.current.typedAssoc();
+      Snowflake userID = Snowflake(thisRow["user_id"]);
+
+      IUser? user = ctx.client.users[userID];
+      user ??= await ctx.client.httpEndpoints.fetchUser(userID);
+      ctx.client.users.putIfAbsent(userID, () => user!);
+
+      outputBuffer.writeln("**${thisRow["row_num"]}.** ${user.tag} - `${thisRow["cookies"]}`");
+    }
+
+    String output = outputBuffer.toString();
+    pages[pageIndex] = output;
+    return output;
+  }
 }

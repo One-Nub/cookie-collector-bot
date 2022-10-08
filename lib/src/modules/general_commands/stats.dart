@@ -1,64 +1,53 @@
+import 'dart:collection';
+
 import 'package:nyxx/nyxx.dart';
-import 'package:nyxx_commander/commander.dart';
+import 'package:onyx_chat/onyx_chat.dart';
 
+import '../../core/CCBot.dart';
 import '../../core/CCDatabase.dart';
-import '../../framework/argument/UserArgument.dart';
-import '../../framework/exceptions/ArgumentNotRequired.dart';
-import '../../framework/exceptions/InvalidUserException.dart';
+import '../../utilities/parse_id.dart';
 
-class Stats {
-  late AllowedMentions _mentions;
-  CCDatabase _database;
+class StatsCommands extends TextCommand {
+  @override
+  String get name => "stats";
 
-  Stats(CCDatabase this._database) {
-    _mentions = AllowedMentions()..allow(reply: false);
-  }
+  @override
+  String get description => "View how many cookies someone, or yourself, has!";
 
-  static bool preRunChecks(CommandContext ctx) {
-    if(ctx.guild == null) {
-      return false;
+  @override
+  HashSet<String> get aliases => HashSet.from(["bal", "balance"]);
+
+  @override
+  Future<void> commandEntry(TextCommandContext ctx, String message, List<String> args) async {
+    int? userID;
+    if (args.isNotEmpty) {
+      userID = parseID(args.first);
     }
-    return true;
-  }
+    userID ??= ctx.author.id.id;
 
-  Future<void> argumentParser(CommandContext ctx, String message) async {
-    var userArg = UserArgument(searchMemberNames: true);
-    User user;
-    try {
-      user = await userArg.parseArg(ctx, message);
-    }
-    on ArgumentNotRequiredException {
-      user = await ctx.client.fetchUser(ctx.author.id);
-    }
-    on InvalidUserException catch (e) {
-      ctx.reply(MessageBuilder.content(e.toString())..allowedMentions = _mentions);
-      return;
+    CCDatabase db = CCDatabase(initializing: false);
+    var databaseResult = await db.getRankedUserGuildData(userID, ctx.guild!.id.id);
+    Map<String, dynamic> userMap = {"user_id": userID, "cookies": 0, "row_num": "N/A"};
+    if (databaseResult != null && databaseResult.rows.isNotEmpty) {
+      userMap = databaseResult.rows.first.typedAssoc();
     }
 
-    commandFunction(ctx, message, user);
-  }
-
-  Future<void> commandFunction(CommandContext ctx, String message, User user) async {
-    var userRow = await _database.getRankedUserGuildData(user.id.id, ctx.guild!.id.id);
-    Map<String, dynamic> userMap = {
-      "user_id" : user.id,
-      "cookies" : 0,
-      "row_num" : "N/A"
-    };
-    if(userRow != null) {
-      userMap = userRow.fields;
-    }
+    CCBot bot = CCBot();
+    IUser user = await bot.gateway.fetchUser(Snowflake(userID));
 
     EmbedBuilder statsEmbed = EmbedBuilder()
       ..addField(name: "**Cookies**", content: userMap["cookies"], inline: true)
       ..addField(name: "**Rank**", content: userMap["row_num"], inline: true)
       ..color = DiscordColor.fromHexString("87CEEB")
-      ..description = (userRow == null)
-          ? "**This user does not have any data stored in the database for this server!**" : ""
+      ..description = (databaseResult!.rows.isEmpty)
+          ? "**This user does not have any data stored in the database for this server!**"
+          : ""
       ..thumbnailUrl = user.avatarURL(format: "png", size: 512)
       ..timestamp = DateTime.now().toUtc()
       ..title = "${user.tag}'s Stats";
 
-    ctx.reply(MessageBuilder.embed(statsEmbed)..allowedMentions = _mentions);
+    await ctx.channel.sendMessage(MessageBuilder.embed(statsEmbed)
+      ..allowedMentions = (AllowedMentions()..allow(reply: false))
+      ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
   }
 }

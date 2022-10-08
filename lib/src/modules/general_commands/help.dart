@@ -1,49 +1,66 @@
-// part of commands;
+import 'dart:collection';
 
-// @Command("help", aliases: ["commands", "cmds"])
-// Future<void> help(CommandContext ctx) async {
-//   String commands =
-//     "`.daily` ➙ collect a set amount of cookies once a day\n"
-//     "`.eat` ➙ eat a cookie! that's literally it\n"
-//     "`.give <user> <amt>` ➙ give the user of your choosing some cookies\n"
-//     "`.help` ➙ view this help prompt!\n"
-//     "`.info` ➙ get some information about the bot\n"
-//     "`.leaderboard` ➙ view the top 15 people with the most cookies\n"
-//     "`.ping` ➙ view the latency between discord and the bot\n"
-//     "`.rob <user>` ➙ take some cookies from someone\n"
-//     "`.stats [user]` ➙ view your stored cookie count and level, or someone elses";
+import 'package:nyxx/nyxx.dart';
+import 'package:onyx_chat/onyx_chat.dart';
 
-//   StringBuffer buffer = new StringBuffer();
-//   buffer.write("`.say <channel> <message>` ➙ have the bot say something in a channel\n");
-//   if (await ctx.author.id.toInt() == 156872400145874944) {
-//     buffer.write("`.generate <user> <amt>` ➙ give the user infinite cookies\n");
-//   }
+import '../../core/CCBot.dart';
 
-//   var helpEmbed = await EmbedBuilder()
-//     ..addField(name: "Commands", content: commands);
-//   if (admins.contains(ctx.author.id)) {
-//     await helpEmbed.addField(name: "Admin Commands", content: buffer.toString());
-//   }
+class HelpCommand extends TextCommand {
+  @override
+  String get name => "help";
 
-//   helpEmbed.title = "Help!";
-//   helpEmbed.description = "Welcome to the help prompt! Hopefully you find what "
-//     "you are looking for! \n\n If you happen to find a bug of some sort, "
-//     "please DM Nub#8399 and he will look into it!";
+  @override
+  String get description => "Learn about the commands the bot has!";
 
-//   var authorDM = await ctx.author.dmChannel;
-//   if(ctx.channel is DMChannel) {
-//     ctx.channel.send(embed: helpEmbed);
-//   }
-//   else {
-//     bool dmsOpen = true;
-//     await authorDM.send(embed: helpEmbed).catchError(
-//       (onError) {
-//         ctx.channel.send(embed: helpEmbed);
-//         dmsOpen = false;
-//     });
+  @override
+  HashSet<String> get aliases => HashSet.from(["cmds", "commands"]);
 
-//     if (dmsOpen) {
-//       await ctx.message.reply(content: "please check your DMs!");
-//     }
-//   }
-// }
+  @override
+  Future<void> commandEntry(TextCommandContext ctx, String message, List<String> args) async {
+    CCBot bot = CCBot();
+
+    EmbedBuilder cmdEmbed = EmbedBuilder()
+      ..title = "Help Me!"
+      ..timestamp = DateTime.now().toUtc()
+      ..description = "Welcome to the commands list for Cookie Collector!";
+
+    StringBuffer adminBuffer = StringBuffer();
+    StringBuffer generalBuffer = StringBuffer();
+    Iterator<TextCommand> commands = bot.onyxChat.commands.iterator;
+    while (commands.moveNext()) {
+      TextCommand currentCommand = commands.current;
+      String cmdName = currentCommand.name;
+      String cmdDescription = currentCommand.description!;
+      if (currentCommand.name == "generate" || currentCommand.name == "say") {
+        adminBuffer.writeln("`.${cmdName}` ➙ ${cmdDescription}");
+      } else {
+        generalBuffer.writeln("`.${cmdName}` ➙ ${cmdDescription}");
+      }
+    }
+
+    cmdEmbed.addField(name: "Commands", content: generalBuffer.toString(), inline: false);
+    if (bot.adminList.contains(ctx.author.id)) {
+      cmdEmbed.addField(name: "Admin Commands", content: adminBuffer.toString(), inline: false);
+    }
+
+    IUser? authorUser = bot.gateway.users[ctx.author.id];
+    if (authorUser == null) {
+      authorUser = await bot.gateway.fetchUser(ctx.author.id);
+    }
+    IDMChannel authorDM = await authorUser.dmChannel;
+
+    bool dmsOpen = true;
+    await authorDM.sendMessage(MessageBuilder.embed(cmdEmbed)).catchError((onError) async {
+      dmsOpen = false;
+      return ctx.channel.sendMessage(MessageBuilder.embed(cmdEmbed)
+        ..allowedMentions = (AllowedMentions()..allow(reply: false))
+        ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
+    });
+
+    if (dmsOpen) {
+      await ctx.channel.sendMessage(MessageBuilder.content("Please check your direct messages!")
+        ..allowedMentions = (AllowedMentions()..allow(reply: false))
+        ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
+    }
+  }
+}

@@ -1,77 +1,69 @@
+import 'package:cookie_collector_bot/src/utilities/parse_id.dart';
 import 'package:nyxx/nyxx.dart';
-import 'package:nyxx_commander/commander.dart';
+import 'package:onyx_chat/onyx_chat.dart';
 
-import '../../framework/argument/ChannelArgument.dart';
-import '../../framework/exceptions/InvalidChannelException.dart';
-import '../../framework/exceptions/MissingArgumentException.dart';
+import '../../core/CCBot.dart';
 
-class Say {
-  late AllowedMentions _mentions;
+class SayCommand extends TextCommand {
+  @override
+  String get name => "say";
 
-  Say() {
-    _mentions = AllowedMentions()..allow(reply: false, everyone: false);
-  }
+  @override
+  String get description => "Have the bot say something either in this channel, or another channel.";
 
-  static Future<bool> preRunChecks(CommandContext ctx, List<Snowflake> admins) async {
-    if(ctx.guild == null) {
-      return false;
-    }
-
-    if(admins.contains(ctx.author.id)) {
-      return true;
-    }
-
-    Member user = await ctx.guild!.fetchMember(ctx.author.id);
-    Permissions userPerms = await user.effectivePermissions;
-    if(userPerms.administrator || userPerms.manageGuild) {
-      return true;
-    }
-    return false;
-  }
-
-  Future<void> argumentParser(CommandContext ctx, String message) async {
-    ChannelArgument cArg = ChannelArgument<TextGuildChannel>();
-    TextGuildChannel channel;
-    try {
-      channel = await cArg.parseArg(ctx, message) as TextGuildChannel;
-    }
-    on MissingArgumentException catch (e) {
-      ctx.reply(MessageBuilder.content("$e A channel identifier was expected.")
-        ..allowedMentions = _mentions);
+  @override
+  Future<void> commandEntry(TextCommandContext ctx, String message, List<String> args) async {
+    CCBot bot = CCBot();
+    if (!bot.adminList.contains(ctx.author.id)) {
       return;
     }
-    on InvalidChannelException catch (e) {
-      ctx.reply(MessageBuilder.content(e.toString())
-        ..allowedMentions = _mentions);
+
+    if (args.isEmpty) {
+      ctx.channel.sendMessage(MessageBuilder.content("I need something to send..."));
       return;
     }
-    message = message.replaceFirst(" ", "").trim();
-    message = message.substring(message.contains(">") ?
-      message.indexOf(">") + 1 :
-      message.indexOf(" "))
-      .trim();
 
-    if(message.isEmpty) {
-      ctx.reply(MessageBuilder.content("I needed something to say..")
-        ..allowedMentions = _mentions);
+    // remove command name
+    message = message.replaceFirst(this.name, '')..trim();
+
+    int? channelID = parseID(args.first);
+    if (channelID == null) {
+      channelID = ctx.channel.id.id;
+    } else {
+      // remove channel ID text
+      message =
+          message.substring(message.contains(">") ? message.indexOf(">") + 1 : message.indexOf(" ")).trim();
+      message = message.replaceAll("$channelID", "").trim();
+    }
+
+    if (message.isEmpty) {
+      ctx.channel.sendMessage(MessageBuilder.content("I need something to send..."));
       return;
     }
-    commandFunction(ctx, message, channel);
-  }
 
-  Future<void> commandFunction(CommandContext ctx, String message,
-    TextGuildChannel textChannel) async {
-      Member? botMember = await ctx.guild!.selfMember.getOrDownload();
+    if (channelID == ctx.channel.id.id) {
+      ctx.channel.sendMessage(MessageBuilder.content(message)
+        ..allowedMentions = (AllowedMentions()..allow(reply: false, everyone: false)));
+    } else {
+      var channel = await bot.gateway.fetchChannel(Snowflake(channelID));
+      try {
+        ITextGuildChannel textChannel = channel as ITextGuildChannel;
 
-      var botSendPerm =
-        await textChannel.effectivePermissions(botMember);
-      if(botSendPerm.sendMessages && botSendPerm.viewChannel) {
-        textChannel.sendMessage(MessageBuilder.content(message)
-          ..allowedMentions = _mentions);
+        var botPerms = await textChannel.effectivePermissions(await ctx.guild!.selfMember.getOrDownload());
+        if (botPerms.sendMessages && botPerms.viewChannel) {
+          textChannel.sendMessage(MessageBuilder.content(message)
+            ..allowedMentions = (AllowedMentions()..allow(reply: false, everyone: false)));
+        } else {
+          ctx.channel.sendMessage(MessageBuilder.content(
+              "I can't send messages in that channel! <a:confuse:724785215838617770>"));
+          return;
+        }
+      } on TypeError {
+        ctx.channel.sendMessage(MessageBuilder.content(
+            "That doesn't appear to be a valid channel I can send to! <a:confuse:724785215838617770>"));
       }
-      else {
-        ctx.reply(MessageBuilder.content("I can't send messages in that channel! <a:confuse:724785215838617770>")
-          ..allowedMentions = _mentions);
-      }
+    }
+
+    await ctx.message.delete();
   }
 }

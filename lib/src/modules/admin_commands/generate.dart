@@ -1,108 +1,101 @@
+import 'dart:async';
+
+import 'package:cookie_collector_bot/core.dart';
 import 'package:nyxx/nyxx.dart';
-import 'package:nyxx_commander/commander.dart';
+import 'package:nyxx_interactions/nyxx_interactions.dart';
+import 'package:onyx_chat/onyx_chat.dart';
 
-import '../../core/CCDatabase.dart';
-import '../../framework/argument/UserArgument.dart';
-import '../../framework/exceptions/InvalidUserException.dart';
-import '../../framework/exceptions/MissingArgumentException.dart';
+import '../../utilities/parse_id.dart';
 
-class Generate {
-  late AllowedMentions _mentions;
-  CCDatabase _database;
-  Generate(this._database) {
-    _mentions = AllowedMentions()..allow(reply: false);
-  }
+class GenerateCommand extends TextCommand {
+  @override
+  String get name => "generate";
 
-  static bool preRunChecks(CommandContext ctx) {
-    //Must be run in guild & must be me
-    if(ctx.guild == null || ctx.author.id.id != 156872400145874944) {
-      return false;
+  @override
+  String get description => "Generate some cookies for someone.";
+
+  @override
+  Future<void> commandEntry(TextCommandContext ctx, String message, List<String> args) async {
+    if (ctx.guild == null || ctx.author.id.id != 156872400145874944) return;
+
+    //need 2 arguments, user and amount of cookies to give
+    if (args.isEmpty || args.length < 2) {
+      ctx.channel
+          .sendMessage(MessageBuilder.content("A user and an amount of cookies to give was expected."));
+      return;
     }
-    return true;
+
+    Iterator argsIterator = args.iterator;
+    argsIterator.moveNext();
+
+    int? userID = parseID(argsIterator.current);
+    if (userID == null) {
+      ctx.channel.sendMessage(MessageBuilder.content("No user ID was found in your message."));
+      return;
+    }
+
+    argsIterator.moveNext();
+    int? cookieCount = int.tryParse(argsIterator.current);
+    if (cookieCount == null) {
+      ctx.channel.sendMessage(MessageBuilder.content("An amount of cookies to give was expected."));
+      return;
+    }
+
+    IMember? member = await OnyxConverter.getGuildMember(ctx.client, ctx.guild!.id.id, memberID: userID);
+    if (member == null) {
+      ctx.channel.sendMessage(
+          MessageBuilder.content("A user with the ID of `$userID` was not found in this server."));
+      return;
+    }
+
+    giveCookies(ctx: ctx, member: member, cookieCount: cookieCount);
+    await ctx.message.delete();
   }
 
-  Future<void> argumentParser(CommandContext ctx, String message) async {
-    message = message.replaceFirst(" ", "");
-    message = message.replaceFirst(ctx.commandMatcher, "");
-    var userArg = UserArgument(searchMemberNames: true, pipeDelimiter: true, isRequired: true);
-    User user;
+  Future<void> giveCookies(
+      {required TextCommandContext ctx, required IMember member, required int cookieCount}) async {
+    var bot = CCBot();
+    var interactions = bot.interactions;
+
+    ComponentMessageBuilder cmb = ComponentMessageBuilder();
+    String memberTag = (await member.user.getOrDownload()).tag;
+    cmb.content = "Please verify your intentions: `$memberTag` "
+        "will receive $cookieCount cookies";
+    cmb.componentRows = [
+      ComponentRowBuilder()
+        ..addComponent(ButtonBuilder("Deny", "deny", ButtonStyle.danger))
+        ..addComponent(ButtonBuilder("Approve", "approve", ButtonStyle.success))
+    ];
+
+    var confirmMsg = await ctx.channel.sendMessage(cmb);
     try {
-      user = await userArg.parseArg(ctx, message);
-    }
-    on MissingArgumentException catch (e) {
-      ctx.reply(MessageBuilder.content("$e \nThis command requires `[user] [amount]`")
-        ..allowedMentions = _mentions);
-      return;
-    }
-    on InvalidUserException catch (e) {
-      ctx.reply(MessageBuilder.content(e.toString())
-        ..allowedMentions = _mentions);
-      return;
-    }
+      var buttonEvent = await interactions.events.onButtonEvent.firstWhere((element) {
+        return element.interaction.userAuthor!.id == ctx.message.author.id &&
+            (element.interaction.customId == "deny" || element.interaction.customId == "approve");
+      }).timeout(Duration(seconds: 15));
 
-    //Remove content before pipe when it exists
-    //Pipe is required when searching via username
-    message = message.split("|").last;
-    List<String> args = message.split(" ").toList();
-    if(args.isEmpty) {
-      ctx.reply(MessageBuilder.content("An amount of cookies to generate was expected.")
-        ..allowedMentions = _mentions);
-      return;
-    }
-    int? cookieCnt = int.tryParse(args.last);
-    if(cookieCnt == null || cookieCnt == user.id.id) {
-      ctx.reply(MessageBuilder.content("An amount of cookies to generate was expected.")
-        ..allowedMentions = _mentions);
-      return;
-    }
+      String buttonID = buttonEvent.interaction.customId;
+      if (buttonID == "deny") {
+        await confirmMsg.delete();
 
-    commandFunction(ctx, message, user, cookieCnt);
-  }
+        // ack then followup because for some reason just responding edits the original msg instead.
+        await buttonEvent.acknowledge();
+        await buttonEvent.sendFollowup(
+            MessageBuilder.content("Cancelled - `$memberTag`'s cookies have not been modified."),
+            hidden: true);
+      } else if (buttonID == "approve") {
+        var database = CCDatabase(initializing: false);
+        await database.addCookies(member.id.id, cookieCount, ctx.guild!.id.id);
 
-  Future<void> commandFunction(CommandContext ctx, String msg, User user, int cookieCnt) async {
-    Message confirmPrompt = await ctx.reply(MessageBuilder.content(
-      "Please verify your intentions: `${user.tag}` will recieve `${cookieCnt}` cookies")
-      ..allowedMentions = _mentions);
+        await confirmMsg.delete();
 
-    // final emoteGuild = await ctx.client.fetchGuild(Snowflake(440350951572897812));
-    // final confirm = await emoteGuild.fetchEmoji(Snowflake(724438115791667220));
-    // final deny = await emoteGuild.fetchEmoji(Snowflake(724438115384557579));
-    UnicodeEmoji confirm = UnicodeEmoji("✅");
-    UnicodeEmoji deny = UnicodeEmoji("❎");
-
-    Duration emoteDelay = Duration(milliseconds: 250);
-    await Future.delayed(emoteDelay, () => confirmPrompt.createReaction(confirm));
-    await Future.delayed(emoteDelay, () => confirmPrompt.createReaction(deny));
-
-    MessageReactionEvent? reactionStream = await ctx.client.onMessageReactionAdded
-    .firstWhere((element) {
-      return element.user.id == ctx.author.id &&
-        (element.emoji.encodeForAPI() == confirm.encodeForAPI()
-        || element.emoji.encodeForAPI() == deny.encodeForAPI());
-    })
-    .timeout(Duration(seconds: 15))
-    .catchError((event) {
-      return null;
-    });
-
-    MessageReactionEvent? result = await reactionStream;
-    if(result == null) {
-      await confirmPrompt.delete();
-      await ctx.reply(MessageBuilder.content("Cancelled due to timeout.")
-        ..allowedMentions = _mentions);
-    }
-    else if(result.emoji.encodeForAPI() == confirm.encodeForAPI()) {
-      await confirmPrompt.deleteSelfReaction(deny);
-      await _database.addCookies(user.id.id, cookieCnt, ctx.guild!.id.id);
-      await confirmPrompt.edit(MessageBuilder.content("Done - `${user.tag}` has recieved "
-        "`$cookieCnt` cookies.")
-        ..allowedMentions = _mentions);
-    }
-    else {
-      confirmPrompt.deleteSelfReaction(confirm);
-      await confirmPrompt.edit(MessageBuilder.content("Cancelled - `${user.tag}`'s cookies "
-        "have not been modified.")
-        ..allowedMentions = _mentions);
+        await buttonEvent.acknowledge();
+        await buttonEvent.sendFollowup(
+            MessageBuilder.content("Done - `$memberTag` has received `$cookieCount` cookies."),
+            hidden: true);
+      }
+    } on TimeoutException {
+      await confirmMsg.delete();
     }
   }
 }

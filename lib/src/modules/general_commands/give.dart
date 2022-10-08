@@ -1,114 +1,131 @@
+import 'dart:async';
+
 import 'package:nyxx/nyxx.dart';
-import 'package:nyxx_commander/commander.dart';
+import 'package:nyxx_interactions/nyxx_interactions.dart';
+import 'package:onyx_chat/onyx_chat.dart';
 
+import '../../core/CCBot.dart';
 import '../../core/CCDatabase.dart';
-import '../../framework/argument/UserArgument.dart';
-import '../../framework/exceptions/InvalidUserException.dart';
-import '../../framework/exceptions/MissingArgumentException.dart';
+import '../../utilities/parse_id.dart';
 
-class Give {
-  CCDatabase _database;
-  Give(this._database) {
-    _mentions = AllowedMentions()
-      ..allow(reply: false);
+class GiveCommand extends TextCommand {
+  @override
+  String get name => "give";
+
+  @override
+  String get description => "Give some cookies to someone!";
+
+  @override
+  Future<void> commandEntry(TextCommandContext ctx, String message, List<String> args) async {
+    if (ctx.guild == null || ctx.author.id.id != 156872400145874944) return;
+
+    //need 2 arguments, user and amount of cookies to give
+    if (args.isEmpty || args.length < 2) {
+      ctx.channel.sendMessage(MessageBuilder.content("A user and an amount of cookies to give was expected.")
+        ..replyBuilder = ReplyBuilder.fromMessage(ctx.message)
+        ..allowedMentions = (AllowedMentions()..allow(reply: false)));
+      return;
+    }
+
+    Iterator argsIterator = args.iterator;
+    argsIterator.moveNext();
+
+    int? userID = parseID(argsIterator.current);
+    if (userID == null) {
+      ctx.channel.sendMessage(MessageBuilder.content("No user ID was found in your message.")
+        ..replyBuilder = ReplyBuilder.fromMessage(ctx.message)
+        ..allowedMentions = (AllowedMentions()..allow(reply: false)));
+      return;
+    }
+
+    if (userID == ctx.author.id.id) {
+      ctx.channel.sendMessage(
+          MessageBuilder.content("You can't give cookies to yourself! That's not how self care works..?")
+            ..replyBuilder = ReplyBuilder.fromMessage(ctx.message)
+            ..allowedMentions = (AllowedMentions()..allow(reply: false)));
+    }
+
+    argsIterator.moveNext();
+    int? cookieCount = int.tryParse(argsIterator.current);
+    if (cookieCount == null) {
+      ctx.channel.sendMessage(MessageBuilder.content("An amount of cookies to give was expected.")
+        ..replyBuilder = ReplyBuilder.fromMessage(ctx.message)
+        ..allowedMentions = (AllowedMentions()..allow(reply: false)));
+      return;
+    }
+
+    IMember? member = await OnyxConverter.getGuildMember(ctx.client, ctx.guild!.id.id, memberID: userID);
+    if (member == null) {
+      ctx.channel
+          .sendMessage(MessageBuilder.content("A user with the ID of `$userID` was not found in this server.")
+            ..replyBuilder = ReplyBuilder.fromMessage(ctx.message)
+            ..allowedMentions = (AllowedMentions()..allow(reply: false)));
+      return;
+    }
+
+    CCDatabase db = CCDatabase(initializing: false);
+    int userCookieCount = await db.getCookieCount(ctx.author.id.id, ctx.guild!.id.id);
+    if (userCookieCount < cookieCount || cookieCount <= 0) {
+      ctx.channel.sendMessage(MessageBuilder.content(
+          "You can't give `$cookieCount` cookies... Try checking the cookie jar next time!")
+        ..replyBuilder = ReplyBuilder.fromMessage(ctx.message)
+        ..allowedMentions = (AllowedMentions()..allow(reply: false)));
+      return;
+    }
+
+    giveCookies(ctx: ctx, member: member, cookieCount: cookieCount);
+    await ctx.message.delete();
   }
 
-  late AllowedMentions _mentions;
+  Future<void> giveCookies(
+      {required TextCommandContext ctx, required IMember member, required int cookieCount}) async {
+    CCDatabase db = CCDatabase(initializing: false);
 
-  static Future<bool> preRunChecks(CommandContext ctx, CCDatabase _database) async {
-    if(ctx.guild == null) return false;
+    if (cookieCount >= 50) {
+      var bot = CCBot();
+      var interactions = bot.interactions;
 
-    int userCookies = await _database.getCookieCount(ctx.author.id.id, ctx.guild!.id.id);
-    if(userCookies <= 0) {
-      var _staticMentions = AllowedMentions()..allow(reply: false);
-      ctx.reply(MessageBuilder.content("You at least need *a* cookie before you can give some away")
-        ..allowedMentions = _staticMentions);
-      return false;
-    }
+      ComponentMessageBuilder cmb = ComponentMessageBuilder();
+      String memberTag = (await member.user.getOrDownload()).tag;
 
-    return true;
-  }
+      cmb.content = "Please confirm that you want to send **$memberTag** `$cookieCount` cookies.";
+      cmb.componentRows = [
+        ComponentRowBuilder()
+          ..addComponent(ButtonBuilder("Deny", "deny", ButtonStyle.danger))
+          ..addComponent(ButtonBuilder("Approve", "approve", ButtonStyle.success))
+      ];
 
-  Future<void> argumentParser(CommandContext ctx, String msg) async {
-    msg = msg.replaceFirst(" ", "");
-    msg = msg.replaceFirst(ctx.commandMatcher, "");
-    UserArgument recipientArg = UserArgument(isRequired: true);
-    User recipient;
-    try {
-      recipient = await recipientArg.parseArg(ctx, msg);
-    }
-    on MissingArgumentException catch (e) {
-      ctx.reply(MessageBuilder.content("$e \nThis command requires `[user] [amount]`")
-        ..allowedMentions = _mentions);
-      return;
-    }
-    on InvalidUserException catch (e) {
-      ctx.reply(MessageBuilder.content(e.toString())..allowedMentions = _mentions);
-      return;
-    }
+      var confirmMsg = await ctx.channel.sendMessage(cmb);
+      try {
+        var buttonEvent = await interactions.events.onButtonEvent.firstWhere((element) {
+          return element.interaction.userAuthor!.id == ctx.message.author.id &&
+              (element.interaction.customId == "deny" || element.interaction.customId == "approve");
+        }).timeout(Duration(seconds: 15));
 
-    if(recipient.id == ctx.author.id) {
-      ctx.reply(MessageBuilder.content("You can't give cookies to yourself... Right?")
-        ..allowedMentions = _mentions);
-      return;
-    }
+        String buttonID = buttonEvent.interaction.customId;
+        if (buttonID == "deny") {
+          await confirmMsg.delete();
 
-    List<String> args = msg.split(" ").toList();
-    if(args.isEmpty) {
-      ctx.reply(MessageBuilder.content("An amount of cookies to give was expected.")
-        ..allowedMentions = _mentions);
-      return;
-    }
-
-    int? cookiesToGive = int.tryParse(args.last);
-    int userCookies = await _database.getCookieCount(ctx.author.id.id, ctx.guild!.id.id);
-    if(cookiesToGive == null || cookiesToGive == recipient.id.id) {
-      ctx.reply(MessageBuilder.content("An amount of cookies to give was expected.")
-        ..allowedMentions = _mentions);
-      return;
-    }
-    else if(cookiesToGive <= 0 || cookiesToGive > userCookies) {
-      ctx.reply(MessageBuilder.content("You can't give that amount of cookies!")
-        ..allowedMentions = _mentions);
-      return;
-    }
-
-    commandFunction(ctx, msg, recipient, cookiesToGive);
-  }
-
-  Future<void> commandFunction(CommandContext ctx, String msg, User recipient, int cookieCnt) async {
-    if(cookieCnt >= 50)
-    {
-      var botConfirm = await ctx.reply(MessageBuilder.content("Please confirm that you want to send"
-      " **${recipient.tag}** `$cookieCnt` cookies. (`Yes/No`)"));
-
-      var userConfirmStream = await ctx.nextMessagesWhere(
-        (msg) => msg.message.author.id == (ctx.author.id), limit: 1);
-
-      MessageReceivedEvent userConfirm = await userConfirmStream.first;
-      if(!userConfirm.message.content.toLowerCase().startsWith("y")) {
-        var cancelMsg = await ctx.reply(MessageBuilder.content("Cancelled.")
-          ..allowedMentions = _mentions);
-        botConfirm.delete();
-        ctx.message.delete();
-        await Future.delayed(Duration(seconds: 3));
-        cancelMsg.delete();
-        return;
+          // ack then followup because for some reason just responding edits the original msg instead.
+          await buttonEvent.acknowledge();
+          await buttonEvent.sendFollowup(MessageBuilder.content("Cookie transfer cancelled."), hidden: true);
+          return;
+        } else if (buttonID == "approve") {
+          await confirmMsg.delete();
+          await buttonEvent.acknowledge();
+        }
+      } on TimeoutException {
+        await confirmMsg.delete();
       }
-
-      botConfirm.delete();
-      userConfirm.message.delete();
     }
 
-    await _database.addCookies(recipient.id.id, cookieCnt, ctx.guild!.id.id);
-    await _database.removeCookies(ctx.author.id.id, cookieCnt, ctx.guild!.id.id);
+    await db.addCookies(member.id.id, cookieCount, ctx.guild!.id.id);
+    await db.removeCookies(ctx.author.id.id, cookieCount, ctx.guild!.id.id);
 
-    User authorUser = await ctx.client.fetchUser(ctx.author.id);
-
-    var giveEmbed = EmbedBuilder()
+    var finalEmbed = EmbedBuilder()
       ..title = "How generous! :cookie:"
-      ..description = "${authorUser.mention} gave ${recipient.mention} $cookieCnt cookies!";
-    ctx.reply(MessageBuilder.embed(giveEmbed)
-      ..allowedMentions = _mentions);
+      ..description = "<@${ctx.author.id}> gave ${member.mention} $cookieCount cookies!";
+    ctx.channel.sendMessage(
+        MessageBuilder.embed(finalEmbed)..allowedMentions = (AllowedMentions()..allow(reply: false)));
   }
 }

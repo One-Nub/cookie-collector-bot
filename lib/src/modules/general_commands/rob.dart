@@ -1,205 +1,178 @@
 import 'dart:collection';
 import 'dart:math';
 
+import 'package:mysql_client/mysql_client.dart';
 import 'package:nyxx/nyxx.dart';
-import 'package:nyxx_commander/commander.dart';
+import 'package:onyx_chat/onyx_chat.dart';
 
-import 'package:mysql1/mysql1.dart';
+import '../../core/CCBot.dart';
 import '../../core/CCDatabase.dart';
-import '../../framework/commands/Cooldown.dart';
-import '../../framework/argument/UserArgument.dart';
-import '../../framework/exceptions/ArgumentNotRequired.dart';
-import '../../framework/exceptions/InvalidUserException.dart';
 
+/// String is guildid-userid, queue is a t/f list (4 true, 6 false)
+final Map<String, Queue<bool>> robChances = Map();
 
-class Rob extends Cooldown {
-  late AllowedMentions _mentions;
-  late CCDatabase _database;
-  static const minCookieCountToRob = 15;
-  static const minVictimCookieCount = 20;
+/// Stores the last time a successful robbery was made for the user.
+final Map<String, DateTime> cooldownMap = Map();
 
-  ///Snowflake: Guild ID
-  ///Guild users map:
-  /// Snowflake: User ID
-  /// List: 10 bools, 3 of which will be true, 7 false.
-  Map<Snowflake, Map<Snowflake, Queue<bool>>> _userRobRate = {};
+const Duration cooldown = Duration(hours: 3);
+const minCookieCount = 15;
+const minVictimCookieCount = 20;
 
-  Rob(this._database) : super(Duration(hours: 3)) {
-    _mentions = AllowedMentions()..allow(reply: false, users: false);
-  }
+const int robVarLow = 5;
+const int robVarHigh = 10;
+const double lowPercentMult = 0.008; //0.8%
+const double highPercentMult = 0.016; //0.16%
 
-  ///Ensures that the command is run in a guild
-  ///Checks that the user is not on a cooldown
-  ///Checks that the user has at least minCookieCountToRob cookies before robbing
-  Future<bool> preRunChecks(CommandContext ctx, CCDatabase _database) async {
-    if(ctx.guild == null) {
-      return false;
+class RobCommand extends TextCommand {
+  @override
+  String get name => "rob";
+
+  @override
+  String get description => "Rob a random user! Be careful, you may not always succeed...";
+
+  @override
+  Future<void> commandEntry(TextCommandContext ctx, String message, List<String> args) async {
+    int authorID = ctx.author.id.id;
+    int guildID = ctx.guild!.id.id;
+
+    String mapEntry = "$guildID-$authorID";
+    if (!robChances.containsKey(mapEntry)) {
+      // generate rob queue first if it doesn't exist
+      robChances[mapEntry] = _resetQueue();
+    } else if (robChances[mapEntry]!.isEmpty) {
+      // generate rob queue if the current one is empty
+      robChances[mapEntry] = _resetQueue();
     }
 
-    if(super.isCooldownActive(ctx.guild!.id, ctx.author.id)) {
-      ctx.reply(MessageBuilder.content("Your prep time has not expired yet! You can rob someone in "
-        "`${super.getRemainingTime(ctx.guild!.id, ctx.author.id)}`")
-        ..allowedMentions = _mentions);
-      return false;
-    }
-
-    int userCookies = await _database.getCookieCount(ctx.author.id.id, ctx.guild!.id.id);
-    if(userCookies < minCookieCountToRob) {
-      ctx.reply(MessageBuilder.content("Hold up there partner! You need at least "
-        "$minCookieCountToRob cookies to rob people! Debt isn't allowed round here")
-        ..allowedMentions = _mentions);
-      return false;
-    }
-
-    return true;
-  }
-
-  ///Post preRunChecks, gets an optional user argument from the message
-  ///Confirms that the user isn't robbing themselves, that the victim exists in the
-  ///database, and that the victim has a minimum amount of cookies.
-  ///
-  ///Selects random victim if no victim is found unless user is searching for a specific
-  ///victim where then the user will be told no matching victim is found.
-  Future<void> argumentParser(CommandContext ctx, String msg) async {
-    Map<String, dynamic> victimMap = {};
-
-    msg = msg.replaceFirst(" ", "");
-    msg = msg.replaceFirst(ctx.commandMatcher, "");
-    var victimArg = UserArgument(searchMemberNames: true);
-
-    try {
-      User victimUser = await victimArg.parseArg(ctx, msg);
-      if(victimUser.id.id == ctx.author.id.id) {
-        await ctx.reply(MessageBuilder.content("I don't think you can rob yourself... right?")
-          ..allowedMentions = _mentions);
-        return;
-      }
-
-      ResultRow? victim = await _database.getUserGuildData(victimUser.id.id, ctx.guild!.id.id);
-      if(victim == null) {
-        await ctx.reply(MessageBuilder.content("That user could not be found in the database.")
-          ..allowedMentions = _mentions);
-        return;
-      }
-      victimMap = victim.fields;
-
-      if(victimMap["cookies"] < minVictimCookieCount) {
-        await ctx.reply(MessageBuilder.content("This user doesn't have enough cookies to be robbed from!")
-          ..allowedMentions = _mentions);
+    if (cooldownMap.containsKey(mapEntry)) {
+      // check cooldown
+      DateTime cooldownExpiry = cooldownMap[mapEntry]!.add(cooldown);
+      if (cooldownExpiry.isAfter(DateTime.now())) {
+        ctx.channel
+            .sendMessage(MessageBuilder.content("Your prep time has not expired yet! You can rob someone"
+                "<t:${(cooldownExpiry.millisecondsSinceEpoch / 1000).round()}:R>.")
+              ..allowedMentions = (AllowedMentions()..allow(reply: false))
+              ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
         return;
       }
     }
-    on ArgumentNotRequiredException {
-      //Get random user
-      ResultRow? victim = await _database.getRandomUserToRob(ctx.guild!.id.id,
-        ctx.author.id.id, minVictimCookieCount);
-      if(victim == null) {
-        await ctx.reply(MessageBuilder.content("Nobody can be robbed at this time, sorry!")
-          ..allowedMentions = _mentions);
-        return;
-      }
-      victimMap = victim.fields;
-    }
-    on InvalidUserException catch (e) {
-      await ctx.reply(MessageBuilder.content(e.toString())
-        ..allowedMentions = _mentions);
+
+    CCDatabase db = CCDatabase(initializing: false);
+    int authorCookies = await db.getCookieCount(authorID, guildID);
+    // check author cookie count
+    if (authorCookies < minCookieCount) {
+      ctx.channel.sendMessage(MessageBuilder.content("Hold up there partner! You need at least "
+          "$minCookieCount cookies to rob people! Debt isn't allowed round here")
+        ..allowedMentions = (AllowedMentions()..allow(reply: false))
+        ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
       return;
     }
 
-    commandFunction(ctx, msg, victimMap);
+    //skip logic to be able to rob a specific person.. maybe one day if i work on features it would come back
+    //but for now we grab a random user from the database and rob them.
+    //yk what i could do is increase the cooldown of robbing someone to an annoyingly high cooldown (think like 48hr)
+    //but leave it low for normal random chance robbing... /shrug
+
+    IResultSet? randomUserSet = await db.getRandomUserToRob(guildID, authorID, minVictimCookieCount);
+    if (randomUserSet == null) {
+      ctx.channel.sendMessage(
+          MessageBuilder.content("Nobody could be robbed at this time, sorry! Might want to consider "
+              "moving out of your ghost town..")
+            ..allowedMentions = (AllowedMentions()..allow(reply: false))
+            ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
+      return;
+    }
+
+    var victimData = randomUserSet.rows.first.typedAssoc();
+    bool robResult = robChances[mapEntry]!.removeFirst();
+
+    if (robResult) {
+      await _robVictim(ctx, victimData, db);
+    } else {
+      await _failRobbery(ctx, authorCookies, victimData, db);
+    }
+
+    cooldownMap[mapEntry] = DateTime.now();
   }
 
-  Future<void> commandFunction(CommandContext ctx, String msg, Map<String, dynamic> victimMap) async {
-    const int low = 5;
-    const int high = 10;
-    const double lowPercentMult = 0.008; //0.8%
-    const double highPercentMult = 0.016; //0.16%
+  Future<void> _robVictim(TextCommandContext ctx, Map<String, dynamic> victimData, CCDatabase db) async {
+    int stolenCount = Random.secure().nextInt(robVarHigh - robVarLow) + robVarLow;
+    int victimCookieCnt = victimData["cookies"];
 
-    String missionResult = "";
-    User victimUser = await ctx.client.fetchUser(Snowflake(victimMap["user_id"]));
-
-    //Used for both success and failure
-    int randomAmt = Random.secure().nextInt(high - low) + low;
-    bool robResult = _robSuccessHandler(ctx.guild!.id, ctx.author.id);
-
-    if(robResult) {
-      if(victimMap["cookies"] > 100 && victimMap["cookies"] < 1500) {
-        randomAmt += (victimMap["cookies"] * highPercentMult).round() as int;
-      }
-      else if (victimMap["cookies"] >= 1500) {
-        //Reduce amount taken from users with high cookie counts (balancing)
-        randomAmt += (victimMap["cookies"] * lowPercentMult).round() as int;
-      }
-
-      _database.addCookies(ctx.author.id.id, randomAmt, ctx.guild!.id.id);
-      _database.addLifetimeCookies(ctx.author.id.id, randomAmt, ctx.guild!.id.id);
-      _database.removeCookies(victimUser.id.id, randomAmt, ctx.guild!.id.id);
-
-      String successMsg = _successMessages[Random().nextInt(_successMessages.length)];
-      missionResult = "You stole `$randomAmt` cookies from "
-        "${victimUser.mention} (${victimUser.tag}) by $successMsg!";
+    if (victimCookieCnt > 100 && victimCookieCnt < 1500) {
+      stolenCount += (victimCookieCnt * highPercentMult).round();
+    } else if (victimCookieCnt >= 1500) {
+      stolenCount += (victimCookieCnt * lowPercentMult).round();
     }
-    else {
-      int robberCookies = await _database.getCookieCount(ctx.author.id.id, ctx.guild!.id.id);
-      int taxAmount = (robberCookies * lowPercentMult).round();
 
-      //Prevents tax from making cookie count negative
-      if(robberCookies - randomAmt > taxAmount) {
-        randomAmt += taxAmount;
-      }
+    int authorID = ctx.author.id.id;
+    int guildID = ctx.guild!.id.id;
+    int victimID = victimData["user_id"];
 
-      await _database.removeCookies(ctx.author.id.id, randomAmt, ctx.guild!.id.id);
+    // these should be grouped or in a transaction in good practice... consider doing that
+    await db.addCookies(authorID, stolenCount, guildID);
+    await db.addLifetimeCookies(authorID, stolenCount, guildID);
+    await db.removeCookies(victimID, stolenCount, guildID);
 
-      String failMsg = _failMessages[Random().nextInt(_failMessages.length)];
-      missionResult = "You failed at robbing ${victimUser.mention} (${victimUser.tag}) "
-        "because $failMsg, so you lost `$randomAmt` cookies.";
-    }
+    var bot = CCBot();
+    var victimUser = await bot.gateway.fetchUser(Snowflake(victimID));
+
+    String successMsg = _successMessages[Random.secure().nextInt(_successMessages.length)];
+    String missionResult = "You stole `$stolenCount` cookies from ${victimUser.mention} (${victimUser.tag}) "
+        "by $successMsg";
 
     EmbedBuilder resultEmbed = EmbedBuilder()
-      ..color = robResult ? DiscordColor.fromHexString("67F399") :
-        DiscordColor.fromHexString("6B0504")
+      ..color = DiscordColor.fromHexString("67F399")
       ..description = missionResult
       ..title = "Robbery Result!";
 
-    ctx.reply(MessageBuilder.embed(resultEmbed)..allowedMentions = _mentions);
-    super.applyCooldown(ctx.guild!.id, ctx.author.id);
+    await ctx.channel.sendMessage(MessageBuilder.embed(resultEmbed)
+      ..allowedMentions = (AllowedMentions()..allow(reply: false))
+      ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
   }
 
-  ///Handles the rob chance queue, removes latest
-  ///If queue is empty or missing, calls for a new queue for the user
-  bool _robSuccessHandler(Snowflake guildID, Snowflake userID) {
-    //Create map for guild if it doesn't exist
-    _userRobRate.putIfAbsent(guildID, () => {});
-    //Get map of users for guild
-    Map<Snowflake, Queue<bool>> userMap = _userRobRate[guildID]!;
+  Future<void> _failRobbery(
+      TextCommandContext ctx, int authorCookies, Map<String, dynamic> victimData, CCDatabase db) async {
+    int lostAmount = Random.secure().nextInt(robVarHigh - robVarLow) + robVarLow;
+    int taxAmount = (authorCookies * lowPercentMult).round();
 
-    //Generate rob chance for user if their key doesn't exist or their queue is empty
-    if(userMap.isEmpty || !userMap.containsKey(userID) || userMap[userID]!.isEmpty) {
-      userMap[userID] = _generateRobChance();
+    if (authorCookies - lostAmount > taxAmount) {
+      lostAmount += taxAmount;
     }
-    Queue<bool> robResultQueue = userMap[userID]!;
-    return robResultQueue.removeFirst();
+
+    await db.removeCookies(ctx.author.id.id, lostAmount, ctx.guild!.id.id);
+
+    var bot = CCBot();
+    var victimUser = await bot.gateway.fetchUser(Snowflake(victimData["user_id"]));
+
+    String failMsg = _failMessages[Random.secure().nextInt(_failMessages.length)];
+    String missionResult = "You failed at robbing ${victimUser.mention} (${victimUser.tag}) "
+        "because $failMsg, so you lost `$lostAmount` cookies.";
+
+    EmbedBuilder resultEmbed = EmbedBuilder()
+      ..color = DiscordColor.fromHexString("6B0504")
+      ..description = missionResult
+      ..title = "Robbery Result!";
+
+    await ctx.channel.sendMessage(MessageBuilder.embed(resultEmbed)
+      ..allowedMentions = (AllowedMentions()..allow(reply: false))
+      ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
   }
 
-  ///Creates a list of bools, 3 of which are true out of 10.
-  ///Then shuffles the list and converts to a queue
-  Queue<bool> _generateRobChance() {
-    List<bool> robChanceList = [];
-    for(int i = 0; i < 10; i++) {
-      //30% success rate
-      if(i < 3) {
-        robChanceList.add(true);
-      }
-      else {
-        robChanceList.add(false);
+  Queue<bool> _resetQueue() {
+    List<bool> chanceList = [];
+    for (int i = 0; i < 10; i++) {
+      if (i < 4) {
+        chanceList.add(true);
+      } else {
+        chanceList.add(false);
       }
     }
-    //Randomize the list
-    robChanceList.shuffle(Random.secure());
-    return Queue.from(robChanceList);
+
+    chanceList.shuffle(Random.secure());
+    return Queue.from(chanceList);
   }
 }
-
 
 //by...
 //24 so far
@@ -231,7 +204,7 @@ final List<String> _successMessages = [
 ];
 
 //because...
-//34 so far
+//33 so far
 final List<String> _failMessages = [
   "you walked by the police office with your bag of cookies",
   "Nub ate your getaway car, tough luck bro",
@@ -266,5 +239,4 @@ final List<String> _failMessages = [
   "the weather was too nice, so you went to the beach instead",
   "the weather was so bad, it would've been impossible anyway",
   "there was a minecraft bedwars tournament",
-  "Technoblade showed up and screamed \"DONDE ESTA LA BIBLIOTECA\" as he took the cookies for himself"
 ];

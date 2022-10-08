@@ -1,29 +1,21 @@
 import 'package:nyxx/nyxx.dart';
-import 'package:nyxx_commander/commander.dart';
+import 'package:onyx_chat/onyx_chat.dart';
 
-class Ping {
-  static Future<bool> preRunChecks(CommandContext ctx) async {
-    if(ctx.guild == null) return false;
+class PingCommand extends TextCommand {
+  @override
+  String get name => "ping";
 
-    Member? botMember = await ctx.guild!.selfMember.getOrDownload();
+  @override
+  String get description => "Pong! Get round-trip latency from the bot to Discord.";
 
-    GuildChannel channel = ctx.channel as GuildChannel;
-    var botPerms = await channel.effectivePermissions(botMember);
-
-    if(botPerms.sendMessages) {
-      return true;
-    }
-    return false;
-  }
-
-  Future<void> commandFunction(CommandContext ctx, String msg) async {
+  @override
+  Future<void> commandEntry(TextCommandContext ctx, String message, List<String> args) async {
     Stopwatch timer = Stopwatch();
     timer.start();
-    AllowedMentions _mentions = AllowedMentions()..allow(reply: false);
-    var msg = await ctx.reply(MessageBuilder.content("Pinging...")
-      ..allowedMentions = _mentions);
+    var message = await ctx.channel.sendMessage(MessageBuilder.content("Pinging...")
+      ..allowedMentions = (AllowedMentions()..allow(reply: false))
+      ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
     timer.stop();
-    msg.edit(MessageBuilder.content(":stopwatch: Pong! `${timer.elapsedMilliseconds}ms`")
-      ..allowedMentions = _mentions);
+    await message.edit(MessageBuilder.content(":stopwatch: Pong! `${timer.elapsedMilliseconds}ms`"));
   }
 }

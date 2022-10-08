@@ -1,34 +1,43 @@
+import 'dart:collection';
 import 'dart:io';
 
 import 'package:date_time_format/date_time_format.dart';
 import 'package:nyxx/nyxx.dart';
-import 'package:nyxx_commander/commander.dart';
+import 'package:onyx_chat/onyx_chat.dart';
 
 import '../../core/CCDatabase.dart';
 
-class Info {
-  late CCDatabase _ccDatabase;
-  Info(this._ccDatabase);
+class InfoCommand extends TextCommand {
+  @override
+  String get name => "info";
 
-  Future<void> commandFunction(CommandContext ctx, String msg) async {
+  @override
+  String get description => "Get some information about the bot's status.";
+
+  @override
+  HashSet<String> get aliases => HashSet.from(["status"]);
+
+  @override
+  Future<void> commandEntry(TextCommandContext ctx, String message, List<String> args) async {
+    CCDatabase db = CCDatabase(initializing: false);
+
     String memUsage = (ProcessInfo.currentRss / 1024 / 1024).toStringAsFixed(2);
-    DateTime startTime = DateTime.now().subtract(ctx.client.uptime);
-    String runtime = DateTimeFormat.relative(startTime, levelOfPrecision: 5, abbr: true);
+    String uptime = DateTimeFormat.relative(DateTime.now(),
+        relativeTo: ctx.client.startTime, levelOfPrecision: 5, abbr: true);
 
     String prefix;
-    if(ctx.guild == null) {
+    if (ctx.guild == null) {
       prefix = ".";
-    }
-    else {
-      prefix = await _ccDatabase.getPrefix(ctx.guild!.id.id);
+    } else {
+      prefix = await db.getPrefix(ctx.guild!.id.id);
     }
 
     var embed = await EmbedBuilder()
-      ..addField(name: "Uptime", content: runtime, inline: true)
+      ..addField(name: "Uptime", content: uptime, inline: true)
       ..addField(name: "Memory Usage", content: "$memUsage MB", inline: true)
       ..addField(name: "Nyxx Version", content: "${ctx.client.version}", inline: true)
-      ..addField(name: "(Cached) Guilds", content: ctx.client.guilds.count, inline: true)
-      ..addField(name: "(Cached) Users", content: ctx.client.users.count, inline: true)
+      ..addField(name: "(Cached) Guilds", content: ctx.client.guilds.length, inline: true)
+      ..addField(name: "(Cached) Users", content: ctx.client.users.length, inline: true)
       ..addField(name: "Prefix", content: prefix, inline: true)
       ..addField(name: "Creator", content: "Nub#8399", inline: true)
       ..addAuthor((author) {
@@ -38,7 +47,8 @@ class Info {
       ..timestamp = DateTime.now().toUtc()
       ..color = DiscordColor.fromHexString("87CEEB");
 
-    await ctx.reply(MessageBuilder.embed(embed)
-      ..allowedMentions = (AllowedMentions()..allow(reply: false)));
+    await ctx.channel.sendMessage(MessageBuilder.embed(embed)
+      ..allowedMentions = (AllowedMentions()..allow(reply: false))
+      ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
   }
 }
