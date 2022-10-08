@@ -76,7 +76,7 @@ class CCDatabase {
         "WHERE rnt.row_num > ${pageNumber * pageEntryMax} LIMIT $pageEntryMax";
 
     var result = await pool.execute(query);
-    return result.iterator;
+    return result.rows.iterator;
   }
 
   Future<IResultSet?> getUserGuildData(int userID, int guildID) async {
@@ -84,7 +84,7 @@ class CCDatabase {
     var results = await pool.execute("SELECT * FROM users_guilds "
         "WHERE (user_id = $userID AND guild_id = $guildID)");
     if (results.isNotEmpty) {
-      returnRow = results.first;
+      returnRow = results;
     }
     return returnRow;
   }
@@ -98,7 +98,7 @@ class CCDatabase {
         "WHERE user_id = $userID";
     var results = await pool.execute(query);
     if (results.isNotEmpty) {
-      returnRow = results.first;
+      returnRow = results;
     }
     return returnRow;
   }
@@ -113,7 +113,7 @@ class CCDatabase {
     IResultSet result = await pool.execute(query);
 
     if (result.isNotEmpty) {
-      return result.first;
+      return result;
     } else {
       return null;
     }
