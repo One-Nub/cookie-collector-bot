@@ -6,10 +6,9 @@ environment:
 
 dependencies:
   date_time_format: ^2.0.1
+  dotenv: ^4.0.1
   mysql_client: ^0.0.27
   nyxx: ^4.1.0
-  # nyxx_commander: ^3.0.0
   nyxx_interactions: ^4.3.0
-  toml: ^0.13.1
   onyx_chat:
     git: https://github.com/One-Nub/Onyx_Chat.git
