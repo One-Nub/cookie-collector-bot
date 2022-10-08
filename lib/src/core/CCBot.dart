@@ -63,6 +63,7 @@ class CCBot {
       EatCommand(),
       GiveCommand(),
       InfoCommand(),
+      LeaderboardCommand(),
       PingCommand(),
       RobCommand(),
       StatsCommands()
