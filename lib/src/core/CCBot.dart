@@ -62,6 +62,7 @@ class CCBot {
       DailyCommand(),
       EatCommand(),
       GiveCommand(),
+      HelpCommand(),
       InfoCommand(),
       LeaderboardCommand(),
       PingCommand(),
