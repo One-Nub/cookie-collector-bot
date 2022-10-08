@@ -3,20 +3,7 @@ import 'package:nyxx_interactions/nyxx_interactions.dart';
 import 'package:logging/logging.dart';
 import 'package:onyx_chat/onyx_chat.dart';
 
-import '../new_modules/chat_collection/on_message.dart' as cc;
-
-import '../new_modules/admin_commands/generate.dart';
-import '../new_modules/admin_commands/say.dart';
-
-import '../new_modules/general_commands/daily.dart';
-import '../new_modules/general_commands/eat.dart';
-import '../new_modules/general_commands/give.dart';
-import '../new_modules/general_commands/help.dart';
-import '../new_modules/general_commands/info.dart';
-import '../new_modules/general_commands/leaderboard.dart';
-import '../new_modules/general_commands/ping.dart';
-import '../new_modules/general_commands/rob.dart';
-import '../new_modules/general_commands/stats.dart';
+import 'package:cookie_collector_bot/modules.dart';
 
 class CCBot {
   late final String token;
@@ -74,7 +61,7 @@ class CCBot {
       if (event.message.author.bot) return;
 
       onyxChat.dispatchIMessage(event.message);
-      cc.onMessageEvent(event);
+      onMessageEvent(event);
     });
   }
 
