@@ -39,7 +39,7 @@ class LeaderboardCommand extends TextCommand {
       if (lastCommandRun[mapEntry]!.add(cooldown).isAfter(DateTime.now())) {
         EmbedBuilder errorEmbed = EmbedBuilder()
           ..color = DiscordColor.fromHexString("6B0504")
-          ..description = "You're being restricted. Try again in little bit";
+          ..description = "You're being restricted. Try again in little bit.";
         await ctx.channel.sendMessage(MessageBuilder.embed(errorEmbed)
           ..allowedMentions = (AllowedMentions()..allow(reply: false))
           ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
@@ -103,12 +103,14 @@ class LeaderboardCommand extends TextCommand {
     lbBStream.listen((event) async {
       String eventValue = event.interaction.customId;
       if (eventValue == "lb_prev") {
-        /// If at min page, don't change
+        /// If at min page, don't change index
         pageIndex = (pageIndex - 1 < 0) ? pageIndex : pageIndex - 1;
+        event.acknowledge();
         await _prevButtonHandler(ctx, maxPageCount, pageIndex, lbMessage);
       } else if (eventValue == "lb_next") {
-        /// If over the max page count, don't change
+        /// If over the max page count, don't change index
         pageIndex = (pageIndex + 1 > maxPageCount) ? pageIndex : pageIndex + 1;
+        event.acknowledge();
         await _nextButtonHandler(ctx, maxPageCount, pageIndex, lbMessage);
       } else if (eventValue == "lb_delete") {
         event.acknowledge();
@@ -123,14 +125,60 @@ class LeaderboardCommand extends TextCommand {
 
   Future<void> _nextButtonHandler(
       TextCommandContext ctx, int maxPageCount, int pageIndex, IMessage lbMessage) async {
-    /// adjust buttons
-    /// edit message
+    ButtonBuilder prevButton = ButtonBuilder("<", "lb_prev", ButtonStyle.primary);
+    ButtonBuilder trashButton =
+        ButtonBuilder(" ", "lb_delete", ButtonStyle.danger, emoji: UnicodeEmoji("🗑"));
+    ButtonBuilder nextButton = ButtonBuilder(">", "lb_next", ButtonStyle.primary);
+
+    if (pageIndex + 1 == maxPageCount) {
+      nextButton.disabled = true;
+    }
+
+    var cmb = ComponentMessageBuilder();
+    cmb.componentRows = [
+      ComponentRowBuilder()
+        ..addComponent(prevButton)
+        ..addComponent(trashButton)
+        ..addComponent(nextButton)
+    ];
+
+    baseEmbed.description = await _generatePage(ctx, pageIndex: pageIndex);
+    baseEmbed.footer = EmbedFooterBuilder()
+      ..text = "Page ${pageIndex + 1} / $maxPageCount"
+      ..iconUrl = ctx.author.avatarURL();
+    cmb.embeds = [baseEmbed];
+    cmb.allowedMentions = _allowedMentions;
+
+    await lbMessage.edit(cmb);
   }
 
   Future<void> _prevButtonHandler(
       TextCommandContext ctx, int maxPageCount, int pageIndex, IMessage lbMessage) async {
-    /// adjust buttons
-    /// edit message
+    ButtonBuilder prevButton = ButtonBuilder("<", "lb_prev", ButtonStyle.primary);
+    ButtonBuilder trashButton =
+        ButtonBuilder(" ", "lb_delete", ButtonStyle.danger, emoji: UnicodeEmoji("🗑"));
+    ButtonBuilder nextButton = ButtonBuilder(">", "lb_next", ButtonStyle.primary);
+
+    if (pageIndex == 0) {
+      prevButton.disabled = true;
+    }
+
+    var cmb = ComponentMessageBuilder();
+    cmb.componentRows = [
+      ComponentRowBuilder()
+        ..addComponent(prevButton)
+        ..addComponent(trashButton)
+        ..addComponent(nextButton)
+    ];
+
+    baseEmbed.description = await _generatePage(ctx, pageIndex: pageIndex);
+    baseEmbed.footer = EmbedFooterBuilder()
+      ..text = "Page ${pageIndex + 1} / $maxPageCount"
+      ..iconUrl = ctx.author.avatarURL();
+    cmb.embeds = [baseEmbed];
+    cmb.allowedMentions = _allowedMentions;
+
+    await lbMessage.edit(cmb);
   }
 
   Future<String> _generatePage(TextCommandContext ctx,
