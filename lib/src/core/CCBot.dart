@@ -64,7 +64,8 @@ class CCBot {
       GiveCommand(),
       InfoCommand(),
       PingCommand(),
-      RobCommand()
+      RobCommand(),
+      StatsCommands()
     ]);
 
     gateway.eventsWs.onMessageReceived.listen((event) {
