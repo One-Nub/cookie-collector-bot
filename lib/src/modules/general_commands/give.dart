@@ -119,12 +119,16 @@ class GiveCommand extends TextCommand {
       }
     }
 
-    await db.addCookies(member.id.id, cookieCount, ctx.guild!.id.id);
+    int taxedCookies = (cookieCount * 0.9).round();
+
+    await db.addCookies(member.id.id, taxedCookies, ctx.guild!.id.id);
     await db.removeCookies(ctx.author.id.id, cookieCount, ctx.guild!.id.id);
 
     var finalEmbed = EmbedBuilder()
       ..title = "How generous! :cookie:"
-      ..description = "<@${ctx.author.id}> gave ${member.mention} $cookieCount cookies!";
+      ..description =
+          "<@${ctx.author.id}> gave ${member.mention} $cookieCount cookies! They received $taxedCookies "
+              "after shipping costs.";
     ctx.channel.sendMessage(
         MessageBuilder.embed(finalEmbed)..allowedMentions = (AllowedMentions()..allow(reply: false)));
   }
