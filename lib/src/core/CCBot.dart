@@ -30,7 +30,7 @@ class CCBot {
       ..userCachePolicyLocation = CachePolicyLocation.all();
 
     gateway = NyxxFactory.createNyxxWebsocket(
-        token, GatewayIntents.messageContent | GatewayIntents.guildMessages,
+        token, GatewayIntents.messageContent | GatewayIntents.guildMessages | GatewayIntents.guildMembers,
         cacheOptions: cacheOptions)
       ..registerPlugin(Logging())
       ..registerPlugin(CliIntegration())
@@ -65,6 +65,8 @@ class CCBot {
       onyxChat.dispatchIMessage(event.message);
       onMessageEvent(event);
     });
+
+    gateway.eventsWs.onGuildMemberRemove.listen((event) => onLeaveEvent(event));
   }
 
   void startInteractions() async {
