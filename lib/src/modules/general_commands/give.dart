@@ -17,7 +17,7 @@ class GiveCommand extends TextCommand {
 
   @override
   Future<void> commandEntry(TextCommandContext ctx, String message, List<String> args) async {
-    if (ctx.guild == null || ctx.author.id.id != 156872400145874944) return;
+    if (ctx.guild == null) return;
 
     //need 2 arguments, user and amount of cookies to give
     if (args.isEmpty || args.length < 2) {
@@ -119,7 +119,7 @@ class GiveCommand extends TextCommand {
       }
     }
 
-    int taxedCookies = (cookieCount * 0.9).round();
+    int taxedCookies = (cookieCount * 0.9).ceil();
 
     await db.addCookies(member.id.id, taxedCookies, ctx.guild!.id.id);
     await db.removeCookies(ctx.author.id.id, cookieCount, ctx.guild!.id.id);
