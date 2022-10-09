@@ -5,7 +5,7 @@ import 'package:dotenv/dotenv.dart';
 import 'package:nyxx/nyxx.dart';
 
 void main() async {
-  var env = DotEnv(includePlatformEnvironment: true)..load();
+  var env = DotEnv(includePlatformEnvironment: true)..load(['bin/.env']);
 
   //Load bot admin IDs
   final List<Snowflake> admins = [];
