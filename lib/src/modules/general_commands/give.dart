@@ -127,8 +127,8 @@ class GiveCommand extends TextCommand {
     var finalEmbed = EmbedBuilder()
       ..title = "How generous! :cookie:"
       ..description =
-          "<@${ctx.author.id}> gave ${member.mention} $cookieCount cookies! They received $taxedCookies "
-              "after shipping costs.";
+          "<@${ctx.author.id}> gave ${member.mention} `$cookieCount` cookies! They received `$taxedCookies` "
+              "cookies after shipping costs.";
     ctx.channel.sendMessage(
         MessageBuilder.embed(finalEmbed)..allowedMentions = (AllowedMentions()..allow(reply: false)));
   }
