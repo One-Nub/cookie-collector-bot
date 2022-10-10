@@ -47,8 +47,9 @@ class CollectionMessage {
   void handleTriggerCollection(IMessage trigger) async {
     int cookieAmount = 1 + Random().nextInt(10);
     String cookieAmountString = "$cookieAmount cookie${cookieAmount != 1 ? "s" : ""}";
+    var channel = await trigger.channel.getOrDownload();
 
-    if (!await _checkPermissions(trigger.channel as ITextGuildChannel)) return;
+    if (!await _checkPermissions(channel as ITextGuildChannel)) return;
 
     EmbedBuilder messageEmbed = EmbedBuilder()
       ..title = triggerMessage
