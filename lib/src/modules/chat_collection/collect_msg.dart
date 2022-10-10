@@ -48,7 +48,7 @@ class CollectionMessage {
     int cookieAmount = 1 + Random().nextInt(10);
     String cookieAmountString = "$cookieAmount cookie${cookieAmount != 1 ? "s" : ""}";
 
-    if (!await _checkPermissions(trigger.channel as IGuildChannel)) return;
+    if (!await _checkPermissions(trigger.channel as ITextGuildChannel)) return;
 
     EmbedBuilder messageEmbed = EmbedBuilder()
       ..title = triggerMessage
@@ -86,7 +86,7 @@ class CollectionMessage {
     }
   }
 
-  Future<bool> _checkPermissions(IGuildChannel channel) async {
+  Future<bool> _checkPermissions(ITextGuildChannel channel) async {
     //Hoops to get bot user in the guild for permission checking
     IGuild channelGuild = await channel.guild.getOrDownload();
     IMember botMember = await channelGuild.fetchMember(channel.client.appId);
