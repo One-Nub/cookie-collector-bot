@@ -51,7 +51,8 @@ class DailyCommand extends TextCommand {
 
     DateTime latestDelayTime = lastCollectTime.add(latestDelay);
     int userStreakDays = userStreak[mapEntry]!;
-    if (latestDelayTime.isAfter(DateTime.now())) {
+
+    if (DateTime.now().isAfter(latestDelayTime)) {
       userStreak[mapEntry] = 1;
     } else {
       userStreak[mapEntry] = userStreakDays + 1;
