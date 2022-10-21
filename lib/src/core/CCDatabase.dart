@@ -82,10 +82,11 @@ class CCDatabase {
 
   Future<IResultSet?> getUserGuildData(int userID, int guildID) async {
     IResultSet? returnRow = null;
-    var results = await pool.execute("SELECT * FROM users_guilds "
-        "WHERE (user_id = $userID AND guild_id = $guildID)");
-    if (results.isNotEmpty) {
-      returnRow = results;
+    String query = "SELECT * FROM users_guilds "
+        "WHERE user_id = $userID AND guild_id = $guildID";
+    var result = await pool.execute(query);
+    if (result.isNotEmpty) {
+      returnRow = result;
     }
     return returnRow;
   }
