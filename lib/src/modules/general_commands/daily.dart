@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:nyxx/nyxx.dart';
 import 'package:onyx_chat/onyx_chat.dart';
 
@@ -65,9 +67,7 @@ class DailyCommand extends TextCommand {
   Future<void> collectCookies(TextCommandContext ctx, String mapEntry) async {
     int streakLength = userStreak[mapEntry]!;
 
-    int streakRewardModifier = (streakLength < 30)
-        ? (streakLength / rewardIncInterval).floor() * 2
-        : (30 / rewardIncInterval).floor() * 2;
+    int streakRewardModifier = ((streakLength / 8) - sin(streakLength / 6 * 2)).ceil();
 
     int reward = baseReward + streakRewardModifier;
     CCDatabase db = CCDatabase(initializing: false);
