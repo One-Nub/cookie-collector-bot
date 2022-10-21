@@ -1,7 +1,5 @@
 ## **Cookie Collector**
 
----
-
 Cookie Collector is a Discord bot meant to help encourage chat activity through a simple, yet fun
 way of letting people collect cookies!
 
