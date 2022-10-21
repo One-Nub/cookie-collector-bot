@@ -43,6 +43,7 @@ class GiveCommand extends TextCommand {
           MessageBuilder.content("You can't give cookies to yourself! That's not how self care works..?")
             ..replyBuilder = ReplyBuilder.fromMessage(ctx.message)
             ..allowedMentions = (AllowedMentions()..allow(reply: false)));
+      return;
     }
 
     argsIterator.moveNext();
