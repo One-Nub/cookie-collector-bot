@@ -1,12 +1,15 @@
+import 'dart:async';
 import 'dart:collection';
 import 'dart:math';
 
 import 'package:mysql_client/mysql_client.dart';
 import 'package:nyxx/nyxx.dart';
+import 'package:nyxx_interactions/nyxx_interactions.dart';
 import 'package:onyx_chat/onyx_chat.dart';
 
 import '../../core/CCBot.dart';
 import '../../core/CCDatabase.dart';
+import '../../utilities/parse_id.dart';
 
 /// String is guildid-userid, queue is a t/f list (4 true, 6 false)
 final Map<String, Queue<bool>> robChances = Map();
@@ -14,7 +17,8 @@ final Map<String, Queue<bool>> robChances = Map();
 /// Stores the last time a successful robbery was made for the user.
 final Map<String, DateTime> cooldownMap = Map();
 
-const Duration _cooldown = Duration(hours: 3);
+const Duration _randomCooldown = Duration(hours: 3);
+const Duration _specificCooldown = Duration(hours: 15);
 const minCookieCount = 15;
 const minVictimCookieCount = 20;
 
@@ -46,10 +50,10 @@ class RobCommand extends TextCommand {
 
     if (cooldownMap.containsKey(mapEntry)) {
       // check cooldown
-      DateTime cooldownExpiry = cooldownMap[mapEntry]!.add(_cooldown);
+      DateTime cooldownExpiry = cooldownMap[mapEntry]!;
       if (cooldownExpiry.isAfter(DateTime.now())) {
         ctx.channel
-            .sendMessage(MessageBuilder.content("Your prep time has not expired yet! You can rob someone"
+            .sendMessage(MessageBuilder.content("Your prep time has not expired yet! You can rob someone "
                 "<t:${(cooldownExpiry.millisecondsSinceEpoch / 1000).round()}:R>.")
               ..allowedMentions = (AllowedMentions()..allow(reply: false))
               ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
@@ -68,22 +72,64 @@ class RobCommand extends TextCommand {
       return;
     }
 
-    //skip logic to be able to rob a specific person.. maybe one day if i work on features it would come back
-    //but for now we grab a random user from the database and rob them.
-    //yk what i could do is increase the cooldown of robbing someone to an annoyingly high cooldown (think like 48hr)
-    //but leave it low for normal random chance robbing... /shrug
+    IResultSet? victimUserSet;
+    if (args.isNotEmpty) {
+      int? victimID = parseID(args.first);
+      if (victimID == null) {
+        ctx.channel.sendMessage(MessageBuilder.content("That doesn't look like a valid user ID to me! "
+            "Please @ someone or put their ID in instead.")
+          ..replyBuilder = ReplyBuilder.fromMessage(ctx.message)
+          ..allowedMentions = (AllowedMentions()..allow(reply: false)));
+        return;
+      }
 
-    IResultSet? randomUserSet = await db.getRandomUserToRob(guildID, authorID, minVictimCookieCount);
-    if (randomUserSet == null) {
-      ctx.channel.sendMessage(
-          MessageBuilder.content("Nobody could be robbed at this time, sorry! Might want to consider "
-              "moving out of your ghost town..")
-            ..allowedMentions = (AllowedMentions()..allow(reply: false))
-            ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
-      return;
+      if (victimID == ctx.author.id.id) {
+        ctx.channel
+            .sendMessage(MessageBuilder.content("You can't rob yourself! What is this, the Great Depression?")
+              ..replyBuilder = ReplyBuilder.fromMessage(ctx.message)
+              ..allowedMentions = (AllowedMentions()..allow(reply: false)));
+        return;
+      }
+
+      victimUserSet = await db.getUserGuildData(victimID, guildID);
+      if (victimUserSet == null || victimUserSet.rows.isEmpty) {
+        ctx.channel.sendMessage(MessageBuilder.content(
+            "Your victim doesn't exist... In the database that is, get them to run `.daily` first!")
+          ..allowedMentions = (AllowedMentions()..allow(reply: false))
+          ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
+        return;
+      }
+
+      int victimCookieCnt = (victimUserSet.rows.first.typedAssoc())["cookies"];
+      if (victimCookieCnt < minVictimCookieCount) {
+        ctx.channel.sendMessage(
+            MessageBuilder.content("Your victim need more cookies before they can be robbed from!")
+              ..allowedMentions = (AllowedMentions()..allow(reply: false))
+              ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
+        return;
+      }
+
+      bool result = await _confirmRobbery(ctx: ctx, victimID: victimID);
+      if (!result) return;
+
+      cooldownMap[mapEntry] = DateTime.now().add(_specificCooldown);
     }
 
-    var victimData = randomUserSet.rows.first.typedAssoc();
+    if (victimUserSet == null) {
+      victimUserSet = await db.getRandomUserToRob(guildID, authorID, minVictimCookieCount);
+      if (victimUserSet == null || victimUserSet.rows.isEmpty) {
+        ctx.channel.sendMessage(
+            MessageBuilder.content("Nobody could be robbed at this time, sorry! Might want to consider "
+                "moving out of your ghost town..")
+              ..allowedMentions = (AllowedMentions()..allow(reply: false))
+              ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
+        return;
+      }
+
+      cooldownMap[mapEntry] = DateTime.now().add(_randomCooldown);
+    }
+
+    var victimData = victimUserSet.rows.first.typedAssoc();
     bool robResult = robChances[mapEntry]!.removeFirst();
 
     if (robResult) {
@@ -91,8 +137,57 @@ class RobCommand extends TextCommand {
     } else {
       await _failRobbery(ctx, authorCookies, victimData, db);
     }
+  }
 
-    cooldownMap[mapEntry] = DateTime.now();
+  Future<bool> _confirmRobbery({required TextCommandContext ctx, required int victimID}) async {
+    var bot = CCBot();
+    var interactions = bot.interactions;
+
+    ComponentMessageBuilder cmb = ComponentMessageBuilder();
+    IUser? victimUser = ctx.client.users[victimID];
+    if (victimUser == null) {
+      victimUser = await ctx.client.httpEndpoints.fetchUser(Snowflake(victimID));
+    }
+
+    cmb.content = "Please confirm that you want to rob **${victimUser.tag}**.\n"
+        "Be careful... Your cooldown will be `${_specificCooldown.inHours} hours` rather "
+        "than the normal `${_randomCooldown.inHours} hours`.";
+    cmb.componentRows = [
+      ComponentRowBuilder()
+        ..addComponent(ButtonBuilder("Deny", "deny", ButtonStyle.danger))
+        ..addComponent(ButtonBuilder("Approve", "approve", ButtonStyle.success))
+    ];
+
+    bool accept = false;
+    var confirmMsg = await ctx.channel.sendMessage(cmb);
+    try {
+      var buttonEvent = await interactions.events.onButtonEvent.firstWhere((element) {
+        return element.interaction.userAuthor!.id == ctx.message.author.id &&
+            (element.interaction.customId == "deny" || element.interaction.customId == "approve");
+      }).timeout(Duration(seconds: 15));
+
+      String buttonID = buttonEvent.interaction.customId;
+      if (buttonID == "deny") {
+        await confirmMsg.delete();
+
+        await buttonEvent.acknowledge();
+        await buttonEvent.sendFollowup(MessageBuilder.content("Robbery cancelled. Quick, scram!"),
+            hidden: true);
+        accept = false;
+      } else if (buttonID == "approve") {
+        await confirmMsg.delete();
+        await buttonEvent.acknowledge();
+        accept = true;
+      }
+    } on TimeoutException {
+      await confirmMsg.delete();
+      await ctx.channel.sendMessage(MessageBuilder.content("Robbery cancelled. Quick, scram!")
+        ..allowedMentions = (AllowedMentions()..allow(reply: false))
+        ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
+      accept = false;
+    } finally {
+      return accept;
+    }
   }
 
   Future<void> _robVictim(TextCommandContext ctx, Map<String, dynamic> victimData, CCDatabase db) async {
@@ -194,7 +289,7 @@ final List<String> _successMessages = [
   "taking their portable cookie jar",
   "acting like a homeless person; where are your morals bro smh",
   "selling their stocks secretly",
-  "you convinced them to invest in stonks",
+  "you convinced them to invest in your stocks",
   "convincing them they had the plague, and that paying you would cure it",
   "getting them join your *exclusive* discord server",
   "stuffing them in your cheeks like a chipmunk while they were cooling",
@@ -222,13 +317,13 @@ final List<String> _failMessages = [
   "you told them in advance you were going to rob them, nice job mate",
   "you felt bad and called the police and told them",
   "you tripped and all your stolen cookies fell down the storm drain",
-  "you woke up",
+  "you woke up from your coma",
   "you ~~somehow~~ fell in love with John and left your profits behind",
   "after a nice robbery, you realize you forgot one thing: the cookies",
   "that's just how the cookie crumbles",
   "all they had were stupid coins and not any cookies",
   "for some reason they had oatmeal cookies, like who eats those?",
-  "your browser said delete cookies and you said yes",
+  "your browser said \"Delete cookies?\" and you said yes",
   "your house was set on fire by the person you robbed",
   "I said so :eyes:",
   "you were too comfy in bed. so you slept through the robbery",
