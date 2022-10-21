@@ -73,12 +73,15 @@ class GiveCommand extends TextCommand {
       return;
     }
 
-    giveCookies(ctx: ctx, member: member, cookieCount: cookieCount);
+    giveCookies(ctx: ctx, member: member, cookieCount: cookieCount, authorCookies: userCookieCount);
     await ctx.message.delete();
   }
 
   Future<void> giveCookies(
-      {required TextCommandContext ctx, required IMember member, required int cookieCount}) async {
+      {required TextCommandContext ctx,
+      required IMember member,
+      required int cookieCount,
+      required int authorCookies}) async {
     CCDatabase db = CCDatabase(initializing: false);
 
     if (cookieCount >= 50) {
@@ -119,7 +122,15 @@ class GiveCommand extends TextCommand {
       }
     }
 
-    int taxedCookies = (cookieCount * 0.9).ceil();
+    double cookiePercentage = ((cookieCount / authorCookies) * 100);
+    int taxedCookies;
+    if (cookiePercentage >= 50) {
+      taxedCookies = (cookieCount * 0.60).ceil();
+    } else if (cookiePercentage >= 20) {
+      taxedCookies = (cookieCount * 0.75).ceil();
+    } else {
+      taxedCookies = (cookieCount * 0.9).ceil();
+    }
 
     await db.addCookies(member.id.id, taxedCookies, ctx.guild!.id.id);
     await db.removeCookies(ctx.author.id.id, cookieCount, ctx.guild!.id.id);
@@ -128,7 +139,7 @@ class GiveCommand extends TextCommand {
       ..title = "How generous! :cookie:"
       ..description =
           "<@${ctx.author.id}> gave ${member.mention} `$cookieCount` cookies! They received `$taxedCookies` "
-              "cookies after shipping costs.";
+              "cookies after shipping + security costs.";
     ctx.channel.sendMessage(
         MessageBuilder.embed(finalEmbed)..allowedMentions = (AllowedMentions()..allow(reply: false)));
   }
