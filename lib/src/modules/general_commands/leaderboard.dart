@@ -39,10 +39,12 @@ class LeaderboardCommand extends TextCommand {
     String mapEntry = "$guildID-$authorID";
 
     if (lastCommandRun.containsKey(mapEntry)) {
-      if (lastCommandRun[mapEntry]!.add(_cooldown).isAfter(DateTime.now())) {
+      var thisCooldown = lastCommandRun[mapEntry]!.add(_cooldown);
+      if (thisCooldown.isAfter(DateTime.now())) {
         EmbedBuilder errorEmbed = EmbedBuilder()
           ..color = DiscordColor.fromHexString("6B0504")
-          ..description = "You're being restricted. Try again in little bit.";
+          ..description =
+              "You're being restricted. Try again <t:${(thisCooldown.millisecondsSinceEpoch / 1000).round()}:R>.";
         await ctx.channel.sendMessage(MessageBuilder.embed(errorEmbed)
           ..allowedMentions = (AllowedMentions()..allow(reply: false))
           ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
@@ -50,6 +52,7 @@ class LeaderboardCommand extends TextCommand {
       }
     }
     lastCommandRun[mapEntry] = DateTime.now();
+    pages.clear();
 
     CCDatabase db = CCDatabase(initializing: false);
     var countQuery = await db.pool.execute("SELECT COUNT(*) FROM users_guilds WHERE guild_id = $guildID");
@@ -187,7 +190,7 @@ class LeaderboardCommand extends TextCommand {
   Future<String> _generatePage(TextCommandContext ctx,
       {int pageIndex = 0, int pageMaxRows = maxRowsPerPage}) async {
     if (pages.containsKey(pageIndex)) {
-      return pages[pageIndex]!;
+      return "*Cached*\n${pages[pageIndex]!}";
     }
 
     CCDatabase db = CCDatabase(initializing: false);
