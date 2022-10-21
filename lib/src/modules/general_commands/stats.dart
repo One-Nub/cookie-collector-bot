@@ -33,7 +33,19 @@ class StatsCommands extends TextCommand {
     }
 
     CCBot bot = CCBot();
-    IUser user = await bot.gateway.fetchUser(Snowflake(userID));
+    IUser? user;
+    try {
+      user = ctx.client.users[Snowflake(userID)];
+      if (user == null) {
+        user = await bot.gateway.fetchUser(Snowflake(userID));
+      }
+    } catch (e) {
+      await ctx.channel.sendMessage(MessageBuilder.content(
+          "There was an issue getting that user... Make sure the ID you're using is correct!")
+        ..allowedMentions = (AllowedMentions()..allow(reply: false))
+        ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
+      return;
+    }
 
     EmbedBuilder statsEmbed = EmbedBuilder()
       ..addField(name: "**Cookies**", content: userMap["cookies"], inline: true)
