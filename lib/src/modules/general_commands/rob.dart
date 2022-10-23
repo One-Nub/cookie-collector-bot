@@ -113,9 +113,7 @@ class RobCommand extends TextCommand {
       if (!result) return;
 
       cooldownMap[mapEntry] = DateTime.now().add(_specificCooldown);
-    }
-
-    if (victimUserSet == null) {
+    } else if (victimUserSet == null) {
       victimUserSet = await db.getRandomUserToRob(guildID, authorID, minVictimCookieCount);
       if (victimUserSet == null || victimUserSet.rows.isEmpty) {
         ctx.channel.sendMessage(
