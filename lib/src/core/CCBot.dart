@@ -67,6 +67,7 @@ class CCBot {
     });
 
     gateway.eventsWs.onGuildMemberRemove.listen((event) => onLeaveEvent(event));
+    gateway.eventsWs.onGuildCreate.listen((event) => onGuildJoinEvent(event));
   }
 
   void startInteractions() async {
