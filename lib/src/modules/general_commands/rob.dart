@@ -9,13 +9,11 @@ import 'package:onyx_chat/onyx_chat.dart';
 
 import '../../core/CCBot.dart';
 import '../../core/CCDatabase.dart';
+import '../../core/CCRedis.dart';
 import '../../utilities/parse_id.dart';
 
 /// String is guildid-userid, queue is a t/f list (4 true, 6 false)
 final Map<String, Queue<bool>> robChances = Map();
-
-/// Stores the last time a successful robbery was made for the user.
-final Map<String, DateTime> cooldownMap = Map();
 
 const Duration _randomCooldown = Duration(hours: 3);
 const Duration _specificCooldown = Duration(hours: 15);
@@ -48,9 +46,12 @@ class RobCommand extends TextCommand {
       robChances[mapEntry] = _resetQueue();
     }
 
-    if (cooldownMap.containsKey(mapEntry)) {
+    CCRedis redis = CCRedis();
+    int? robCooldown = await redis.getRobCooldown(guildID, authorID);
+
+    if (robCooldown != null) {
       // check cooldown
-      DateTime cooldownExpiry = cooldownMap[mapEntry]!;
+      DateTime cooldownExpiry = DateTime.fromMillisecondsSinceEpoch(robCooldown);
       if (cooldownExpiry.isAfter(DateTime.now())) {
         ctx.channel
             .sendMessage(MessageBuilder.content("Your prep time has not expired yet! You can rob someone "
@@ -112,7 +113,7 @@ class RobCommand extends TextCommand {
       bool result = await _confirmRobbery(ctx: ctx, victimID: victimID);
       if (!result) return;
 
-      cooldownMap[mapEntry] = DateTime.now().add(_specificCooldown);
+      redis.setRobCooldown(guildID, authorID, DateTime.now().add(_specificCooldown), ttl: _specificCooldown);
     } else if (victimUserSet == null) {
       victimUserSet = await db.getRandomUserToRob(guildID, authorID, minVictimCookieCount);
       if (victimUserSet == null || victimUserSet.rows.isEmpty) {
@@ -124,7 +125,7 @@ class RobCommand extends TextCommand {
         return;
       }
 
-      cooldownMap[mapEntry] = DateTime.now().add(_randomCooldown);
+      redis.setRobCooldown(guildID, authorID, DateTime.now().add(_randomCooldown), ttl: _randomCooldown);
     }
 
     var victimData = victimUserSet.rows.first.typedAssoc();

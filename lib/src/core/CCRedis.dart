@@ -29,6 +29,7 @@ class CCRedis {
     return await client.hgetall("streak-$guildID-$userID");
   }
 
+  /// Increase the streak for a [userID] in [guildID] when the last user collection time is [luc].
   Future<int> increaseDailyStreak(int guildID, int userID, DateTime luc) async {
     var client = RespCommandsTier2(cacheConnection);
     String key = "streak-$guildID-$userID";
@@ -37,5 +38,30 @@ class CCRedis {
     client.pexpire(key, Duration(days: 2));
 
     return (duration.toInteger()).payload;
+  }
+
+  Future<int?> getRobCooldown(int guildID, int userID) async {
+    var client = RespCommandsTier2(cacheConnection);
+    String key = "rob-cooldowns-$guildID-$userID";
+
+    String? result = await client.get(key);
+    if (result != null) {
+      return int.tryParse(result);
+    } else {
+      return null;
+    }
+  }
+
+  Future<void> setRobCooldown(int guildID, int userID, DateTime expiryTime, {Duration? ttl}) async {
+    var client = RespCommandsTier2(cacheConnection);
+    String key = "rob-cooldowns-$guildID-$userID";
+
+    await client.set(key, expiryTime.millisecondsSinceEpoch);
+    if (ttl != null) {
+      client.pexpire(key, ttl);
+    } else {
+      /// Expire key after a day since by then it should be expired regardless.
+      client.pexpire(key, Duration(days: 1));
+    }
   }
 }
