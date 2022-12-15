@@ -26,13 +26,13 @@ class CCRedis {
 
   Future<Map<String, dynamic>> getDailyStreakData(int guildID, int userID) async {
     var client = RespCommandsTier2(cacheConnection);
-    return await client.hgetall("streak-$guildID-$userID");
+    return await client.hgetall("daily-streak-$guildID-$userID");
   }
 
   /// Increase the streak for a [userID] in [guildID] when the last user collection time is [luc].
   Future<int> increaseDailyStreak(int guildID, int userID, DateTime luc) async {
     var client = RespCommandsTier2(cacheConnection);
-    String key = "streak-$guildID-$userID";
+    String key = "daily-streak-$guildID-$userID";
     var duration = await client.tier1.tier0.execute(["HINCRBY", key, "streak-duration", 1]);
     client.hset(key, "lastUserCollection", luc.millisecondsSinceEpoch);
     client.pexpire(key, Duration(days: 2));
