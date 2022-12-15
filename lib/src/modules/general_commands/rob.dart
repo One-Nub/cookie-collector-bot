@@ -11,12 +11,24 @@ import '../../core/CCBot.dart';
 import '../../core/CCDatabase.dart';
 import '../../core/CCRedis.dart';
 import '../../utilities/parse_id.dart';
+import '../../utilities/event_tiers.dart';
 
 /// String is guildid-userid, queue is a t/f list (4 true, 6 false)
 final Map<String, Queue<bool>> robChances = Map();
 
 const Duration _randomCooldown = Duration(hours: 3);
-const Duration _specificCooldown = Duration(hours: 15);
+const Duration _specificCooldown = Duration(hours: 8);
+
+const int _tieredGuild = 440350951572897812;
+
+const Duration _t1CooldownRandom = Duration(minutes: 90);
+const Duration _t2CooldownRandom = Duration(minutes: 45);
+const Duration _t3CooldownRandom = Duration(minutes: 30);
+
+const Duration _t1CooldownSpecific = Duration(hours: 2);
+const Duration _t2CooldownSpecific = Duration(minutes: 75);
+const Duration _t3CooldownSpecific = Duration(minutes: 60);
+
 const minCookieCount = 15;
 const minVictimCookieCount = 20;
 
@@ -73,6 +85,17 @@ class RobCommand extends TextCommand {
       return;
     }
 
+    int userTier = await getUserTier(guildID, authorID);
+
+    if (args.isNotEmpty && userTier == 0 && guildID == _tieredGuild) {
+      ctx.channel
+          .sendMessage(MessageBuilder.content("You don't have the right skills to rob someone specific! "
+              "Try again by joining a donation tier, or just run the command by itself (`.rob`).")
+            ..replyBuilder = ReplyBuilder.fromMessage(ctx.message)
+            ..allowedMentions = (AllowedMentions()..allow(reply: false)));
+      return;
+    }
+
     IResultSet? victimUserSet;
     if (args.isNotEmpty) {
       int? victimID = parseID(args.first);
@@ -110,10 +133,11 @@ class RobCommand extends TextCommand {
         return;
       }
 
-      bool result = await _confirmRobbery(ctx: ctx, victimID: victimID);
+      bool result = await _confirmRobbery(ctx: ctx, victimID: victimID, userTier: userTier);
       if (!result) return;
 
-      redis.setRobCooldown(guildID, authorID, DateTime.now().add(_specificCooldown), ttl: _specificCooldown);
+      Duration cooldown = await _determineCooldown(guildID, authorID, isRandom: false, userTier: userTier);
+      redis.setRobCooldown(guildID, authorID, DateTime.now().add(cooldown), ttl: cooldown);
     } else if (victimUserSet == null) {
       victimUserSet = await db.getRandomUserToRob(guildID, authorID, minVictimCookieCount);
       if (victimUserSet == null || victimUserSet.rows.isEmpty) {
@@ -125,7 +149,8 @@ class RobCommand extends TextCommand {
         return;
       }
 
-      redis.setRobCooldown(guildID, authorID, DateTime.now().add(_randomCooldown), ttl: _randomCooldown);
+      Duration cooldown = await _determineCooldown(guildID, authorID, isRandom: true, userTier: userTier);
+      redis.setRobCooldown(guildID, authorID, DateTime.now().add(cooldown), ttl: cooldown);
     }
 
     var victimData = victimUserSet.rows.first.typedAssoc();
@@ -138,7 +163,8 @@ class RobCommand extends TextCommand {
     }
   }
 
-  Future<bool> _confirmRobbery({required TextCommandContext ctx, required int victimID}) async {
+  Future<bool> _confirmRobbery(
+      {required TextCommandContext ctx, required int victimID, required int userTier}) async {
     var bot = CCBot();
     var interactions = bot.interactions;
 
@@ -148,9 +174,22 @@ class RobCommand extends TextCommand {
       victimUser = await ctx.client.httpEndpoints.fetchUser(Snowflake(victimID));
     }
 
+    Duration randomCooldown = _randomCooldown;
+    Duration specificCooldown = _specificCooldown;
+    if (userTier == 1) {
+      randomCooldown = _t1CooldownRandom;
+      specificCooldown = _t1CooldownSpecific;
+    } else if (userTier == 2) {
+      randomCooldown = _t2CooldownRandom;
+      specificCooldown = _t2CooldownSpecific;
+    } else if (userTier == 3) {
+      randomCooldown = _t3CooldownRandom;
+      specificCooldown = _t3CooldownSpecific;
+    }
+
     cmb.content = "Please confirm that you want to rob **${victimUser.tag}**.\n"
-        "Be careful... Your cooldown will be `${_specificCooldown.inHours} hours` rather "
-        "than the normal `${_randomCooldown.inHours} hours`.";
+        "Be careful... You will have to wait `${specificCooldown.inMinutes} minutes` rather "
+        "than the normal `${randomCooldown.inMinutes} minutes` before you can rob again.";
     cmb.componentRows = [
       ComponentRowBuilder()
         ..addComponent(ButtonBuilder("Deny", "deny", ButtonStyle.danger))
@@ -265,6 +304,21 @@ class RobCommand extends TextCommand {
 
     chanceList.shuffle(Random.secure());
     return Queue.from(chanceList);
+  }
+}
+
+Future<Duration> _determineCooldown(int guildID, int userID, {required bool isRandom, int? userTier}) async {
+  int tierResult = (userTier == null) ? await getUserTier(guildID, userID) : userTier;
+
+  switch (tierResult) {
+    case 1:
+      return (isRandom) ? _t1CooldownRandom : _t1CooldownSpecific;
+    case 2:
+      return (isRandom) ? _t2CooldownRandom : _t2CooldownSpecific;
+    case 3:
+      return (isRandom) ? _t3CooldownRandom : _t3CooldownSpecific;
+    default:
+      return (isRandom) ? _randomCooldown : _specificCooldown;
   }
 }
 
