@@ -4,10 +4,8 @@ import 'package:nyxx/nyxx.dart';
 import 'package:onyx_chat/onyx_chat.dart';
 
 import '../../core/CCDatabase.dart';
+import '../../core/CCRedis.dart';
 
-final Map<String, DateTime> lastUserCollection = Map();
-final Map<String, int> userStreak = Map();
-const Duration latestDelay = Duration(days: 2);
 const Duration cooldown = Duration(days: 1);
 
 const int baseReward = 15;
@@ -24,19 +22,20 @@ class DailyCommand extends TextCommand {
     int authorID = ctx.author.id.id;
     int guildID = ctx.guild!.id.id;
 
-    /// workaround to not have to deal with nested maps like in the prior code.
-    String mapEntry = "$guildID-$authorID";
+    CCRedis redis = CCRedis();
+    Map<String, dynamic> streakData = await redis.getDailyStreakData(guildID, authorID);
 
-    if (!lastUserCollection.containsKey(mapEntry)) {
-      userStreak[mapEntry] = 1;
-      lastUserCollection[mapEntry] = DateTime.now();
-      await collectCookies(ctx, mapEntry);
+    if (streakData.isEmpty) {
+      int streakDuration = await redis.increaseDailyStreak(guildID, authorID, DateTime.now().toUtc());
+      await collectCookies(ctx, streakDuration);
       return;
     }
 
-    DateTime lastCollectTime = lastUserCollection[mapEntry]!;
+    int lucMs = int.parse(streakData["lastUserCollection"]);
+    DateTime lastCollectTime = DateTime.fromMillisecondsSinceEpoch(lucMs, isUtc: true);
     DateTime cooldownTime = lastCollectTime.add(cooldown);
-    if (cooldownTime.isAfter(DateTime.now())) {
+
+    if (cooldownTime.isAfter(DateTime.now().toUtc())) {
       EmbedBuilder errorEmbed = EmbedBuilder()
         ..color = DiscordColor.fromHexString("6B0504")
         ..description = "It hasn't been a full day yet! You can collect your daily cookies "
@@ -51,22 +50,12 @@ class DailyCommand extends TextCommand {
       return;
     }
 
-    DateTime latestDelayTime = lastCollectTime.add(latestDelay);
-    int userStreakDays = userStreak[mapEntry]!;
-
-    if (DateTime.now().isAfter(latestDelayTime)) {
-      userStreak[mapEntry] = 1;
-    } else {
-      userStreak[mapEntry] = userStreakDays + 1;
-    }
-
-    lastUserCollection[mapEntry] = DateTime.now();
-    await collectCookies(ctx, mapEntry);
+    /// No checking for overtime since if the key expired, the streak will start at 1 again.
+    int streakLength = await redis.increaseDailyStreak(guildID, authorID, DateTime.now().toUtc());
+    await collectCookies(ctx, streakLength);
   }
 
-  Future<void> collectCookies(TextCommandContext ctx, String mapEntry) async {
-    int streakLength = userStreak[mapEntry]!;
-
+  Future<void> collectCookies(TextCommandContext ctx, int streakLength) async {
     int streakRewardModifier = ((streakLength / 8) - sin(streakLength / 6 * 2)).ceil();
 
     int reward = baseReward + streakRewardModifier;

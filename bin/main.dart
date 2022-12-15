@@ -22,6 +22,8 @@ void main() async {
       databaseName: env["DB_NAME"],
       port: int.parse(env["DB_PORT"]!));
 
+  CCRedis.init(host: env["REDIS_HOST"]!, port: int.parse(env["REDIS_PORT"]!), auth: env["REDIS_PASS"]);
+
   CCBot bot = CCBot(token: env["TOKEN"], adminList: admins);
   bot.startGateway();
   bot.startInteractions();
