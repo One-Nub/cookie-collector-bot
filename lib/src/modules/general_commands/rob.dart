@@ -14,7 +14,7 @@ import '../../utilities/parse_id.dart';
 import '../../utilities/event_tiers.dart';
 
 /// String is guildid-userid, queue is a t/f list (4 true, 6 false)
-final Map<String, Queue<bool>> robChances = Map();
+// final Map<String, Queue<bool>> robChances = Map();
 
 const Duration _randomCooldown = Duration(hours: 3);
 const Duration _specificCooldown = Duration(hours: 8);
@@ -49,14 +49,14 @@ class RobCommand extends TextCommand {
     int authorID = ctx.author.id.id;
     int guildID = ctx.guild!.id.id;
 
-    String mapEntry = "$guildID-$authorID";
-    if (!robChances.containsKey(mapEntry)) {
-      // generate rob queue first if it doesn't exist
-      robChances[mapEntry] = _resetQueue();
-    } else if (robChances[mapEntry]!.isEmpty) {
-      // generate rob queue if the current one is empty
-      robChances[mapEntry] = _resetQueue();
-    }
+    // String mapEntry = "$guildID-$authorID";
+    // if (!robChances.containsKey(mapEntry)) {
+    //   // generate rob queue first if it doesn't exist
+    //   robChances[mapEntry] = _resetQueue();
+    // } else if (robChances[mapEntry]!.isEmpty) {
+    //   // generate rob queue if the current one is empty
+    //   robChances[mapEntry] = _resetQueue();
+    // }
 
     CCRedis redis = CCRedis();
     int? robCooldown = await redis.getRobCooldown(guildID, authorID);
@@ -154,7 +154,16 @@ class RobCommand extends TextCommand {
     }
 
     var victimData = victimUserSet.rows.first.typedAssoc();
-    bool robResult = robChances[mapEntry]!.removeFirst();
+    // bool robResult = robChances[mapEntry]!.removeFirst();
+    bool robResult = false;
+    int roll = Random.secure().nextInt(120) + 1;
+    if (userTier == 0 || userTier == 1) {
+      robResult = roll >= 65 && roll <= 95;
+    } else if (userTier == 2) {
+      robResult = roll >= 25 && roll <= 65;
+    } else {
+      robResult = roll <= 25 || roll >= 95;
+    }
 
     if (robResult) {
       await _robVictim(ctx, victimData, db);
@@ -292,19 +301,19 @@ class RobCommand extends TextCommand {
       ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
   }
 
-  Queue<bool> _resetQueue() {
-    List<bool> chanceList = [];
-    for (int i = 0; i < 10; i++) {
-      if (i < 4) {
-        chanceList.add(true);
-      } else {
-        chanceList.add(false);
-      }
-    }
+  // Queue<bool> _resetQueue() {
+  //   List<bool> chanceList = [];
+  //   for (int i = 0; i < 10; i++) {
+  //     if (i < 4) {
+  //       chanceList.add(true);
+  //     } else {
+  //       chanceList.add(false);
+  //     }
+  //   }
 
-    chanceList.shuffle(Random.secure());
-    return Queue.from(chanceList);
-  }
+  //   chanceList.shuffle(Random.secure());
+  //   return Queue.from(chanceList);
+  // }
 }
 
 Future<Duration> _determineCooldown(int guildID, int userID, {required bool isRandom, int? userTier}) async {
