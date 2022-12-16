@@ -4,6 +4,8 @@ import 'dart:math';
 import 'package:cookie_collector_bot/core.dart';
 import 'package:nyxx/nyxx.dart';
 
+import '../../utilities/parse_id.dart';
+
 const _promptTimeout = Duration(seconds: 75);
 const List<String> collectTriggers = [
   "collect",
@@ -48,8 +50,9 @@ class CollectionMessage {
     int cookieAmount = 5 + Random().nextInt(10);
     String cookieAmountString = "$cookieAmount cookie${cookieAmount != 1 ? "s" : ""}";
     var channel = await trigger.channel.getOrDownload();
+    var botMember = await (await trigger.guild!.getOrDownload()).selfMember.getOrDownload();
 
-    if (!await _checkPermissions(channel as ITextGuildChannel)) return;
+    if (!await _checkPermissions(channel as ITextGuildChannel, member: botMember)) return;
 
     EmbedBuilder messageEmbed = EmbedBuilder()
       ..title = triggerMessage
@@ -87,10 +90,15 @@ class CollectionMessage {
     }
   }
 
-  Future<bool> _checkPermissions(ITextGuildChannel channel) async {
+  Future<bool> _checkPermissions(ITextGuildChannel channel, {IMember? member}) async {
     //Hoops to get bot user in the guild for permission checking
-    IGuild channelGuild = await channel.guild.getOrDownload();
-    IMember botMember = await channelGuild.fetchMember(channel.client.appId);
+    IMember botMember;
+    if (member != null) {
+      botMember = member;
+    } else {
+      IGuild channelGuild = await channel.guild.getOrDownload();
+      botMember = await channelGuild.fetchMember(channel.client.appId);
+    }
 
     IPermissions botPerms = await channel.effectivePermissions(botMember);
     return (botPerms.administrator || (botPerms.sendMessages && botPerms.manageMessages));
