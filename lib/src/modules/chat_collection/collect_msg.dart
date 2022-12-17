@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:cookie_collector_bot/core.dart';
 import 'package:nyxx/nyxx.dart';
 
-import '../../utilities/parse_id.dart';
 import '../../utilities/event_tiers.dart';
 
 const _promptTimeout = Duration(seconds: 75);
