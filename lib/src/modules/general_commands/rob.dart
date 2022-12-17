@@ -19,7 +19,7 @@ import '../../utilities/event_tiers.dart';
 const Duration _randomCooldown = Duration(hours: 3);
 const Duration _specificCooldown = Duration(hours: 8);
 
-const int _tieredGuild = 440350951572897812;
+const int _tieredGuild = 918211605970423838;
 
 const Duration _t1CooldownRandom = Duration(minutes: 90);
 const Duration _t2CooldownRandom = Duration(minutes: 45);

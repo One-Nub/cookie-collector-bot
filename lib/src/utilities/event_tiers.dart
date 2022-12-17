@@ -2,9 +2,9 @@ import '../core/CCBot.dart';
 
 import 'package:nyxx/nyxx.dart' show Snowflake, IMember;
 
-const TierOneRole = 1052856548541595650;
-const TierTwoRole = 1052856556020056124;
-const TierThreeRole = 1053047515064307713;
+const TierOneRole = 1050547246204194867; // Bronze
+const TierTwoRole = 1050547596298567680; // Gold
+const TierThreeRole = 1050547709066621009; // Diamond
 
 Future<int> getUserTier(int guildID, int userID) async {
   CCBot bot = CCBot();
