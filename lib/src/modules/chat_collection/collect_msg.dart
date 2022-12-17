@@ -5,6 +5,7 @@ import 'package:cookie_collector_bot/core.dart';
 import 'package:nyxx/nyxx.dart';
 
 import '../../utilities/parse_id.dart';
+import '../../utilities/event_tiers.dart';
 
 const _promptTimeout = Duration(seconds: 75);
 const List<String> collectTriggers = [
@@ -47,7 +48,7 @@ class CollectionMessage {
   }
 
   void handleTriggerCollection(IMessage trigger) async {
-    int cookieAmount = 5 + Random().nextInt(10);
+    int cookieAmount = 5 + Random().nextInt(5);
     String cookieAmountString = "$cookieAmount cookie${cookieAmount != 1 ? "s" : ""}";
     var channel = await trigger.channel.getOrDownload();
     var botMember = await (await trigger.guild!.getOrDownload()).selfMember.getOrDownload();
@@ -76,15 +77,41 @@ class CollectionMessage {
       String authorTag = collectionEvent.message.author.tag;
       AllowedMentions mentions = AllowedMentions()..allow(users: false);
 
+      int guildID = collectionEvent.message.guild!.id.id;
+      int channelID = collectionEvent.message.channel.id.id;
+      CCRedis redis = CCRedis();
+      var streakData = await redis.getChannelStreakData(channelID);
+
+      int userTier = await getUserTier(guildID, authorID);
+      int userBonus = await _getTierBaseBonus(guildID, authorID, userTier: userTier);
+
+      if (streakData.isEmpty || userTier == 0) {
+        redis.startChannelStreak(channelID, authorID, baseAmount: userBonus);
+      } else {
+        int? streakUserID = int.tryParse(streakData["userID"]);
+        if (streakUserID == authorID) {
+          userBonus = await redis.increaseChannelStreak(channelID);
+        } else {
+          redis.startChannelStreak(channelID, authorID, baseAmount: userBonus);
+        }
+      }
+
+      int totalCookies = cookieAmount + userBonus;
+      String description = "<@$authorID> ($authorTag) collected $cookieAmountString";
+      description += (userBonus == 0)
+          ? "!"
+          : ", with a streak bonus of $userBonus cookie${userBonus != 1 ? "s" : ""}, "
+              "resulting in a total of $totalCookies cookies!";
+
       trigger.channel
           .sendMessage(MessageBuilder()
-            ..content = "<@$authorID> ($authorTag) collected $cookieAmountString!"
+            ..content = description
             ..allowedMentions = mentions)
           .then((value) => {Timer(Duration(seconds: 5), () => value.delete())});
 
       CCDatabase database = CCDatabase(initializing: false);
-      database.addCookies(authorID, cookieAmount, trigger.guild!.id.id);
-      database.addLifetimeCookies(authorID, cookieAmount, trigger.guild!.id.id);
+      database.addCookies(authorID, totalCookies, trigger.guild!.id.id);
+      database.addLifetimeCookies(authorID, totalCookies, trigger.guild!.id.id);
     } on TimeoutException {
       await collectionMsg.delete();
     }
@@ -102,5 +129,22 @@ class CollectionMessage {
 
     IPermissions botPerms = await channel.effectivePermissions(botMember);
     return (botPerms.administrator || (botPerms.sendMessages && botPerms.manageMessages));
+  }
+}
+
+Future<int> _getTierBaseBonus(int guildID, int userID, {int? userTier}) async {
+  int tierResult = (userTier == null) ? await getUserTier(guildID, userID) : userTier;
+
+  /// For the time being this switch case is rather dumb, but I am leaving it
+  /// for an instance where the base bonus may wish to be changed per tier.
+  switch (tierResult) {
+    case 1:
+      return 1;
+    case 2:
+      return 2;
+    case 3:
+      return 3;
+    default:
+      return 0;
   }
 }
