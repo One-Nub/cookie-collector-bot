@@ -30,7 +30,11 @@ class CCBot {
       ..userCachePolicyLocation = CachePolicyLocation.all();
 
     gateway = NyxxFactory.createNyxxWebsocket(
-        token, GatewayIntents.messageContent | GatewayIntents.guildMessages | GatewayIntents.guildMembers,
+        token,
+        GatewayIntents.messageContent |
+            GatewayIntents.guildMessages |
+            GatewayIntents.guildMembers |
+            GatewayIntents.guilds,
         cacheOptions: cacheOptions)
       ..registerPlugin(Logging())
       ..registerPlugin(CliIntegration())
