@@ -1,17 +1,18 @@
+import 'package:mysql_client/mysql_client.dart';
 import 'package:nyxx/nyxx.dart';
 
 import '../core/CCDatabase.dart';
 
 void onGuildJoinEvent(IGuildCreateEvent event) async {
-  if ((await event.guild.selfMember.getOrDownload())
-      .joinedAt
-      .isBefore(DateTime.now().toUtc().subtract(Duration(days: 1)))) {
-    /// We were already in this guild before the past day so there's no need to generate the default
-    /// database information for it.
-    return;
-  }
-
+  print("Guild create event for: ${event.guild.id} - ${event.guild.name}");
   CCDatabase database = CCDatabase(initializing: false);
-  database.addGuildRow(event.guild.id.id);
-  print("Guild joined: ${event.guild.id} - ${event.guild.name}");
+
+  IResultSet result =
+      await database.pool.execute("SELECT count(*) FROM guilds WHERE id IN (${event.guild.id.id})");
+  int count = result.rows.first.typedAssoc()["count(*)"];
+
+  if (count == 0) {
+    database.addGuildRow(event.guild.id.id);
+    print("Guild added to the database: ${event.guild.id} - ${event.guild.name}");
+  }
 }
