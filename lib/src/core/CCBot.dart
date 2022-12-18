@@ -39,7 +39,8 @@ class CCBot {
 
     gateway.eventsWs.onReady.listen((event) {
       gateway.setPresence(PresenceBuilder.of(
-          status: UserStatus.online, activity: ActivityBuilder("the chat go by...", ActivityType.watching)));
+          status: UserStatus.online,
+          activity: ActivityBuilder("Bloxlink's 5th Anniversary!", ActivityType.watching)));
     });
 
     onyxChat = OnyxChat(gateway, prefix: ".");
