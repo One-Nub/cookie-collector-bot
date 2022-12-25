@@ -1,0 +1,21 @@
+version: "3.9"
+
+# Mariadb image is not included, but is required to exist.
+services:
+  cookie_bot:
+    image: cc_bot:latest
+    container_name: cb_cookie_bot
+    env_file:
+      - stack.env
+    depends_on:
+      - redis
+    restart: unless-stopped
+    pull_policy: build
+
+  redis:
+    image: redis:7.0.6-alpine
+    container_name: cb_redis
+    volumes:
+      - /home/dietpi/cc_bot_files/redis:/data
+    command: "redis-server --save 60 1 --loglevel warning --requirepass $REDIS_PASS"
+    restart: unless-stopped
