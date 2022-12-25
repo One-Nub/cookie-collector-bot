@@ -58,10 +58,15 @@ class RobCommand extends TextCommand {
 
     CCRedis redis = CCRedis();
     int? robCooldown = await redis.getRobCooldown(guildID, authorID);
+    int userTier = await getUserTier(authorID, guildID: guildID);
 
     if (robCooldown != null) {
       // check cooldown
       DateTime cooldownExpiry = DateTime.fromMillisecondsSinceEpoch(robCooldown);
+
+      /// check to see if current cooldown is longer than longest cooldown duration for their tier.
+      cooldownExpiry = await _tieredCooldownCheck(cooldownExpiry, userTier, guildID, authorID);
+
       if (cooldownExpiry.isAfter(DateTime.now())) {
         ctx.channel
             .sendMessage(MessageBuilder.content("Your prep time has not expired yet! You can rob someone "
@@ -82,8 +87,6 @@ class RobCommand extends TextCommand {
         ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
       return;
     }
-
-    int userTier = await getUserTier(authorID, guildID: guildID);
 
     if (args.isNotEmpty && userTier == 0 && guildID == TieredGuildID) {
       ctx.channel
@@ -326,6 +329,43 @@ Future<Duration> _determineCooldown(int guildID, int userID, {required bool isRa
       return (isRandom) ? _t3CooldownRandom : _t3CooldownSpecific;
     default:
       return (isRandom) ? _randomCooldown : _specificCooldown;
+  }
+}
+
+/// Check if a user has a cooldown longer than the tier that they are subscribed to.
+/// If so, update the cooldown to the cooldown of their tier. If not, don't change anything.
+///
+/// In the instance there should be no change, the [currentCooldown] DateTime is returned, otherwise
+/// an updated datetime should be returned.
+Future<DateTime> _tieredCooldownCheck(DateTime currentCooldown, int userTier, int guildID, int userID) async {
+  if (userTier == 0) return currentCooldown;
+
+  Duration maxCooldownDuration;
+
+  /// Specific cooldowns are used since this checks every time the cmd is run.
+  /// This means that if someone robs someone specific then tries again,
+  /// if the cooldown check for someone random was used, their cooldown would
+  /// instantly be reduced to the lower of the two, which we don't want.
+  ///
+  /// This just means for first increase ppl, it will be the 'higher' cooldown,
+  /// not too big of a deal if it's just a one time occurrence imo.
+  if (userTier == 1) {
+    maxCooldownDuration = _t1CooldownSpecific;
+  } else if (userTier == 2) {
+    maxCooldownDuration = _t2CooldownSpecific;
+  } else {
+    maxCooldownDuration = _t3CooldownSpecific;
+  }
+
+  DateTime modDuration = DateTime.now().add(maxCooldownDuration);
+
+  if (modDuration.isBefore(currentCooldown)) {
+    /// Update the cooldown.
+    CCRedis redis = CCRedis();
+    redis.setRobCooldown(guildID, userID, modDuration, ttl: maxCooldownDuration);
+    return modDuration;
+  } else {
+    return currentCooldown;
   }
 }
 
