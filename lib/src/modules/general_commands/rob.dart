@@ -19,8 +19,6 @@ import '../../utilities/event_tiers.dart';
 const Duration _randomCooldown = Duration(hours: 3);
 const Duration _specificCooldown = Duration(hours: 8);
 
-const int _tieredGuild = 1044788433412948058;
-
 const Duration _t1CooldownRandom = Duration(minutes: 90);
 const Duration _t2CooldownRandom = Duration(minutes: 45);
 const Duration _t3CooldownRandom = Duration(minutes: 30);
@@ -85,9 +83,9 @@ class RobCommand extends TextCommand {
       return;
     }
 
-    int userTier = await getUserTier(guildID, authorID);
+    int userTier = await getUserTier(authorID, guildID: guildID);
 
-    if (args.isNotEmpty && userTier == 0 && guildID == _tieredGuild) {
+    if (args.isNotEmpty && userTier == 0 && guildID == TieredGuildID) {
       ctx.channel
           .sendMessage(MessageBuilder.content("You don't have the right skills to rob someone specific! "
               "Try again by joining a donation tier, or just run the command by itself (`.rob`).")
@@ -317,7 +315,7 @@ class RobCommand extends TextCommand {
 }
 
 Future<Duration> _determineCooldown(int guildID, int userID, {required bool isRandom, int? userTier}) async {
-  int tierResult = (userTier == null) ? await getUserTier(guildID, userID) : userTier;
+  int tierResult = (userTier == null) ? await getUserTier(userID, guildID: guildID) : userTier;
 
   switch (tierResult) {
     case 1:

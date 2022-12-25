@@ -81,7 +81,7 @@ class CollectionMessage {
       CCRedis redis = CCRedis();
       var streakData = await redis.getChannelStreakData(channelID);
 
-      int userTier = await getUserTier(guildID, authorID);
+      int userTier = await getUserTier(authorID, guildID: guildID);
       int userBonus = await _getTierBaseBonus(guildID, authorID, userTier: userTier);
 
       if (streakData.isEmpty || userTier == 0) {
@@ -132,7 +132,7 @@ class CollectionMessage {
 }
 
 Future<int> _getTierBaseBonus(int guildID, int userID, {int? userTier}) async {
-  int tierResult = (userTier == null) ? await getUserTier(guildID, userID) : userTier;
+  int tierResult = (userTier == null) ? await getUserTier(userID, guildID: guildID) : userTier;
 
   /// For the time being this switch case is rather dumb, but I am leaving it
   /// for an instance where the base bonus may wish to be changed per tier.
