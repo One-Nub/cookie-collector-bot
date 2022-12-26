@@ -2,11 +2,11 @@ import '../core/CCBot.dart';
 
 import 'package:nyxx/nyxx.dart' show Cacheable, Snowflake, IMember, IRole;
 
-const TierOneRole = 1053835787776577566; // Bronze
-const TierTwoRole = 1053835841002283159; // Gold
-const TierThreeRole = 1053835877752778833; // Diamond
+const TierOneRole = 1054959782190137501; // Bronze
+const TierTwoRole = 1054958659198791684; // Gold
+const TierThreeRole = 1054956990926950402; // Diamond
 
-const TieredGuildID = 1044788433412948058;
+const TieredGuildID = 918211605970423838;
 
 Future<int> getUserTier(int userID, {int? guildID, Iterable<Cacheable<Snowflake, IRole>>? roleList}) async {
   CCBot bot = CCBot();
