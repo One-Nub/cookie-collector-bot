@@ -19,3 +19,6 @@ export 'src/modules/general_commands/stats.dart';
 
 /// On leave action
 export 'src/modules/on_leave.dart';
+
+/// On guild join action
+export 'src/modules/on_guild_join.dart';

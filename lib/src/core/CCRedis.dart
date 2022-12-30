@@ -64,4 +64,30 @@ class CCRedis {
       client.pexpire(key, Duration(days: 1));
     }
   }
+
+  Future<Map<String, dynamic>> getChannelStreakData(int channelID) async {
+    var client = RespCommandsTier2(cacheConnection);
+    return await client.hgetall("channel-streak-$channelID");
+  }
+
+  Future<int> increaseChannelStreak(int channelID) async {
+    var client = RespCommandsTier2(cacheConnection);
+    String key = "channel-streak-$channelID";
+
+    var streakLength = await client.tier1.tier0.execute(["HINCRBY", key, "streak-duration", 1]);
+    // Expire after a day since by that point the streak has gone stale.
+    client.pexpire(key, Duration(days: 1));
+
+    return (streakLength.toInteger()).payload;
+  }
+
+  Future<void> startChannelStreak(int channelID, int userID, {int baseAmount = 0}) async {
+    var client = RespCommandsTier2(cacheConnection);
+    String key = "channel-streak-$channelID";
+
+    client.hset(key, "streak-duration", baseAmount);
+    client.hset(key, "userID", userID);
+    // Expire after a day since by that point the streak has gone stale.
+    client.pexpire(key, Duration(days: 1));
+  }
 }

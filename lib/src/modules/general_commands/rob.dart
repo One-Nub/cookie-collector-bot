@@ -11,12 +11,22 @@ import '../../core/CCBot.dart';
 import '../../core/CCDatabase.dart';
 import '../../core/CCRedis.dart';
 import '../../utilities/parse_id.dart';
+import '../../utilities/event_tiers.dart';
 
 /// String is guildid-userid, queue is a t/f list (4 true, 6 false)
-final Map<String, Queue<bool>> robChances = Map();
+// final Map<String, Queue<bool>> robChances = Map();
 
 const Duration _randomCooldown = Duration(hours: 3);
-const Duration _specificCooldown = Duration(hours: 15);
+const Duration _specificCooldown = Duration(hours: 8);
+
+const Duration _t1CooldownRandom = Duration(minutes: 90);
+const Duration _t2CooldownRandom = Duration(minutes: 45);
+const Duration _t3CooldownRandom = Duration(minutes: 30);
+
+const Duration _t1CooldownSpecific = Duration(hours: 2);
+const Duration _t2CooldownSpecific = Duration(minutes: 75);
+const Duration _t3CooldownSpecific = Duration(minutes: 60);
+
 const minCookieCount = 15;
 const minVictimCookieCount = 20;
 
@@ -37,21 +47,26 @@ class RobCommand extends TextCommand {
     int authorID = ctx.author.id.id;
     int guildID = ctx.guild!.id.id;
 
-    String mapEntry = "$guildID-$authorID";
-    if (!robChances.containsKey(mapEntry)) {
-      // generate rob queue first if it doesn't exist
-      robChances[mapEntry] = _resetQueue();
-    } else if (robChances[mapEntry]!.isEmpty) {
-      // generate rob queue if the current one is empty
-      robChances[mapEntry] = _resetQueue();
-    }
+    // String mapEntry = "$guildID-$authorID";
+    // if (!robChances.containsKey(mapEntry)) {
+    //   // generate rob queue first if it doesn't exist
+    //   robChances[mapEntry] = _resetQueue();
+    // } else if (robChances[mapEntry]!.isEmpty) {
+    //   // generate rob queue if the current one is empty
+    //   robChances[mapEntry] = _resetQueue();
+    // }
 
     CCRedis redis = CCRedis();
     int? robCooldown = await redis.getRobCooldown(guildID, authorID);
+    int userTier = await getUserTier(authorID, guildID: guildID);
 
     if (robCooldown != null) {
       // check cooldown
       DateTime cooldownExpiry = DateTime.fromMillisecondsSinceEpoch(robCooldown);
+
+      /// check to see if current cooldown is longer than longest cooldown duration for their tier.
+      cooldownExpiry = await _tieredCooldownCheck(cooldownExpiry, userTier, guildID, authorID);
+
       if (cooldownExpiry.isAfter(DateTime.now())) {
         ctx.channel
             .sendMessage(MessageBuilder.content("Your prep time has not expired yet! You can rob someone "
@@ -70,6 +85,15 @@ class RobCommand extends TextCommand {
           "$minCookieCount cookies to rob people! Debt isn't allowed round here")
         ..allowedMentions = (AllowedMentions()..allow(reply: false))
         ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
+      return;
+    }
+
+    if (args.isNotEmpty && userTier == 0 && guildID == TieredGuildID) {
+      ctx.channel
+          .sendMessage(MessageBuilder.content("You don't have the right skills to rob someone specific! "
+              "Try again by joining a donation tier, or just run the command by itself (`.rob`).")
+            ..replyBuilder = ReplyBuilder.fromMessage(ctx.message)
+            ..allowedMentions = (AllowedMentions()..allow(reply: false)));
       return;
     }
 
@@ -110,10 +134,11 @@ class RobCommand extends TextCommand {
         return;
       }
 
-      bool result = await _confirmRobbery(ctx: ctx, victimID: victimID);
+      bool result = await _confirmRobbery(ctx: ctx, victimID: victimID, userTier: userTier);
       if (!result) return;
 
-      redis.setRobCooldown(guildID, authorID, DateTime.now().add(_specificCooldown), ttl: _specificCooldown);
+      Duration cooldown = await _determineCooldown(guildID, authorID, isRandom: false, userTier: userTier);
+      redis.setRobCooldown(guildID, authorID, DateTime.now().add(cooldown), ttl: cooldown);
     } else if (victimUserSet == null) {
       victimUserSet = await db.getRandomUserToRob(guildID, authorID, minVictimCookieCount);
       if (victimUserSet == null || victimUserSet.rows.isEmpty) {
@@ -125,11 +150,21 @@ class RobCommand extends TextCommand {
         return;
       }
 
-      redis.setRobCooldown(guildID, authorID, DateTime.now().add(_randomCooldown), ttl: _randomCooldown);
+      Duration cooldown = await _determineCooldown(guildID, authorID, isRandom: true, userTier: userTier);
+      redis.setRobCooldown(guildID, authorID, DateTime.now().add(cooldown), ttl: cooldown);
     }
 
     var victimData = victimUserSet.rows.first.typedAssoc();
-    bool robResult = robChances[mapEntry]!.removeFirst();
+    // bool robResult = robChances[mapEntry]!.removeFirst();
+    bool robResult = false;
+    int roll = Random.secure().nextInt(120) + 1;
+    if (userTier == 0 || userTier == 1) {
+      robResult = roll >= 65 && roll <= 95;
+    } else if (userTier == 2) {
+      robResult = roll >= 25 && roll <= 65;
+    } else {
+      robResult = roll <= 25 || roll >= 95;
+    }
 
     if (robResult) {
       await _robVictim(ctx, victimData, db);
@@ -138,7 +173,8 @@ class RobCommand extends TextCommand {
     }
   }
 
-  Future<bool> _confirmRobbery({required TextCommandContext ctx, required int victimID}) async {
+  Future<bool> _confirmRobbery(
+      {required TextCommandContext ctx, required int victimID, required int userTier}) async {
     var bot = CCBot();
     var interactions = bot.interactions;
 
@@ -148,9 +184,22 @@ class RobCommand extends TextCommand {
       victimUser = await ctx.client.httpEndpoints.fetchUser(Snowflake(victimID));
     }
 
+    Duration randomCooldown = _randomCooldown;
+    Duration specificCooldown = _specificCooldown;
+    if (userTier == 1) {
+      randomCooldown = _t1CooldownRandom;
+      specificCooldown = _t1CooldownSpecific;
+    } else if (userTier == 2) {
+      randomCooldown = _t2CooldownRandom;
+      specificCooldown = _t2CooldownSpecific;
+    } else if (userTier == 3) {
+      randomCooldown = _t3CooldownRandom;
+      specificCooldown = _t3CooldownSpecific;
+    }
+
     cmb.content = "Please confirm that you want to rob **${victimUser.tag}**.\n"
-        "Be careful... Your cooldown will be `${_specificCooldown.inHours} hours` rather "
-        "than the normal `${_randomCooldown.inHours} hours`.";
+        "Be careful... You will have to wait `${specificCooldown.inMinutes} minutes` rather "
+        "than the normal `${randomCooldown.inMinutes} minutes` before you can rob again.";
     cmb.componentRows = [
       ComponentRowBuilder()
         ..addComponent(ButtonBuilder("Deny", "deny", ButtonStyle.danger))
@@ -253,18 +302,70 @@ class RobCommand extends TextCommand {
       ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
   }
 
-  Queue<bool> _resetQueue() {
-    List<bool> chanceList = [];
-    for (int i = 0; i < 10; i++) {
-      if (i < 4) {
-        chanceList.add(true);
-      } else {
-        chanceList.add(false);
-      }
-    }
+  // Queue<bool> _resetQueue() {
+  //   List<bool> chanceList = [];
+  //   for (int i = 0; i < 10; i++) {
+  //     if (i < 4) {
+  //       chanceList.add(true);
+  //     } else {
+  //       chanceList.add(false);
+  //     }
+  //   }
 
-    chanceList.shuffle(Random.secure());
-    return Queue.from(chanceList);
+  //   chanceList.shuffle(Random.secure());
+  //   return Queue.from(chanceList);
+  // }
+}
+
+Future<Duration> _determineCooldown(int guildID, int userID, {required bool isRandom, int? userTier}) async {
+  int tierResult = (userTier == null) ? await getUserTier(userID, guildID: guildID) : userTier;
+
+  switch (tierResult) {
+    case 1:
+      return (isRandom) ? _t1CooldownRandom : _t1CooldownSpecific;
+    case 2:
+      return (isRandom) ? _t2CooldownRandom : _t2CooldownSpecific;
+    case 3:
+      return (isRandom) ? _t3CooldownRandom : _t3CooldownSpecific;
+    default:
+      return (isRandom) ? _randomCooldown : _specificCooldown;
+  }
+}
+
+/// Check if a user has a cooldown longer than the tier that they are subscribed to.
+/// If so, update the cooldown to the cooldown of their tier. If not, don't change anything.
+///
+/// In the instance there should be no change, the [currentCooldown] DateTime is returned, otherwise
+/// an updated datetime should be returned.
+Future<DateTime> _tieredCooldownCheck(DateTime currentCooldown, int userTier, int guildID, int userID) async {
+  if (userTier == 0) return currentCooldown;
+
+  Duration maxCooldownDuration;
+
+  /// Specific cooldowns are used since this checks every time the cmd is run.
+  /// This means that if someone robs someone specific then tries again,
+  /// if the cooldown check for someone random was used, their cooldown would
+  /// instantly be reduced to the lower of the two, which we don't want.
+  ///
+  /// This just means for first increase ppl, it will be the 'higher' cooldown,
+  /// not too big of a deal if it's just a one time occurrence imo.
+  if (userTier == 1) {
+    maxCooldownDuration = _t1CooldownSpecific;
+  } else if (userTier == 2) {
+    maxCooldownDuration = _t2CooldownSpecific;
+  } else {
+    maxCooldownDuration = _t3CooldownSpecific;
+  }
+
+  DateTime modDuration = DateTime.now().add(maxCooldownDuration);
+
+  if (modDuration.isBefore(currentCooldown)) {
+    /// Update the cooldown.
+    CCRedis redis = CCRedis();
+    redis.setRobCooldown(guildID, userID, modDuration, ttl: maxCooldownDuration);
+    return modDuration;
+  } else {
+    return currentCooldown;
   }
 }
 

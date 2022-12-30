@@ -30,7 +30,11 @@ class CCBot {
       ..userCachePolicyLocation = CachePolicyLocation.all();
 
     gateway = NyxxFactory.createNyxxWebsocket(
-        token, GatewayIntents.messageContent | GatewayIntents.guildMessages | GatewayIntents.guildMembers,
+        token,
+        GatewayIntents.messageContent |
+            GatewayIntents.guildMessages |
+            GatewayIntents.guildMembers |
+            GatewayIntents.guilds,
         cacheOptions: cacheOptions)
       ..registerPlugin(Logging())
       ..registerPlugin(CliIntegration())
@@ -39,7 +43,8 @@ class CCBot {
 
     gateway.eventsWs.onReady.listen((event) {
       gateway.setPresence(PresenceBuilder.of(
-          status: UserStatus.online, activity: ActivityBuilder("the chat go by...", ActivityType.watching)));
+          status: UserStatus.online,
+          activity: ActivityBuilder("the cookies bake in the oven.", ActivityType.watching)));
     });
 
     onyxChat = OnyxChat(gateway, prefix: ".");
@@ -67,6 +72,7 @@ class CCBot {
     });
 
     gateway.eventsWs.onGuildMemberRemove.listen((event) => onLeaveEvent(event));
+    gateway.eventsWs.onGuildCreate.listen((event) => onGuildJoinEvent(event));
   }
 
   void startInteractions() async {
