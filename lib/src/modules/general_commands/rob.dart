@@ -253,7 +253,7 @@ class RobCommand extends TextCommand {
 
     String successMsg = _successMessages[Random.secure().nextInt(_successMessages.length)];
     String missionResult = "You stole `$stolenCount` cookies from ${victimUser.mention} (${victimUser.tag}) "
-        "by $successMsg";
+        "by $successMsg.";
 
     EmbedBuilder resultEmbed = EmbedBuilder()
       ..color = DiscordColor.fromHexString("67F399")
@@ -375,39 +375,41 @@ final List<String> _successMessages = [
   "calling the IRS on them... Cookie Government needs its cookies bro",
   "reaching inside the open window and into the cookie jar",
   "taking it in the divorce... It was a long con alright",
-  "beating them in the pyramid scheme",
+  "being their boss in the latest pyramid scheme, an automatic cookie-eater",
   "reaching into their pocket while they weren't looking",
   "taking their portable cookie jar",
   "acting like a homeless person; where are your morals bro smh",
   "selling their stocks secretly",
-  "you convinced them to invest in your stocks",
+  "you convinced them to invest in your stocks - which you then trashed the next day",
   "convincing them they had the plague, and that paying you would cure it",
-  "getting them join your *exclusive* discord server",
+  "getting them join your *exclusive* discord server :eyes:",
   "stuffing them in your cheeks like a chipmunk while they were cooling",
   "trading them with some plastic cookies",
   "hosting a cookie party but sneaking out to their safe",
-  "begging a lot, like *a lot*..."
+  "begging a lot, like *a lot*...",
+  "stealing the secret krabby patty recipe, and then swapping it with their cookies",
+  "distracting them with some cool dance moves, until you karate chopped their neck.."
 ];
 
 //because...
 //33 so far
 final List<String> _failMessages = [
-  "you walked by the police office with your bag of cookies",
-  "Nub ate your getaway car, tough luck bro",
-  "the window was made of acrylic",
+  "you walked by the police office with your bag of cookies (very suspiciously)",
+  "Nub ate your getaway car, tough luck bro, he said it was tasty though",
+  "the window was made of acrylic, so it wouldn't break",
   "you left your mask in the van and you didn't feel like getting it",
-  "it was as if you were never there",
+  "it was as if you were never there :ghost:",
   "even I can steal better than you, smh",
   "the neighbor's dog needed belly rubs",
-  "you left the note for your crush behind that you signed for some reason...",
+  "you dropped the note that was supposed to be for your date...",
   "the cookie jar was too well protected & you were too lazy to deal with that",
   "the cookie jar was actually fake, causing you to fall into a trap",
   "it was too hot outside",
   "it was too cold outside",
-  "you actually tried to rob the police station",
-  "you told them in advance you were going to rob them, nice job mate",
-  "you felt bad and called the police and told them",
-  "you tripped and all your stolen cookies fell down the storm drain",
+  "your intelligence gave you the address of the police station instead",
+  "you told them in advance you were going to rob them, very courteous",
+  "you felt bad and called off the robbery last minute",
+  "you tripped and all your stolen cookies fell down a storm drain",
   "you woke up from your coma",
   "you ~~somehow~~ fell in love with John and left your profits behind",
   "after a nice robbery, you realize you forgot one thing: the cookies",
@@ -421,8 +423,12 @@ final List<String> _failMessages = [
   "you threw out your plans while cleaning",
   "you had a change of heart and left your robberies for the day behind",
   "the neighbor's dog tackled you, or was that nub...",
-  "someone saw you put your very unsuspicious ski mask on",
+  "someone saw you put your very unsuspicious ski mask on in front of the door",
   "the weather was too nice, so you went to the beach instead",
   "the weather was so bad, it would've been impossible anyway",
-  "there was a minecraft bedwars tournament",
+  "there was a concert that you just HAD to go to instead",
+  "your favorite livestreamer was too distracting, so you missed the deadline",
+  "you were too busy making TikToks explaining how robbers take cookies",
+  "you crashed your getaway car into Nub's house, now where is he gonna live? :(",
+  "you saw John in the distance and wanted his autograph, but then he talked too much so you missed the cut-off time"
 ];
