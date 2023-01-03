@@ -88,15 +88,6 @@ class RobCommand extends TextCommand {
       return;
     }
 
-    if (args.isNotEmpty && userTier == 0 && guildID == TieredGuildID) {
-      ctx.channel
-          .sendMessage(MessageBuilder.content("You don't have the right skills to rob someone specific! "
-              "Try again by joining a donation tier, or just run the command by itself (`.rob`).")
-            ..replyBuilder = ReplyBuilder.fromMessage(ctx.message)
-            ..allowedMentions = (AllowedMentions()..allow(reply: false)));
-      return;
-    }
-
     IResultSet? victimUserSet;
     if (args.isNotEmpty) {
       int? victimID = parseID(args.first);
