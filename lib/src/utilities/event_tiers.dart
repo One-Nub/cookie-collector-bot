@@ -2,9 +2,9 @@ import '../core/CCBot.dart';
 
 import 'package:nyxx/nyxx.dart' show Cacheable, Snowflake, IMember, IRole;
 
-const TierOneRole = 1054959782190137501; // Bronze
-const TierTwoRole = 1054958659198791684; // Gold
-const TierThreeRole = 1054956990926950402; // Diamond
+// const TierOneRole = 1054959782190137501;
+const TierTwoRole = 1066159325388755089; // Star
+const TierThreeRole = 1066160959443451974; // Astronaut
 
 const TieredGuildID = 918211605970423838;
 
@@ -22,9 +22,7 @@ Future<int> getUserTier(int userID, {int? guildID, Iterable<Cacheable<Snowflake,
 
   int tierResult = 0;
   roleList.forEach((element) {
-    if (element.id.id == TierOneRole) {
-      tierResult = 1;
-    } else if (element.id.id == TierTwoRole) {
+    if (element.id.id == TierTwoRole) {
       tierResult = 2;
     } else if (element.id.id == TierThreeRole) {
       tierResult = 3;
