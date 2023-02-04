@@ -430,5 +430,6 @@ final List<String> _failMessages = [
   "your favorite livestreamer was too distracting, so you missed the deadline",
   "you were too busy making TikToks explaining how robbers take cookies",
   "you crashed your getaway car into Nub's house, now where is he gonna live? :(",
-  "you saw John in the distance and wanted his autograph, but then he talked too much so you missed the cut-off time"
+  "you saw John in the distance and wanted his autograph, but then he talked too much so you missed the cut-off time",
+  "Boba drank your car's getaway fuel, L"
 ];
