@@ -158,9 +158,9 @@ class RobCommand extends TextCommand {
     }
 
     if (robResult) {
-      await _robVictim(ctx, victimData, db);
+      await _robSuccess(ctx, victimData, db);
     } else {
-      await _failRobbery(ctx, authorCookies, victimData, db);
+      await _robFailure(ctx, authorCookies, victimData, db);
     }
   }
 
@@ -229,7 +229,7 @@ class RobCommand extends TextCommand {
     }
   }
 
-  Future<void> _robVictim(TextCommandContext ctx, Map<String, dynamic> victimData, CCDatabase db) async {
+  Future<void> _robSuccess(TextCommandContext ctx, Map<String, dynamic> victimData, CCDatabase db) async {
     int stolenCount = Random.secure().nextInt(robVarHigh - robVarLow) + robVarLow;
     int victimCookieCnt = victimData["cookies"];
 
@@ -265,7 +265,7 @@ class RobCommand extends TextCommand {
       ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
   }
 
-  Future<void> _failRobbery(
+  Future<void> _robFailure(
       TextCommandContext ctx, int authorCookies, Map<String, dynamic> victimData, CCDatabase db) async {
     int lostAmount = Random.secure().nextInt(robVarHigh - robVarLow) + robVarLow;
     int taxAmount = (authorCookies * lowPercentMult).round();
