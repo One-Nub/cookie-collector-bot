@@ -13,8 +13,8 @@ import '../../core/CCRedis.dart';
 import '../../utilities/parse_id.dart';
 import '../../utilities/event_tiers.dart';
 
-/// String is guildid-userid, queue is a t/f list (4 true, 6 false)
-// final Map<String, Queue<bool>> robChances = Map();
+/// String is guildid-userid, queue is a t/f list.
+final Map<String, Queue<bool>> robChances = Map();
 
 const Duration _randomCooldown = Duration(hours: 3);
 const Duration _specificCooldown = Duration(hours: 8);
@@ -46,15 +46,6 @@ class RobCommand extends TextCommand {
   Future<void> commandEntry(TextCommandContext ctx, String message, List<String> args) async {
     int authorID = ctx.author.id.id;
     int guildID = ctx.guild!.id.id;
-
-    // String mapEntry = "$guildID-$authorID";
-    // if (!robChances.containsKey(mapEntry)) {
-    //   // generate rob queue first if it doesn't exist
-    //   robChances[mapEntry] = _resetQueue();
-    // } else if (robChances[mapEntry]!.isEmpty) {
-    //   // generate rob queue if the current one is empty
-    //   robChances[mapEntry] = _resetQueue();
-    // }
 
     CCRedis redis = CCRedis();
     int? robCooldown = await redis.getRobCooldown(guildID, authorID);
@@ -145,17 +136,18 @@ class RobCommand extends TextCommand {
       redis.setRobCooldown(guildID, authorID, DateTime.now().add(cooldown), ttl: cooldown);
     }
 
-    var victimData = victimUserSet.rows.first.typedAssoc();
-    // bool robResult = robChances[mapEntry]!.removeFirst();
-    bool robResult = false;
-    int roll = Random.secure().nextInt(120) + 1;
-    if (userTier == 0 || userTier == 1) {
-      robResult = roll >= 65 && roll <= 95;
-    } else if (userTier == 2) {
-      robResult = roll >= 25 && roll <= 65;
-    } else {
-      robResult = roll <= 25 || roll >= 95;
+    /// This could be done in redis, but I honestly don't think it needs to be in redis.
+    String mapEntry = "$guildID-$authorID";
+    if (!robChances.containsKey(mapEntry)) {
+      // generate rob queue first if it doesn't exist
+      robChances[mapEntry] = _resetQueue(userTier: userTier);
+    } else if (robChances[mapEntry]!.isEmpty) {
+      // generate rob queue if the current one is empty
+      robChances[mapEntry] = _resetQueue(userTier: userTier);
     }
+
+    var victimData = victimUserSet.rows.first.typedAssoc();
+    bool robResult = robChances[mapEntry]!.removeFirst();
 
     if (robResult) {
       await _robSuccess(ctx, victimData, db);
@@ -293,19 +285,28 @@ class RobCommand extends TextCommand {
       ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
   }
 
-  // Queue<bool> _resetQueue() {
-  //   List<bool> chanceList = [];
-  //   for (int i = 0; i < 10; i++) {
-  //     if (i < 4) {
-  //       chanceList.add(true);
-  //     } else {
-  //       chanceList.add(false);
-  //     }
-  //   }
+  Queue<bool> _resetQueue({int userTier = 0}) {
+    // 30% when combined
+    List<bool> chanceFirst = [false, true, false];
+    List<bool> chanceSecond = [false, true, false, false];
+    List<bool> chanceThird = [false, true, false];
 
-  //   chanceList.shuffle(Random.secure());
-  //   return Queue.from(chanceList);
-  // }
+    if (userTier == 2) {
+      // 40%
+      chanceSecond[2] = true;
+    } else if (userTier == 3) {
+      // 50%
+      chanceFirst[0] = true;
+      chanceSecond[3] = true;
+    }
+
+    chanceFirst.shuffle(Random.secure());
+    chanceSecond.shuffle(Random.secure());
+    chanceThird.shuffle(Random.secure());
+
+    print("$chanceFirst, $chanceSecond, $chanceThird");
+    return Queue.from([...chanceFirst, ...chanceSecond, ...chanceThird]);
+  }
 }
 
 Future<Duration> _determineCooldown(int guildID, int userID, {required bool isRandom, int? userTier}) async {
