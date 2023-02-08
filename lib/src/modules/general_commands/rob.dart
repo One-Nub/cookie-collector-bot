@@ -361,7 +361,6 @@ Future<DateTime> _tieredCooldownCheck(DateTime currentCooldown, int userTier, in
 }
 
 //by...
-//24 so far
 final List<String> _successMessages = [
   "dodging the wild bork and crawling in through the doggy door",
   "making them pay for the dinner date",
@@ -392,7 +391,6 @@ final List<String> _successMessages = [
 ];
 
 //because...
-//33 so far
 final List<String> _failMessages = [
   "you walked by the police office with your bag of cookies (very suspiciously)",
   "Nub ate your getaway car, tough luck bro, he said it was tasty though",
