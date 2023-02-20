@@ -98,6 +98,9 @@ class GiveCommand extends TextCommand {
           ..addComponent(ButtonBuilder("Deny", "deny", ButtonStyle.danger))
           ..addComponent(ButtonBuilder("Approve", "approve", ButtonStyle.success))
       ];
+      cmb.replyBuilder = ReplyBuilder.fromMessage(ctx.message);
+      cmb.allowedMentions = AllowedMentions()
+        ..allow(users: false, reply: false, roles: false, everyone: false);
 
       var confirmMsg = await ctx.channel.sendMessage(cmb);
       try {
@@ -120,6 +123,7 @@ class GiveCommand extends TextCommand {
         }
       } on TimeoutException {
         await confirmMsg.delete();
+        return;
       }
     }
 
