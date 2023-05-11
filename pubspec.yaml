@@ -2,7 +2,7 @@ name: cookie_collector_bot
 description: A little discord bot that lets you collect and do stuff with cookies
 
 environment:
-  sdk: ">=2.18.0 <3.0.0"
+  sdk: ">=2.18.0 <4.0.0"
 
 dependencies:
   date_time_format: ^2.0.1
