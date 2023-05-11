@@ -1,6 +1,11 @@
+import 'dart:io';
+
+import 'package:logging/logging.dart';
 import 'package:resp_client/resp_client.dart';
 import 'package:resp_client/resp_commands.dart';
 import 'package:resp_client/resp_server.dart' as resp_server;
+
+Logger _logger = Logger("CCRedis");
 
 class CCRedis {
   static final CCRedis _instance = CCRedis._init();
@@ -13,15 +18,47 @@ class CCRedis {
   }
 
   static Future<CCRedis> init({String host = "localhost", int port = 6379, String? auth}) async {
-    var serverConnection = await resp_server.connectSocket(host, port: port);
-    RespClient client = RespClient(serverConnection);
-    _instance.cacheConnection = client;
+    bool connected = false;
+    int retryCount = 0;
 
-    if (auth != null) {
-      RespCommandsTier2(client).auth(auth);
+    connected = await handleConnect(host: host, port: port, auth: auth);
+
+    while (!connected && retryCount <= 5) {
+      _logger.warning("Could not connect to the Redis server. Retry attempt: $retryCount");
+      connected = await handleConnect(host: host, port: port, auth: auth);
+
+      // Increase how long it takes before retrying up to 12 seconds at most.
+      await Future.delayed(Duration(seconds: 2 * (retryCount += 1)));
+    }
+
+    if (!connected) {
+      // Stop execution, couldn't connect to redis. This will cause the program to restart though, which
+      // when not handled properly, can easily lead to the daily session count for Discord being
+      // reached (when program is set tp auto-restart).
+      _logger.shout("Execution is being terminated. Redis connection could not be made.");
+
+      // Give logger a chance to shout before exiting.
+      await Future.delayed(Duration(seconds: 1));
+      exit(1);
     }
 
     return _instance;
+  }
+
+  static Future<bool> handleConnect({String host = "localhost", int port = 6379, String? auth}) async {
+    try {
+      var serverConnection = await resp_server.connectSocket(host, port: port);
+      RespClient client = RespClient(serverConnection);
+      _instance.cacheConnection = client;
+
+      if (auth != null) {
+        RespCommandsTier2(client).auth(auth);
+      }
+
+      return true;
+    } on SocketException {
+      return false;
+    }
   }
 
   Future<Map<String, dynamic>> getDailyStreakData(int guildID, int userID) async {
