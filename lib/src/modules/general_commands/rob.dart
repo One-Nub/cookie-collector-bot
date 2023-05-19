@@ -121,6 +121,7 @@ class RobCommand extends TextCommand {
 
       Duration cooldown = await _determineCooldown(guildID, authorID, isRandom: false, userTier: userTier);
       redis.setRobCooldown(guildID, authorID, DateTime.now().add(cooldown), ttl: cooldown);
+      // ignore: unnecessary_null_comparison
     } else if (victimUserSet == null) {
       victimUserSet = await db.getRandomUserToRob(guildID, authorID, minVictimCookieCount);
       if (victimUserSet == null || victimUserSet.rows.isEmpty) {
