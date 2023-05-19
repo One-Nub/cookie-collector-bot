@@ -38,12 +38,29 @@ const List<String> collectTriggers = [
   "macadamia"
 ];
 
+// question:answer
+const Map<String, String> quizTriggers = {
+  "What is the other identity of Tony Stark?": "Iron man",
+  "What's the secret identity of Spider-man?": "Peter Parker",
+};
+
 class CollectionMessage {
+  String? triggerQuestion;
   late String triggerMessage;
 
   void generateTrigger() {
-    int randNum = Random().nextInt(collectTriggers.length);
-    triggerMessage = "." + collectTriggers[randNum];
+    Random rand = Random.secure();
+    bool choice = rand.nextBool();
+
+    // Choose random trigger when true, quiz when false.
+    if (choice) {
+      int randNum = rand.nextInt(collectTriggers.length);
+      triggerMessage = "." + collectTriggers[randNum];
+    } else {
+      int randNum = rand.nextInt(quizTriggers.length);
+      triggerQuestion = quizTriggers.keys.elementAt(randNum);
+      triggerMessage = quizTriggers.values.elementAt(randNum);
+    }
   }
 
   void handleTriggerCollection(IMessage trigger) async {
@@ -53,20 +70,31 @@ class CollectionMessage {
     var botMember = await (await trigger.guild!.getOrDownload()).selfMember.getOrDownload();
 
     if (!await _checkPermissions(channel as ITextGuildChannel, member: botMember)) return;
-
     EmbedBuilder messageEmbed = EmbedBuilder()
-      ..title = triggerMessage
-      ..description = "Say **$triggerMessage** to collect $cookieAmountString! (Or don't that on you...)"
+      ..title = "Some cookies fell in chat! Grab them!"
+      ..description = "> *Repeat the text or answer my question in chat;*\n"
+          "> *The first person to answer will earn some cookies!*"
       ..addFooter((footer) {
-        footer.text = "This will expire in ${_promptTimeout.inSeconds} seconds!";
-      });
+        footer.text = "Be quick, the cookies will go stale in ${_promptTimeout.inSeconds} seconds!";
+      })
+      ..color = DiscordColor.fromHexString("20262c");
+
+    if (triggerQuestion != null) {
+      messageEmbed.addField(
+          name: ":face_with_monocle: Answer my question:", content: triggerQuestion, inline: true);
+    } else {
+      messageEmbed.addField(name: ":keyboard: Repeat after me!", content: triggerMessage, inline: true);
+    }
+
+    messageEmbed.addField(name: ":cookie: Your earnings:", content: "$cookieAmountString", inline: true);
 
     var collectionMsg = await trigger.channel.sendMessage(MessageBuilder.embed(messageEmbed));
 
     INyxxWebsocket client = trigger.client as INyxxWebsocket;
     try {
       var collectionEvent = await client.eventsWs.onMessageReceived
-          .firstWhere((element) => element.message.content == triggerMessage)
+          .firstWhere(
+              (element) => element.message.content.toLowerCase().trim() == triggerMessage.toLowerCase())
           .timeout(_promptTimeout);
 
       await collectionMsg.delete();
