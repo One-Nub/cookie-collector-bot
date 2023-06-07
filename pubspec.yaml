@@ -10,6 +10,7 @@ dependencies:
   mysql_client: ^0.0.27
   nyxx: ^4.4.0
   nyxx_interactions: ^4.5.0
+  nyxx_commands: ^5.0.2
   onyx_chat:
     git: https://github.com/One-Nub/Onyx_Chat.git
   resp_client: ^1.2.0

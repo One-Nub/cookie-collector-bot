@@ -19,29 +19,7 @@ class HelpCommand extends TextCommand {
   Future<void> commandEntry(TextCommandContext ctx, String message, List<String> args) async {
     CCBot bot = CCBot();
 
-    EmbedBuilder cmdEmbed = EmbedBuilder()
-      ..title = "Help Me!"
-      ..timestamp = DateTime.now().toUtc()
-      ..description = "Welcome to the commands list for Cookie Collector!";
-
-    StringBuffer adminBuffer = StringBuffer();
-    StringBuffer generalBuffer = StringBuffer();
-    Iterator<TextCommand> commands = bot.onyxChat.commands.iterator;
-    while (commands.moveNext()) {
-      TextCommand currentCommand = commands.current;
-      String cmdName = currentCommand.name;
-      String cmdDescription = currentCommand.description!;
-      if (currentCommand.name == "generate" || currentCommand.name == "say") {
-        adminBuffer.writeln("`.${cmdName}` ➙ ${cmdDescription}");
-      } else {
-        generalBuffer.writeln("`.${cmdName}` ➙ ${cmdDescription}");
-      }
-    }
-
-    cmdEmbed.addField(name: "Commands", content: generalBuffer.toString(), inline: false);
-    if (bot.adminList.contains(ctx.author.id)) {
-      cmdEmbed.addField(name: "Admin Commands", content: adminBuffer.toString(), inline: false);
-    }
+    var cmdEmbed = buildHelpEmbed(bot, ctx.author.id);
 
     IUser? authorUser = bot.gateway.users[ctx.author.id];
     if (authorUser == null) {
@@ -63,4 +41,32 @@ class HelpCommand extends TextCommand {
         ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
     }
   }
+}
+
+EmbedBuilder buildHelpEmbed(CCBot bot, Snowflake authorID) {
+  EmbedBuilder cmdEmbed = EmbedBuilder()
+    ..title = "Help Me!"
+    ..timestamp = DateTime.now().toUtc()
+    ..description = "Welcome to the commands list for Cookie Collector!";
+
+  StringBuffer adminBuffer = StringBuffer();
+  StringBuffer generalBuffer = StringBuffer();
+  Iterator<TextCommand> commands = bot.onyxChat.commands.iterator;
+  while (commands.moveNext()) {
+    TextCommand currentCommand = commands.current;
+    String cmdName = currentCommand.name;
+    String cmdDescription = currentCommand.description!;
+    if (currentCommand.name == "generate" || currentCommand.name == "say") {
+      adminBuffer.writeln("`.${cmdName}` ➙ ${cmdDescription}");
+    } else {
+      generalBuffer.writeln("`.${cmdName}` ➙ ${cmdDescription}");
+    }
+  }
+
+  cmdEmbed.addField(name: "Commands", content: generalBuffer.toString(), inline: false);
+  if (bot.adminList.contains(authorID)) {
+    cmdEmbed.addField(name: "Admin Commands", content: adminBuffer.toString(), inline: false);
+  }
+
+  return cmdEmbed;
 }

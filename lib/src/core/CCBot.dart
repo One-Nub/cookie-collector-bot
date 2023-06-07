@@ -77,5 +77,14 @@ class CCBot {
 
   void startInteractions() async {
     interactions = IInteractions.create(WebsocketInteractionBackend(gateway));
+    interactions.registerSlashCommand(SlashCommandBuilder("help", "Get some help with cookie bot!", [])
+      ..registerHandler((event) async {
+        EmbedBuilder embed = event.interaction.memberAuthor == null
+            ? buildHelpEmbed(CCBot(), event.interaction.userAuthor!.id)
+            : buildHelpEmbed(CCBot(), event.interaction.memberAuthor!.id);
+
+        await event.respond(MessageBuilder.embed(embed), hidden: true);
+      }));
+    interactions.syncOnReady();
   }
 }
