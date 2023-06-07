@@ -75,8 +75,7 @@ class CollectionMessage {
     if (!await _checkPermissions(channel as ITextGuildChannel, member: botMember)) return;
     EmbedBuilder messageEmbed = EmbedBuilder()
       ..title = "Some cookies fell in chat! Grab them!"
-      ..description = "> *Repeat the text or answer my question in chat;*\n"
-          "> *The first person to answer will earn some cookies!*"
+      ..description = "> *Repeat the text or answer my question in chat*"
       ..addFooter((footer) {
         footer.text = "Be quick, the cookies will go stale in ${_promptTimeout.inSeconds} seconds!";
       })
