@@ -50,17 +50,20 @@ class CollectionMessage {
 
   void generateTrigger() {
     Random rand = Random.secure();
-    bool choice = rand.nextBool();
+    // bool choice = rand.nextBool();
 
     // Choose random trigger when true, quiz when false.
-    if (choice) {
-      int randNum = rand.nextInt(collectTriggers.length);
-      triggerMessage = "." + collectTriggers[randNum];
-    } else {
-      int randNum = rand.nextInt(quizTriggers.length);
-      triggerQuestion = quizTriggers.keys.elementAt(randNum);
-      triggerMessage = quizTriggers.values.elementAt(randNum);
-    }
+    // if (choice) {
+    //   int randNum = rand.nextInt(collectTriggers.length);
+    //   triggerMessage = "." + collectTriggers[randNum];
+    // } else {
+    //   int randNum = rand.nextInt(quizTriggers.length);
+    //   triggerQuestion = quizTriggers.keys.elementAt(randNum);
+    //   triggerMessage = quizTriggers.values.elementAt(randNum);
+    // }
+
+    int randNum = rand.nextInt(collectTriggers.length);
+    triggerMessage = "." + collectTriggers[randNum];
   }
 
   void handleTriggerCollection(IMessage trigger) async {
