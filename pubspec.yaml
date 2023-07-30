@@ -8,7 +8,7 @@ dependencies:
   date_time_format: ^2.0.1
   dotenv: ^4.0.1
   mysql_client: ^0.0.27
-  nyxx: ^4.4.0
+  nyxx: ^4.5.1
   nyxx_interactions: ^4.5.0
   onyx_chat:
     git: https://github.com/One-Nub/Onyx_Chat.git
