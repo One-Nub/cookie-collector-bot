@@ -150,7 +150,8 @@ class CCDatabase {
     String query = "SELECT cookies FROM users_guilds "
         "WHERE (user_id = $userID AND guild_id = $guildID)";
     IResultSet resultSet = await pool.execute(query);
-    if (resultSet.isNotEmpty) {
+
+    if (resultSet.numOfRows != 0) {
       var resultRow = resultSet.rows.first;
       numCookies = resultRow.typedAssoc()["cookies"];
     }
@@ -162,7 +163,7 @@ class CCDatabase {
     IResultSet resultSet = await pool.execute(query);
 
     String prefix = ".";
-    if (resultSet.isNotEmpty) {
+    if (resultSet.numOfRows != 0) {
       var resultRow = resultSet.rows.first;
       prefix = resultRow.assoc()["prefix"]!;
     }
