@@ -10,6 +10,11 @@ Map<Snowflake, DateTime> lastTriggerMap = Map();
 
 void onMessageEvent(IMessageReceivedEvent event) async {
   if (event.message.author.bot) return;
+
+  // Ignore non text guild channels (primarily threads)
+  var channel = await event.message.channel.getOrDownload();
+  if (channel.runtimeType != ITextGuildChannel) return;
+
   //would ignore channel here if that was actually implemented
 
   // print("message recieved");
