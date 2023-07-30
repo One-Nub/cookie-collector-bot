@@ -25,6 +25,13 @@ class StatsCommands extends TextCommand {
     }
     userID ??= ctx.author.id.id;
 
+    if (ctx.guild == null) {
+      await ctx.channel.sendMessage(MessageBuilder.content("You can't use this command in DMs!")
+        ..allowedMentions = (AllowedMentions()..allow(reply: false))
+        ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
+      return;
+    }
+
     CCDatabase db = CCDatabase(initializing: false);
     var databaseResult = await db.getRankedUserGuildData(userID, ctx.guild!.id.id);
     Map<String, dynamic> userMap = {"user_id": userID, "cookies": 0, "row_num": "N/A"};

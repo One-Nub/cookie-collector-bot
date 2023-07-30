@@ -37,6 +37,13 @@ class LeaderboardCommand extends TextCommand {
 }
 
 Future<void> _commandFunction(TextCommandContext ctx, String message, List<String> args) async {
+  if (ctx.guild == null) {
+    await ctx.channel.sendMessage(MessageBuilder.content("You can't use this command in DMs!")
+      ..allowedMentions = (AllowedMentions()..allow(reply: false))
+      ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
+    return;
+  }
+
   Map<int, String> pages = Map();
   int authorID = ctx.author.id.id;
   int guildID = ctx.guild!.id.id;

@@ -17,7 +17,12 @@ class GiveCommand extends TextCommand {
 
   @override
   Future<void> commandEntry(TextCommandContext ctx, String message, List<String> args) async {
-    if (ctx.guild == null) return;
+    if (ctx.guild == null) {
+      await ctx.channel.sendMessage(MessageBuilder.content("You can't use this command in DMs!")
+        ..allowedMentions = (AllowedMentions()..allow(reply: false))
+        ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
+      return;
+    }
 
     //need 2 arguments, user and amount of cookies to give
     if (args.isEmpty || args.length < 2) {

@@ -12,6 +12,13 @@ class EatCommand extends TextCommand {
 
   @override
   Future<void> commandEntry(TextCommandContext ctx, String message, List<String> args) async {
+    if (ctx.guild == null) {
+      await ctx.channel.sendMessage(MessageBuilder.content("You can't use this command in DMs!")
+        ..allowedMentions = (AllowedMentions()..allow(reply: false))
+        ..replyBuilder = ReplyBuilder.fromMessage(ctx.message));
+      return;
+    }
+
     var db = CCDatabase(initializing: false);
     int cookieCount = await db.getCookieCount(ctx.author.id.id, ctx.guild!.id.id);
 

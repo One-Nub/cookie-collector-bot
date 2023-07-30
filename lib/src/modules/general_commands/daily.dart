@@ -20,6 +20,8 @@ class DailyCommand extends TextCommand {
   @override
   Future<void> commandEntry(TextCommandContext ctx, String message, List<String> args) async {
     int authorID = ctx.author.id.id;
+
+    if (ctx.guild == null) return;
     int guildID = ctx.guild!.id.id;
 
     CCRedis redis = CCRedis();
