@@ -13,13 +13,10 @@ void onMessageEvent(IMessageReceivedEvent event) async {
 
   // Ignore non text guild channels (primarily threads)
   var channel = await event.message.channel.getOrDownload();
-  if (channel.runtimeType != ITextGuildChannel) return;
+
+  if (channel is! ITextGuildChannel) return;
 
   //would ignore channel here if that was actually implemented
-
-  // print("message recieved");
-  // print(lastMessageMap);
-  // print(lastTriggerMap);
 
   Snowflake channelID = event.message.channel.id;
   IMessage? lastMessage = lastMessageMap[channelID];

@@ -72,9 +72,6 @@ class CollectionMessage {
     var channel = await trigger.channel.getOrDownload();
     var botMember = await (await trigger.guild!.getOrDownload()).selfMember.getOrDownload();
 
-    // Another safeguard to ignore threads.
-    if (channel.runtimeType != ITextGuildChannel) return;
-
     if (!await _checkPermissions(channel as ITextGuildChannel, member: botMember)) return;
     EmbedBuilder messageEmbed = EmbedBuilder()
       ..title = "Some cookies fell in chat! Grab them!"
