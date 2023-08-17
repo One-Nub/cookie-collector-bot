@@ -26,7 +26,6 @@ class DumpDatabaseCommand extends TextCommand {
 
     while (iterator.moveNext()) {
       var thisRow = iterator.current.typedAssoc();
-      print(thisRow);
 
       String guildId = thisRow["guild_id"].toString();
       thisRow.remove("guild_id");
