@@ -1,4 +1,5 @@
 /// Admin Commands
+export 'src/modules/admin_commands/db_dump.dart';
 export 'src/modules/admin_commands/generate.dart';
 export 'src/modules/admin_commands/say.dart';
 

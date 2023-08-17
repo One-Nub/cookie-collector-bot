@@ -49,6 +49,7 @@ class CCBot {
 
     onyxChat = OnyxChat(gateway, prefix: ".");
     onyxChat.addCommandList([
+      DumpDatabaseCommand(),
       GenerateCommand(),
       SayCommand(),
       DailyCommand(),
