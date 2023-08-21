@@ -14,7 +14,12 @@ class DumpDatabaseCommand extends TextCommand {
 
   @override
   Future<void> commandEntry(TextCommandContext ctx, String message, List<String> args) async {
-    if (ctx.guild == null || ctx.author.id.id != 156872400145874944) return;
+    if (ctx.guild == null) return;
+
+    CCBot bot = CCBot();
+    if (!bot.adminList.contains(ctx.author.id)) {
+      return;
+    }
 
     CCDatabase db = CCDatabase(initializing: false);
     String query = "SELECT * FROM users_guilds";
