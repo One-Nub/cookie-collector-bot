@@ -29,12 +29,24 @@ class DumpDatabaseCommand extends TextCommand {
 
     Map<String, List> guildMapping = {};
 
+    CCRedis redis = CCRedis();
+
     while (iterator.moveNext()) {
       var thisRow = iterator.current.typedAssoc();
 
       String guildId = thisRow["guild_id"].toString();
+      String userId = thisRow["user_id"].toString();
       thisRow.remove("guild_id");
       thisRow.remove("partner_id");
+      thisRow.remove("lifetime_cookies");
+
+      var data = await redis.getDailyStreakData(int.parse(guildId), int.parse(userId));
+      if (data.isNotEmpty) {
+        int? sd = int.tryParse(data["streak-duration"] ??= "");
+        if (sd != null) {
+          thisRow["streak_duration"] = sd;
+        }
+      }
 
       if (!guildMapping.containsKey(guildId)) {
         guildMapping[guildId] = [];
@@ -43,7 +55,9 @@ class DumpDatabaseCommand extends TextCommand {
       guildMapping[guildId]?.add(thisRow);
     }
 
-    List<int> fileOut = utf8.encode(jsonEncode(guildMapping).toString());
+    JsonEncoder encoder = JsonEncoder.withIndent("  ");
+
+    List<int> fileOut = utf8.encode(encoder.convert(guildMapping));
     MessageBuilder mb = MessageBuilder.files([AttachmentBuilder.bytes(fileOut, "DB_DUMP.json")]);
     await ctx.channel.sendMessage(mb);
   }
