@@ -1,9 +1,25 @@
+# NOTICE
+
+Cookie Collector has now been recreated and replaced by my friend [here](https://github.com/MrCookieBot/MrCookie) as he has started his journey
+into the world of programming like I once did.
+
+Because of this, this bot and repository will sit idle for a while and eventually be archived. I would say that this bot helped me learn a tremendous amount
+during the span of me slowly learning more about programming and then applying that to the code. I am extremely happy with how Cookie Collector came to be
+and how it has served both me and the Discord servers it was in over time.
+
+With this in mind, this repository will ultimately be left to sit as a reference for anyone potentially curious about making a Discord bot with Dart (even though 
+it is using chat commands, which are not the suggested way of running commands anymore).
+
+Going forward I expect to continue working on little things related to my other hobby discord bot, [Pyrite](https://github.com/Pyrite-X/Pyrite), 
+and my work for [Bloxlink](https://github.com/bloxlink/) (as long as I work there xD), and at some point anything related to my career or hobbies!
+
+---
+<br>
+
 ## **Cookie Collector**
 
 Cookie Collector is a Discord bot meant to help encourage chat activity through a simple, yet fun
 way of letting people collect cookies!
-
-It is currently in development and is not publicly available for inviting just yet. But when it is available, the bot can be invited from [here](https://discord.com/oauth2/authorize?client_id=659480764915777536&scope=bot&permissions=2416241856).
 
 ---
 
@@ -21,6 +37,9 @@ which should be renamed to `.env` for development usage.
 --- 
 ### **Running the Bot**
 
-To run the bot, it can be ran manually with `dart run bin/main.dart` (or `/main-local.dart` for development usage - this file looks for the .env file).
+To run the bot, it can be run manually with `dart run bin/main.dart` (or `/main-local.dart` for development usage - this file looks for the .env file).
 
 Alternatively, the bot can be run via a [Docker](https://www.docker.com/) container. All that is required is that the image is first built, which can be done by cloning the repo & running `docker build -t cc_bot .` in the cloned directory. Then after that, you can run the image in your preferred way, either through [Docker Compose](https://docs.docker.com/compose/), the [docker run](https://docs.docker.com/engine/reference/run/) command, or some other utility like [Portainer](https://www.portainer.io/).
+
+Cookie Collector needs a MariaDB database to connect to, as well as a Redis client to connect to. The (docker compose)[docker-compose.yml] file does not include a MariaDB instance, 
+but it does include the Redis instance. As mentioned previously, prior to the first usage of the bot it is necessary that the database is set up with the default tables!
