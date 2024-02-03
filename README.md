@@ -1,20 +1,19 @@
-# NOTICE
+> [!IMPORTANT]
+> Cookie Collector has now been recreated and replaced by my friend [here](https://github.com/MrCookieBot/MrCookie) as he has started his journey
+  into the world of programming like I once did.
+> 
+> Because of this, this bot and repository will sit idle for a while and eventually be archived. I would say that this bot helped me learn a tremendous amount
+  during the span of me slowly learning more about programming and then applying that to the code. I am extremely happy with how Cookie Collector came to be
+  and how it has served both me and the Discord servers it was in over time.
+>
+> With this in mind, this repository will ultimately be left to sit as a reference for anyone potentially curious about making a Discord bot with Dart (even though 
+  it is using chat commands, which are not the suggested way of running commands anymore, plus it is not using the latest versions of Nyxx).
+>
+> Going forward I expect to continue working on little things related to my other hobby discord bot, [Pyrite](https://github.com/Pyrite-X/Pyrite), 
+  and my work for [Bloxlink](https://github.com/bloxlink/), and at some point anything else related to my career or hobbies!
 
-Cookie Collector has now been recreated and replaced by my friend [here](https://github.com/MrCookieBot/MrCookie) as he has started his journey
-into the world of programming like I once did.
-
-Because of this, this bot and repository will sit idle for a while and eventually be archived. I would say that this bot helped me learn a tremendous amount
-during the span of me slowly learning more about programming and then applying that to the code. I am extremely happy with how Cookie Collector came to be
-and how it has served both me and the Discord servers it was in over time.
-
-With this in mind, this repository will ultimately be left to sit as a reference for anyone potentially curious about making a Discord bot with Dart (even though 
-it is using chat commands, which are not the suggested way of running commands anymore).
-
-Going forward I expect to continue working on little things related to my other hobby discord bot, [Pyrite](https://github.com/Pyrite-X/Pyrite), 
-and my work for [Bloxlink](https://github.com/bloxlink/) (as long as I work there xD), and at some point anything related to my career or hobbies!
-
----
-<br>
+<details>
+<summary>View the original readme</summary>
 
 ## **Cookie Collector**
 
@@ -41,5 +40,7 @@ To run the bot, it can be run manually with `dart run bin/main.dart` (or `/main-
 
 Alternatively, the bot can be run via a [Docker](https://www.docker.com/) container. All that is required is that the image is first built, which can be done by cloning the repo & running `docker build -t cc_bot .` in the cloned directory. Then after that, you can run the image in your preferred way, either through [Docker Compose](https://docs.docker.com/compose/), the [docker run](https://docs.docker.com/engine/reference/run/) command, or some other utility like [Portainer](https://www.portainer.io/).
 
-Cookie Collector needs a MariaDB database to connect to, as well as a Redis client to connect to. The (docker compose)[docker-compose.yml] file does not include a MariaDB instance, 
+Cookie Collector needs a MariaDB database to connect to, as well as a Redis client to connect to. The [docker compose](./docker-compose.yml) file does not include a MariaDB instance, 
 but it does include the Redis instance. As mentioned previously, prior to the first usage of the bot it is necessary that the database is set up with the default tables!
+
+</details>
